@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.trenska.longwang.dao.sys.SysEmpMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="SimpleInfoResultMap" type="com.trenska.longwang.entity.sys.SysEmp">
+        <id column="emp_id" property="empId" />
+        <result column="emp_acct" property="empAcct"/>
+        <result column="emp_name" property="empName" />
+        <result column="nickname" property="nickname" />
+        <result column="email" property="email"/>
+        <result column="all_data" property="allData"/>
+        <result column="avatar_path" property="avatarPath"/>
+    </resultMap>
+
+    <!-- 通用查询映射结果，包括账号的角色和区域分组信息 -->
+    <resultMap id="BaseResultMap" type="com.trenska.longwang.entity.sys.SysEmp">
+        <id column="emp_id" property="empId" />
+        <result column="emp_acct" property="empAcct"/>
+        <result column="emp_name" property="empName" />
+        <result column="nickname" property="nickname" />
+        <result column="email" property="email"/>
+        <result column="all_data" property="allData"/>
+        <result column="avatar_path" property="avatarPath"/>
+        <collection property="roles" column="emp_id" select="com.trenska.longwang.dao.sys.SysRoleMapper.selectRolesByEmpId"/>
+        <!--获取empId所拥有的区域分组-->
+        <collection property="areaGrps" column="emp_id" select="com.trenska.longwang.dao.customer.AreaGrpMapper.selectAreaGrpsByEmpId"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+      se.emp_id,se.emp_acct,se.emp_type,se.ncode,se.init_acct,se.emp_name,se.emp_pwd,se.branch_no,se.nickname,se.salt,se.avatar_path,se.acct_status,se.created_time,se.updated_time,se.deleted_time,se.last_login_time,se.last_login_ip,se.login_cts,se.ticket,se.fail_time,se.fail_cts,se.email,se.all_data
+    </sql>
+    <!--获取包括角色和权限的账号信息-->
+    <select id="selectSysEmpPageSelective" resultMap="BaseResultMap">
+        select <include refid="Base_Column_List"/>
+        from sys_emp se
+        <trim prefix="where" prefixOverrides="and">
+            <if test="empType != null and empType != ''">
+                and se.emp_type = #{empType}
+            </if>
+        </trim>
+    </select>
+    <select id="selectSimpleInfoById" resultType="com.trenska.longwang.entity.sys.SysEmp">
+        select emp_id,emp_acct,emp_name
+        from sys_emp
+        where emp_id = #{empId}
+    </select>
+    <select id="selectSysEmpCountSelective" resultType="java.lang.Integer">
+        select count(1)
+        from sys_emp se
+        <trim prefix="where" prefixOverrides="and">
+            <if test="empType != null and empType != ''">
+                and se.emp_type = #{empType}
+            </if>
+        </trim>
+    </select>
+</mapper>

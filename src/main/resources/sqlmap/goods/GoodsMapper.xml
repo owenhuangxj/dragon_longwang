@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.trenska.longwang.dao.goods.GoodsMapper">
+
+
+    <resultMap id="exportResultMap" type="com.trenska.longwang.model.goods.GoodsExportModel">
+        <result column="goodsNo" property="goodsNo" />
+        <result column="goodsName" property="goodsName" />
+        <result column="brandName" property="brandName" />
+        <result column="frtCatName" property="frtCatName" />
+        <result column="price" property="price" />
+        <result column="avbStock" property="avbStock" />
+        <result column="stock" property="stock" />
+        <result column="stat" property="stat" />
+        <association property="mainUnit" column="mainUnitId"  select="com.trenska.longwang.dao.goods.UnitMapper.selectUnitNameById" autoMapping="true" />
+        <collection property="goodsSpecs" column="goodsId" select="com.trenska.longwang.dao.goods.GoodsSpecMapper.selectGoodsSpecByGoodsId" autoMapping="true"/>
+    </resultMap>
+
+
+    <resultMap id="simpleInfoResultMap" type="com.trenska.longwang.entity.goods.Goods">
+        <id column="goods_id" property="goodsId" />
+        <result column="goods_no" property="goodsNo" />
+        <result column="barcode" property="barcode" />
+        <result column="goods_name" property="goodsName" />
+        <result column="main_unit_id" property="mainUnitId" />
+        <result column="sub_unit_id" property="subUnitId" />
+        <result column="multi" property="multi" />
+        <result column="brand_name" property="brandName" />
+        <result column="cat_id" property="catId"/>
+        <result column="frt_cat_name" property="frtCatName" />
+        <result column="scd_cat_name" property="scdCatName" />
+        <result column="stat" property="stat" />
+        <result column="min_odr_qtt" property="minOdrQtt" />
+        <result column="init_stock" property="initStock" />
+        <result column="stockin" property="stockin"/>
+        <result column="stockout" property="stockout" />
+        <result column="price" property="price" />
+        <result column="img" property="img" />
+        <result column="expir" property="expire" />
+        <result column="remarks" property="remarks" />
+        <association property="mainUnit" column="main_unit_id"  select="com.trenska.longwang.dao.goods.UnitMapper.selectUnitNameById" fetchType="lazy" autoMapping="true" />
+        <collection property="goodsSpecs" column="goods_id" select="com.trenska.longwang.dao.goods.GoodsSpecMapper.selectGoodsSpecByGoodsId" fetchType="lazy" autoMapping="true"/>
+    </resultMap>
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.trenska.longwang.entity.goods.Goods">
+        <id column="goods_id" property="goodsId" />
+        <result column="goods_no" property="goodsNo" />
+        <result column="barcode" property="barcode" />
+        <result column="goods_name" property="goodsName" />
+        <result column="main_unit_id" property="mainUnitId" />
+        <result column="sub_unit_id" property="subUnitId" />
+        <result column="multi" property="multi" />
+        <result column="brand_name" property="brandName" />
+        <result column="cat_id" property="catId"/>
+        <result column="frt_cat_name" property="frtCatName" />
+        <result column="scd_cat_name" property="scdCatName" />
+        <result column="stat" property="stat" />
+        <result column="min_odr_qtt" property="minOdrQtt" />
+        <result column="init_stock" property="initStock" />
+        <result column="stockin" property="stockin"/>
+        <result column="stockout" property="stockout" />
+        <result column="price" property="price" />
+        <result column="img" property="img" />
+        <result column="expir" property="expire" />
+        <result column="remarks" property="remarks" />
+        <association property="mainUnit" column="main_unit_id"  select="com.trenska.longwang.dao.goods.UnitMapper.selectUnitNameById" autoMapping="true" />
+        <association property="subUnit" column="sub_unit_id"  select="com.trenska.longwang.dao.goods.UnitMapper.selectUnitNameById" autoMapping="true" />
+        <collection property="specialPrices" column="goods_id"  select="com.trenska.longwang.dao.goods.GoodsCustSpecialMapper.selectByGoodsId" autoMapping="true" />
+        <collection property="priceGrps" column="goods_id"  select="com.trenska.longwang.dao.goods.GoodsPriceGrpMapper.selectByGoodsId" autoMapping="true" />
+        <collection property="goodsSpecs" column="goods_id" select="com.trenska.longwang.dao.goods.GoodsSpecMapper.selectGoodsSpecByGoodsId" autoMapping="true" />
+    </resultMap>
+
+    <resultMap id="RealSimpleResultMap" type="com.trenska.longwang.entity.goods.Goods">
+        <id column="goods_id" property="goodsId" />
+        <result column="goods_name" property="goodsName" />
+        <result column="main_unit_id" property="mainUnitId" />
+        <result column="stock" property="stock" />
+        <association property="mainUnit" column="main_unit_id"  select="com.trenska.longwang.dao.goods.UnitMapper.selectUnitNameById" fetchType="lazy" autoMapping="true" />
+        <collection property="goodsSpecs" column="goods_id" select="com.trenska.longwang.dao.goods.GoodsSpecMapper.selectGoodsSpecByGoodsId" fetchType="lazy" autoMapping="true" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        tg.goods_id, tg.goods_no, tg.barcode, tg.goods_name, tg.cat_id, tg.main_unit_id, tg.sub_unit_id, tg.multi, tg.brand_name, tg.frt_cat_name, tg.scd_cat_name, tg.stat, tg.min_odr_qtt, tg.init_stock, tg.stock, tg.stockin, tg.stockout, tg.price, tg.img, tg.remarks, tg.expir
+    </sql>
+
+    <sql id="Simple_Column_List">
+        tg.goods_id, tg.goods_name, tg.main_unit_id, tg.stock
+    </sql>
+
+    <delete id="updateGoodsStock">
+        update t_goods
+        set stock = stock - #{stock}
+        where goods_id = #{goodsId}
+    </delete>
+
+    <delete id="deleteGoodsByGoodsId">
+        delete from t_goods
+        where goods_id = #{goodsId}
+    </delete>
+
+    <select id="selectGoodsRealSimpleInfo" resultMap="RealSimpleResultMap">
+        select <include refid="Simple_Column_List"/>
+        from t_goods tg
+    </select>
+
+    <select id="selectGoodsSimpleInfo" resultMap="simpleInfoResultMap">
+        select <include refid="Base_Column_List"/>
+        from t_goods tg
+        where tg.goods_id = #{goodsId}
+    </select>
+    <select id="selectGoodsPage" resultMap="BaseResultMap">
+        select <include refid="Base_Column_List"/>
+        from t_goods tg
+    </select>
+    <select id="selectGoodsPageSelective" resultMap="BaseResultMap">
+        select <include refid="Base_Column_List"/>
+        from t_goods tg
+        <if test="propName != null and propName != ''">
+            ,t_goods_spec tgs
+        </if>
+        where tg.deleted = 0
+        <trim prefixOverrides="and" prefix="and">
+            <if test="combine != null and combine != ''">
+                and instr(combine,#{combine})
+            </if>
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and tg.brand_name = #{brandName}
+            </if>
+            <if test="stat != null">
+                and tg.stat = #{stat}
+            </if>
+            <if test="minOdrQtt != null">
+                and tg.min_odr_qtt >= #{minOdrQtt}
+            </if>
+            <if test="propName != null and propName != ''">
+                and tgs.prop_name = #{propName}
+                and tgs.goods_id = tg.goods_id
+            </if>
+        </trim>
+        order by tg.goods_no
+    </select>
+
+    <select id="selectCountSelective" resultType="java.lang.Integer">
+        select count(1)
+        from t_goods tg
+        <if test="propName != null and propName != ''">
+            ,t_goods_spec tgs
+        </if>
+        <trim prefixOverrides="and" prefix="where">
+            <if test="combine != null and combine != ''">
+                and instr(combine,#{combine})
+            </if>
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and tg.brand_name = #{brandName}
+            </if>
+            <if test="stat != null">
+                and tg.stat = #{stat}
+            </if>
+            <if test="minOdrQtt != null">
+                and tg.min_odr_qtt >= #{minOdrQtt}
+            </if>
+            <if test="propName != null and propName != ''">
+                and tgs.prop_name = #{propName}
+                and tgs.goods_id = tg.goods_id
+            </if>
+        </trim>
+    </select>
+    <select id="selectUnDeletedGoodsByGoodsId" resultMap="BaseResultMap">
+        select <include refid="Base_Column_List"/>
+        from t_goods tg
+        where  tg.goods_id = #{goodsId}
+    </select>
+    <select id="selectGoodsByGoodsId" resultMap="BaseResultMap">
+        select <include refid="Base_Column_List"/>
+        from t_goods tg
+        where  tg.goods_id = #{goodsId}
+    </select>
+    <select id="selectGoodsPageSelectiveCount" resultType="java.lang.Integer">
+        select count(1)
+        from t_goods tg
+        <if test="propName != null and propName != ''">
+            ,t_goods_spec tgs
+        </if>
+        where tg.deleted = 0
+        <trim prefixOverrides="and" prefix="and">
+            <if test="combine != null and combine != ''">
+                and instr(combine,#{combine})
+            </if>
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and tg.brand_name = #{brandName}
+            </if>
+            <if test="stat != null">
+                and tg.stat = #{stat}
+            </if>
+            <if test="minOdrQtt != null">
+                and tg.min_odr_qtt >= #{minOdrQtt}
+            </if>
+            <if test="propName != null and propName != ''">
+                and tgs.prop_name = #{propName}
+                and tgs.goods_id = tg.goods_id
+            </if>
+        </trim>
+    </select>
+    <select id="selectGoodsExcelPageSelective" resultMap="exportResultMap">
+        select tg.goods_id as goodsId, ifnull(tg.goods_no,"") as goodsNo,ifnull(tg.goods_name,"") as goodsName,ifnull(tg.brand_name,"") as brandName,
+               tg.frt_cat_name as frtCatName,tg.main_unit_id as mainUnitId,tg.price as price,(tg.stock-tg.stockout) as avbStock,
+               tg.stock as stock,tg.stat as stat
+        from t_goods tg
+        <if test="propName != null and propName != ''">
+            ,t_goods_spec tgs
+        </if>
+        <trim prefixOverrides="and" prefix="where">
+            <if test="combine != null and combine != ''">
+                and instr(combine,#{combine})
+            </if>
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and tg.brand_name = #{brandName}
+            </if>
+            <if test="stat != null">
+                and tg.stat = #{stat}
+            </if>
+            <if test="minOdrQtt != null">
+                and tg.min_odr_qtt >= #{minOdrQtt}
+            </if>
+            <if test="propName != null and propName != ''">
+                and tgs.prop_name = #{propName}
+                and tgs.goods_id = tg.goods_id
+            </if>
+        </trim>
+    </select>
+
+</mapper>

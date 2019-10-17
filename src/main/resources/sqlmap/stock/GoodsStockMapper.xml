@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.trenska.longwang.dao.stock.GoodsStockMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.trenska.longwang.entity.stock.GoodsStock">
+        <id column="id" property="id" />
+        <result column="goods_id" property="goodsId" />
+        <result column="made_date" property="madeDate" />
+        <result column="num" property="num" />
+        <result column="stock_price" property="stockPrice"/>
+    </resultMap>
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, goods_id, made_date, num,stock_price
+    </sql>
+    <!--查询商品库存批次 , all参数控制是否查询低于0的库存，如果没有查询指定的批次，查询结果按照批次升序排列-->
+    <select id="selectGoodsStock" resultType="com.trenska.longwang.entity.stock.GoodsStock">
+        select <include refid="Base_Column_List"/>
+        from t_goods_stock tgs
+        where tgs.goods_id = #{goodsId}
+        and tgs.num != 0
+        <trim prefix="and" prefixOverrides="and">
+            <if test="madeDate != null and madeDate != ''">
+                and tgs.made_date = #{madeDate}
+            </if>
+            <if test="stockPrice != null and stockPrice != ''">
+              and tgs.stock_price =#{stockPrice}
+            </if>
+            <if test="all != true">
+                and tgs.num > 0
+            </if>
+        </trim>
+            order by tgs.made_date
+    </select>
+    <!--查询商品库存记录的数量，即有多少个批次-->
+    <select id="selectGoodsStockCount" resultType="java.lang.Integer">
+        select count(1)
+        from t_goods_stock tgs
+        where tgs.goods_id = #{goodsId}
+        <trim prefix="and" prefixOverrides="and">
+            <if test="madeDate != null and madeDate != ''">
+                and tgs.made_date = #{madeDate}
+            </if>
+            <if test="stockPrice != null and stockPrice != ''">
+                and tgs.stock_price = #{stockPrice}
+            </if>
+            <if test="all != true">
+                and tgs.num > 0
+            </if>
+        </trim>
+    </select>
+    <select id="selectGoodsStockPageSelective" resultType="com.trenska.longwang.entity.stock.GoodsStock">
+        select <include refid="Base_Column_List"/>
+        from t_goods_stock tgs
+        <if test="goodsId != null">
+            where tgs.goods_id = #{goodsId}
+        </if>
+        order by tgs.goods_id, tgs.made_date
+    </select>
+
+    <select id="selectGoodsStockPageSelectiveCount">
+        select count(1)
+        from t_goods_stock tgs
+        <if test="goodsId != null">
+            where tgs.goods_id = #{goodsId}
+        </if>
+    </select>
+
+    <!--查询商品的各个批次的库存量-->
+    <select id="selectGoodsMadeDates" resultType="com.trenska.longwang.entity.indent.StockMadedate">
+        select tgs.num as num,tgs.made_date as madeDate,tgs.stock_price as stockPrice
+        from t_goods_stock as tgs
+        where tgs.goods_id = #{goodsId}
+          and tgs.num > 0
+        order by tgs.made_date
+    </select>
+    <!--更新商品批次库存-->
+    <update id="updateGoodsMadeDateStock">
+        update t_goods_stock
+        set num = num - #{num}
+        where made_date = #{madeDate}
+        and goods_id = #{goodsId}
+        and stock_price = #{stockPrice}
+    </update>
+
+</mapper>

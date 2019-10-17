@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.trenska.longwang.dao.sys.SysConfigMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.trenska.longwang.entity.sys.SysConfig">
+        <id column="sys_emp_id" property="sysEmpId" />
+        <result column="stockout_by_madedate" property="stockoutByMadedate"/>
+        <result property="goodsImgable" column="goods_imagable"/>
+        <result column="retain" property="retain"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        sc.sys_emp_id, sc.stockout_by_madedate, sc.goods_imgable, sc.retain
+    </sql>
+
+</mapper>

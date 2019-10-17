@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.trenska.longwang.dao.goods.SpecPropertyMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.trenska.longwang.entity.goods.SpecProperty">
+        <id column="spec_prop_id" property="specPropId" />
+        <result column="spec_id" property="specId" />
+        <result column="prop_name" property="propName" />
+        <result column="stat" property="stat" />
+        <result column="deletable" property="deletable" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+       tsp.spec_prop_id, tsp.spec_id, tsp.prop_name, tsp.stat, tsp.deletable
+    </sql>
+
+    <!-- 将没有别使用的规格值设置为可以删除 -->
+    <update id="setDeletable">
+        update t_spec_property tsp
+        set tsp.deletable = 1
+        where tsp.spec_prop_id
+        not in
+        (
+          select tgs.spec_prop_id
+          from t_goods_spec tgs
+          group by tgs.spec_prop_id
+        )
+    </update>
+
+    <delete id="deleteSpecProperty">
+        delete from t_spec_property where spec_id = #{specId}
+    </delete>
+
+    <select id="selectSpecPropertiesPageSelective" resultType="com.trenska.longwang.entity.goods.SpecProperty">
+        select
+        <include refid="Base_Column_List"/>
+        from t_spec_property tsp
+        <trim prefix="where" prefixOverrides="and">
+            <if test="propName != null and propName != ''">
+                tsp.prop_name like concat('%',#{propName},'%')
+             </if>
+            <if test="stat != null">
+              and tsp.stat = #{stat}
+            </if>
+        </trim>
+    </select>
+
+    <select id="selectCountSelective" resultType="java.lang.Integer">
+        select
+        count(1)
+        from t_spec_property tsp
+        <trim prefix="where" prefixOverrides="and">
+            <if test="propName != null and propName != ''">
+                tsp.prop_name like concat('%',#{propName},'%')
+            </if>
+            <if test="stat != null">
+              and tsp.stat = #{stat}
+            </if>
+        </trim>
+    </select>
+    
+    <select id="selectSpecPropertiesPageBySpecId" resultType="com.trenska.longwang.entity.goods.SpecProperty">
+        select <include refid="Base_Column_List"/>
+        from t_spec_property tsp
+        where tsp.spec_id = #{specId}
+        <if test="stat != null">
+            and tsp.stat = #{stat}
+        </if>
+    </select>
+</mapper>

@@ -1,0 +1,34 @@
+server:
+  port: 8888
+#  servlet:
+#    context-path: /xx_admin
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/longwang?useUnicode=true&characterEncoding=UTF-8&userSSL=false&tinyIntlisBit=true&serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL
+    username: root
+    password: Longwang_2019@Admin
+  redis:
+    host: localhost
+    password: xxlw
+    port: 6379
+    ##redis统一timeout 缓存有效期, 毫秒 600000 ====> 10分钟
+    timeout: 600000
+    ## token的失效时间，毫秒, 3600000 ====> 一个小时
+    token-timeout: 2000000000
+template:
+  path: e:/tpl
+#logging:
+  #  config: classpath:log4j2.xml
+mybatis-plus:
+  mapper-locations: classpath:sqlmap/**/*Mapper.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: true
+    global-config:
+      db-config:
+        logic-delete-value: 1  #配置逻辑删除字段为1是删除
+        logic-not-delete-value: 0 #配置逻辑删除字段为0是未删除
+logging:
+  level:
+    com.trenska.longwang: info

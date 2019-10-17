@@ -1,0 +1,411 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.trenska.longwang.dao.stock.StockDetailMapper">
+    <!-- 简单库存详情查询映射结果 -->
+    <resultMap id="SimpleStockDetailResultMap" type="com.trenska.longwang.entity.stock.StockDetail">
+        <result column="goods_id" property="goodsId"/>
+        <result column="history" property="history"/>
+        <result column="stock_time" property="stockTime"/>
+        <result column="multi" property="multi"/>
+        <result column="unit_id" property="unitId"/>
+        <result column="emp_id" property="empId"/>
+        <result column="num" property="num"/>
+        <result column="stat" property="stat"/>
+        <result column="stock_price" property="stockPrice"/>
+        <result column="detail_remarks" property="detailRemarks"/>
+        <association property="unitName" column="unit_id" fetchType="eager"
+                     select="com.trenska.longwang.dao.goods.UnitMapper.selectUnitNameById" autoMapping="true"/>
+        <association property="goods" column="goods_id" fetchType="eager"
+                     select="com.trenska.longwang.dao.goods.GoodsMapper.selectGoodsSimpleInfo" autoMapping="true"/>
+    </resultMap>
+
+    <select id="selectStockDetailPage" resultMap="SimpleStockDetailResultMap">
+        select tsd.detail_id,tsd.goods_id,tsd.made_date,tsd.stock_time,tsd.num,tsd.unit_id,tsd.emp_id,tsd.oper_type,tsd.history,tsd.stock_price,tsd.multi,tsd.detail_remarks,tsd.stat
+        from t_stock_detail tsd
+        <trim prefix="where" prefixOverrides="and">
+            <if test="stockNo != null and stockNo != ''">
+                and tsd.stock_no = #{stockNo}
+            </if>
+            <if test="operType != null and operType!=''">
+                and tsd.oper_type = #{operType}
+            </if>
+            <if test="stockType != null and stockType!=''">
+                and substring(tsd.stock_type,1,3) = #{stockType}
+            </if>
+            <if test="stockTime != null and stockTime !=''">
+                and tsd.stock_time = #{stockTime}
+            </if>
+            <if test="stat != null">
+                and tsd.stat = #{stat}
+            </if>
+        </trim>
+    </select>
+
+    <select id="selectStockDetailCount" resultType="java.lang.Integer">
+        select count(1)
+        from t_stock_detail tsd
+        <trim prefix="where" prefixOverrides="and">
+            <if test="stockNo != null and stockNo != ''">
+                and tsd.stock_no = #{stockNo}
+            </if>
+            <if test="operType != null and operType!=''">
+                and tsd.oper_type = #{operType}
+            </if>
+            <if test="stockType != null and stockType!=''">
+                and substring(tsd.stock_type,1,3) = #{stockType}
+            </if>
+            <if test="stockTime != null and stockTime !=''">
+                and tsd.stock_time = #{stockTime}
+            </if>
+            <if test="stat != null">
+                and tsd.stat = #{stat}
+            </if>
+        </trim>
+    </select>
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.trenska.longwang.entity.stock.StockDetail">
+        <id column="detail_id" property="detailId"/>
+        <result column="stock_no" property="stockNo"/>
+        <result column="busi_no" property="busiNo"/>
+        <result column="goods_id" property="goodsId"/>
+        <result column="stock_type" property="stockType"/>
+        <result column="oper_type" property="operType"/>
+        <result column="stock_time" property="stockTime"/>
+        <result column="emp_id" property="empId"/>
+        <result column="num" property="num"/>
+        <result column="multi" property="multi"/>
+        <result column="history" property="history"/>
+        <result column="stock" property="stock"/>
+        <result column="unit_id" property="unitId"/>
+        <result column="made_date" property="madeDate"/>
+        <result column="stock_price" property="stockPrice"/>
+        <result column="sales_price" property="salesPrice"/>
+        <result column="detail_remarks" property="detailRemarks"/>
+        <result column="stat" property="stat"/>
+        <result column="deleted" property="deleted"/>
+        <association property="unitName" column="unit_id"
+                     select="com.trenska.longwang.dao.goods.UnitMapper.selectUnitNameById" autoMapping="true"
+                     fetchType="eager"/>
+        <association property="goods" column="goods_id"
+                     select="com.trenska.longwang.dao.goods.GoodsMapper.selectGoodsSimpleInfo" autoMapping="true"
+                     fetchType="eager"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        tsd.detail_id,tsd.stock_no,tsd.goods_id,tsd.busi_no,tsd.emp_id,tsd.stock_type,tsd.oper_type,tsd.stock_time,tsd.num,tsd.multi,tsd.history,tsd.stock,tsd.unit_id,tsd.made_date,tsd.stock_price,tsd.sales_price,tsd.stat,tsd.detail_remarks,tsd.deleted
+    </sql>
+
+    <select id="selectStockOverBrkSelective" resultType="map">
+        select tsd.stock_no as stockNo,tsd.stock_time as stockTime,se.emp_name as empName,tg.brand_name as
+        brandName,tu.unit_name as unitName,(tsd.num*tsd.stock_price) as total,ts.stat as stat
+        from t_goods tg,t_stock ts,t_stock_detail tsd,sys_emp se,t_unit tu
+        where tg.goods_id = tsd.goods_id
+        and tsd.stock_no = ts.stock_no
+        and se.emp_id = ts.emp_id
+        and tu.unit_id = tsd.unit_id
+        and ts.oper_type = tsd.oper_type
+        and ts.oper_type = #{operType}
+        <trim prefix="and" prefixOverrides="and">
+            <if test="beginTime != null and endTime != null">
+                and tsd.stock_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="stockNo != null and stockNo != ''">
+                and tsd.stock_no like concat( '%',#{stockNo},'%')
+            </if>
+            <if test="stat != null">
+                and ts.stat = #{stat}
+            </if>
+        </trim>
+    </select>
+
+    <select id="selectStockOverBrkCountSelective" resultType="java.lang.Integer">
+        select count(1)
+        from t_goods tg,t_stock ts,t_stock_detail tsd,sys_emp se,t_unit tu
+        where tg.goods_id = tsd.goods_id
+        and tsd.stock_no = ts.stock_no
+        and se.emp_id = ts.emp_id
+        and tu.unit_id = tsd.unit_id
+        and ts.oper_type = tsd.oper_type
+        and ts.oper_type = #{operType}
+        <trim prefix="and" prefixOverrides="and">
+            <if test="beginTime != null and endTime != null">
+                and tsd.stock_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="stockNo != null and stockNo != ''">
+                and tsd.stock_no like concat( '%',#{stockNo},'%')
+            </if>
+            <if test="stat != null">
+                and ts.stat = #{stat}
+            </if>
+        </trim>
+    </select>
+
+    <select id="selectStockDetailCountSelective" resultType="java.lang.Integer">
+        select count(1)
+        from t_stock_detail tsd
+        where tsd.stat = 1
+        <trim prefix="and" prefixOverrides="and">
+            <if test="stockNo != null and stockNo != ''">
+                and tsd.stock_no = #{stockNo}
+            </if>
+        </trim>
+    </select>
+
+    <!--查询商品的各个批次的库存量-->
+    <select id="selectGoodsMadeDateByGoodsId" resultType="com.trenska.longwang.entity.indent.StockMadedate">
+        select tgs.num as num,tgs.made_date as madeDate,tgs.stock_price as stockPrice
+        from t_goods_stock as tgs
+        where tgs.goods_id = #{goodsId}
+
+        <trim prefixOverrides="and" prefix="and">
+            <if test="all != true">
+                and tgs.num > 0
+            </if>
+        </trim>
+        order by tgs.made_date
+    </select>
+
+    <select id="selectGoodsMadeDateCount" resultType="java.lang.Integer">
+        select count(1)
+        from t_goods_stock as tgs
+        where tgs.goods_id = #{goodsId}
+
+        <trim prefixOverrides="and" prefix="and">
+            <if test="all != true">
+                and tgs.num > 0
+            </if>
+        </trim>
+        order by tgs.made_date
+    </select>
+
+    <!--查询产品的出库/入库详情,如果max不为null表示要找出库存量小于max的库存明细-->
+    <select id="selectGoodsMadeDateStockInfo" resultType="com.trenska.longwang.entity.stock.StockDetail">
+        select
+        <include refid="Base_Column_List"/>
+        from t_stock_detail tsd,t_goods_stock tgs
+        where tgs.goods_id = tsd.goods_id
+        and tsd.stat = 1
+        <if test="stockType != null and stockType != ''">
+            and tsd.stock_type = #{stockType}
+        </if>
+        and tsd.goods_id = #{goodsId}
+        and DATEDIFF(DATE(SUBSTR(tgs.made_date FROM 1 FOR 10)),DATE(SUBSTR(#{madeDate} FROM 1 FOR 10)))=0
+        <if test="max !=null">
+            and  #{max} > tgs.num
+        </if>
+        order by tgs.num,tsd.stock_time
+    </select>
+
+    <select id="selectGoodsMadeDateStockCount" resultType="java.lang.Integer">
+        select count(1)
+        from t_stock_detail tsd,t_goods_stock tgs
+        where tgs.goods_id = tsd.goods_id
+        and tsd.stat = 1
+        <if test="stockType != null and stockType != ''">
+            and tsd.stock_type = #{stockType}
+        </if>
+        and tsd.goods_id = #{goodsId}
+        and DATEDIFF(DATE(SUBSTR(tgs.made_date FROM 1 FOR 10)),DATE(SUBSTR(#{madeDate} FROM 1 FOR 10)))=0
+        <if test="max !=null">
+            and  #{max} > tgs.num
+        </if>
+    </select>
+
+    <!--<select id="selectStockWarningPageSelective" resultMap="StockWarningResultMap">
+        select tg.barcode,tg.goods_no,tg.goods_name,tg.goods_id,tg.main_unit_id,tgs.made_date,tg.expir expir,
+               (tg.expir - DATEDIFF(DATE(NOW()),DATE(SUBSTR(tgs.made_date FROM 1 FOR 10)))) as left_days,sum(tgs.num) as left_stock
+        from t_goods tg,t_goods_stock tgs
+        where tg.goods_id = tgs.goods_id
+        <if test="combine != null and combine !=''">
+            and instr(tg.combine,#{combine})
+        </if>
+        <if test="label != null and label != ''">
+            <choose>
+                <when test="label=='新货'">
+                    and DATEDIFF(DATE(NOW()),DATE(SUBSTR(tgs.made_date FROM 1 FOR 10))) <![CDATA[ < ]]> tg.expir*1/12
+                </when>
+                <when test="label=='滞销风险商品'">
+                    and DATEDIFF(DATE(NOW()),DATE(SUBSTR(tgs.made_date FROM 1 FOR 10))) <![CDATA[ > ]]> tg.expir*1/4
+                    and DATEDIFF(DATE(NOW()),DATE(SUBSTR(tgs.made_date FROM 1 FOR 10))) <![CDATA[ <= ]]> tg.expir*1/2
+                </when>
+                <when test="label=='滞销商品'">
+                    and DATEDIFF(DATE(NOW()),DATE(SUBSTR(tgs.made_date FROM 1 FOR 10))) <![CDATA[ > ]]> tg.expir*1/2
+                    and DATEDIFF(DATE(NOW()),DATE(SUBSTR(tgs.made_date FROM 1 FOR 10))) <![CDATA[ <= ]]> tg.expir*5/6
+                </when>
+                <when test="label=='临期商品'">
+                    and DATEDIFF(DATE(NOW()),DATE(SUBSTR(tgs.made_date FROM 1 FOR 10))) <![CDATA[ > ]]> tg.expir*5/6
+                    and DATEDIFF(DATE(NOW()),DATE(SUBSTR(tgs.made_date FROM 1 FOR 10))) <![CDATA[ <= ]]> tg.expir
+                </when>
+                <when test="label=='过期商品'">
+                    and DATEDIFF(DATE(NOW()),DATE(SUBSTR(tgs.made_date FROM 1 FOR 10))) <![CDATA[ > ]]> tg.expir
+                </when>
+            </choose>
+          </if>
+        group by tgs.made_date,tg.goods_id
+        order by left_days,tg.goods_no
+    </select>-->
+
+    <!--<select id="selectStockWarningPageSelective" resultMap="StockWarningResultMap">
+        select tg.barcode,tg.goods_no,tg.goods_name,tg.goods_id,tg.main_unit_id,tgs.made_date,tg.expir expir,
+        (tg.expir - DATEDIFF(DATE(NOW()),DATE(SUBSTR(tgs.made_date FROM 1 FOR 10)))) as left_days,
+        (DATEDIFF(DATE(NOW()),DATE(SUBSTR(tgs.made_date FROM 1 FOR 10)))) as passed_days,sum(tgs.num) as left_stock
+        from t_goods tg,t_goods_stock tgs
+        where tg.goods_id = tgs.goods_id
+        <if test="combine != null and combine !=''">
+            and instr(tg.combine,#{combine})
+        </if>
+        <if test="label != null and label != ''">
+            <choose>
+                <when test="label=='新货'">
+                    and DATEDIFF(DATE(NOW()),DATE(SUBSTR(tgs.made_date FROM 1 FOR 10))) <![CDATA[ < ]]> 60
+                </when>
+                <when test="label=='滞销风险商品'">
+                    and DATEDIFF(DATE(NOW()),DATE(SUBSTR(tgs.made_date FROM 1 FOR 10))) <![CDATA[ >= ]]> 60
+                    and DATEDIFF(DATE(NOW()),DATE(SUBSTR(tgs.made_date FROM 1 FOR 10))) <![CDATA[ < ]]> 90
+                </when>
+                <when test="label=='滞销商品'">
+                    and DATEDIFF(DATE(NOW()),DATE(SUBSTR(tgs.made_date FROM 1 FOR 10))) <![CDATA[ >= ]]> 90
+                    and DATEDIFF(DATE(NOW()),DATE(SUBSTR(tgs.made_date FROM 1 FOR 10))) <![CDATA[ < ]]> 300
+                </when>
+                <when test="label=='临期商品'">
+                    and DATEDIFF(DATE(NOW()),DATE(SUBSTR(tgs.made_date FROM 1 FOR 10))) <![CDATA[ >= ]]> 300
+                    and DATEDIFF(DATE(NOW()),DATE(SUBSTR(tgs.made_date FROM 1 FOR 10))) <![CDATA[ <= ]]> 365
+                </when>
+                <when test="label=='过期商品'">
+                    and DATEDIFF(DATE(NOW()),DATE(SUBSTR(tgs.made_date FROM 1 FOR 10))) <![CDATA[ > ]]> 365
+                </when>
+            </choose>
+        </if>
+        group by tgs.made_date,tg.goods_id
+        order by left_days,tg.goods_no
+    </select>-->
+
+    <select id="selectStockWarningPageSelective" resultMap="StockWarningResultMap">
+        select tg.barcode,tg.goods_no,tg.goods_name,tg.goods_id,tg.main_unit_id,tgs.made_date,tg.expir expir,
+        (tg.expir - DATEDIFF(DATE(NOW()),DATE(SUBSTR(tgs.made_date FROM 1 FOR 10)))) as left_days,
+        TIMESTAMPDIFF(MONTH,DATE(SUBSTR(tgs.made_date FROM 1 FOR 10)),DATE(NOW())) as passed_months,
+        (DATEDIFF(DATE(NOW()),DATE(SUBSTR(tgs.made_date FROM 1 FOR 10)))) as passed_days,sum(tgs.num) as left_stock
+        from t_goods tg,t_goods_stock tgs
+        where tg.goods_id = tgs.goods_id
+        <if test="combine != null and combine !=''">
+            and instr(tg.combine,#{combine})
+        </if>
+        <if test="label != null and label != ''">
+            <choose>
+                <when test="label=='新货'">
+                    and TIMESTAMPDIFF(MONTH,DATE(SUBSTR(tgs.made_date FROM 1 FOR 10)),DATE(NOW())) <![CDATA[ < ]]> 2
+                </when>
+                <when test="label=='滞销风险商品'">
+                    and TIMESTAMPDIFF(MONTH,DATE(SUBSTR(tgs.made_date FROM 1 FOR 10)),DATE(NOW())) <![CDATA[ >= ]]> 2
+                    and TIMESTAMPDIFF(MONTH,DATE(SUBSTR(tgs.made_date FROM 1 FOR 10)),DATE(NOW())) <![CDATA[ <= ]]> 3
+                </when>
+                <when test="label=='滞销商品'">
+                    and TIMESTAMPDIFF(MONTH,DATE(SUBSTR(tgs.made_date FROM 1 FOR 10)),DATE(NOW())) <![CDATA[ > ]]> 3
+                    and TIMESTAMPDIFF(MONTH,DATE(SUBSTR(tgs.made_date FROM 1 FOR 10)),DATE(NOW())) <![CDATA[ <= ]]> 10
+                </when>
+                <when test="label=='临期商品'">
+                    and TIMESTAMPDIFF(MONTH,DATE(SUBSTR(tgs.made_date FROM 1 FOR 10)),DATE(NOW())) <![CDATA[ > ]]> 10
+                    and TIMESTAMPDIFF(MONTH,DATE(SUBSTR(tgs.made_date FROM 1 FOR 10)),DATE(NOW())) <![CDATA[ <= ]]> 12
+                </when>
+                <when test="label=='过期商品'">
+                    and TIMESTAMPDIFF(MONTH,DATE(SUBSTR(tgs.made_date FROM 1 FOR 10)),DATE(NOW())) <![CDATA[ > ]]> 12
+                </when>
+            </choose>
+        </if>
+        group by tgs.made_date,tg.goods_id
+        order by left_days,tg.goods_no
+    </select>
+
+    <resultMap id="StockWarningResultMap" type="com.trenska.longwang.model.stock.StockWarningModel">
+        <result property="stock" column="left_stock"/>
+        <result property="barcode" column="barcode"/>
+        <result property="goodsNo" column="goods_no"/>
+        <result property="goodsName" column="goods_name"/>
+        <result property="madeDate" column="made_date"/>
+        <result property="leftDays" column="left_days"/>
+        <result property="passedDays" column="passed_days"/>
+        <result property="passedMonths" column="passed_months"/>
+        <association property="unitName" column="main_unit_id"
+                     select="com.trenska.longwang.dao.goods.UnitMapper.selectUnitNameById"/>
+        <association property="goodsSpecs" column="goods_id"
+                     select="com.trenska.longwang.dao.goods.GoodsSpecMapper.selectGoodsSpecByGoodsId"/>
+    </resultMap>
+    <select id="selectStockWarningCount" resultType="java.lang.Integer">
+        select count(1)
+        from t_goods tg,t_goods_stock tgs
+        where tg.goods_id = tgs.goods_id
+        <if test="combine != null and combine !=''">
+            and instr(tg.combine,#{combine})
+        </if>
+        <if test="label != null and label != ''">
+            <choose>
+                <when test="label=='新货'">
+                    and TIMESTAMPDIFF(MONTH,DATE(SUBSTR(tgs.made_date FROM 1 FOR 10)),DATE(NOW())) <![CDATA[ < ]]> 2
+                </when>
+                <when test="label=='滞销风险商品'">
+                    and TIMESTAMPDIFF(MONTH,DATE(SUBSTR(tgs.made_date FROM 1 FOR 10)),DATE(NOW())) <![CDATA[ >= ]]> 2
+                    and TIMESTAMPDIFF(MONTH,DATE(SUBSTR(tgs.made_date FROM 1 FOR 10)),DATE(NOW())) <![CDATA[ <= ]]> 3
+                </when>
+                <when test="label=='滞销商品'">
+                    and TIMESTAMPDIFF(MONTH,DATE(SUBSTR(tgs.made_date FROM 1 FOR 10)),DATE(NOW())) <![CDATA[ > ]]> 3
+                    and TIMESTAMPDIFF(MONTH,DATE(SUBSTR(tgs.made_date FROM 1 FOR 10)),DATE(NOW())) <![CDATA[ <= ]]> 10
+                </when>
+                <when test="label=='临期商品'">
+                    and TIMESTAMPDIFF(MONTH,DATE(SUBSTR(tgs.made_date FROM 1 FOR 10)),DATE(NOW())) <![CDATA[ > ]]> 10
+                    and TIMESTAMPDIFF(MONTH,DATE(SUBSTR(tgs.made_date FROM 1 FOR 10)),DATE(NOW())) <![CDATA[ <= ]]> 12
+                </when>
+                <when test="label=='过期商品'">
+                    and TIMESTAMPDIFF(MONTH,DATE(SUBSTR(tgs.made_date FROM 1 FOR 10)),DATE(NOW())) <![CDATA[ > ]]> 12
+                </when>
+            </choose>
+        </if>
+        group by tgs.made_date,tg.goods_id
+    </select>
+
+    <select id="selectStockoutDetailInfo" resultType="com.trenska.longwang.entity.indent.StockMadedate">
+        select tgs.made_date as madeDate, tgs.num as num,tgs.goods_id as goodsId,tgs.stock_price as stockPrice
+        from t_goods_stock tgs,t_stock_detail tsd
+        where tgs.goods_id = #{goodsId}
+        and tsd.busi_no = #{busiNo}
+        and tsd.stat = 1
+        and tsd.goods_id = tgs.goods_id
+    </select>
+
+    <select id="selectByBusiNo" resultType="com.trenska.longwang.entity.stock.StockDetail">
+        select <include refid="Base_Column_List"/>
+        from t_stock_detail tsd
+        where stat = 1
+        and tsd.stock_type = '出库单'
+        and tsd.oper_type = '销售出库'
+        and tsd.busi_no = #{busiNo}
+    </select>
+
+    <select id="selectByStockNo" resultMap="BaseResultMap">
+        select <include refid="Base_Column_List"/>
+        from t_stock_detail tsd
+        where stat = 1
+        and tsd.stock_type = '出库单'
+        and tsd.oper_type = '销售出库'
+        and tsd.stock_no = #{stockNo}
+    </select>
+    <!-- 根据订单号获取商品的出库批次:按照批次进行分组 -->
+    <select id="getUniqueMadeDatesByIndentNo" resultType="java.lang.String">
+        select tsd.made_date
+        from t_stock_detail tsd
+        where tsd.stock_type = '出库单'
+        and tsd.busi_no = #{indentNo}
+        and tsd.goods_id = #{goodsId}
+        group by tsd.made_date
+    </select>
+    <select id="selectSingleGoodsStockoutDetails" resultType="com.trenska.longwang.model.report.SingleGoodsSalesIndentStockoutDetailModel">
+        select tsd.made_date as madeDate, tsd.num as stockoutNum
+        from t_stock_detail tsd
+        where tsd.goods_id = #{goodsId}
+        and tsd.busi_no = #{indentNo}
+        and tsd.stat = 1
+        and tsd.stock_type='出库单'
+    </select>
+
+</mapper>

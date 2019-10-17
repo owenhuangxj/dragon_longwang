@@ -1,0 +1,18 @@
+server:
+  port: 8081
+#  servlet:
+#    context-path: /xx_admin
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/longwang?useUnicode=true&characterEncoding=UTF-8&userSSL=false&tinyIntlisBit=true&serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL
+    username: root
+    password: root
+  redis:
+    host: localhost
+    password: xxlw
+    port: 6379
+    ##redis统一timeout 缓存有效期，毫秒
+    timeout: 3600000
+    ## token的失效时间，毫秒
+    token-timeout: 3600000

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.trenska.longwang.dao.goods.SpecMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.trenska.longwang.entity.goods.Spec">
+        <id column="spec_id" property="specId" />
+        <result column="spec_name" property="specName" />
+        <result column="stat" property="stat" />
+        <result column="deletable" property="deletable" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ts.spec_id, ts.spec_name, ts.stat, ts.deletable
+    </sql>
+    <!-- 将没有被使用的规格设置为可以删除 t_spec表中spec_id被t_goods_spec所持有时 就不可以被删除 -->
+    <update id="setUndeletable">
+        update t_spec ts
+        set ts.deletable = 0
+        where ts.spec_id in
+              (select tgs.spec_id from t_goods_spec tgs group by tgs.spec_id)
+    </update>
+
+    <!-- 将没有被使用的规格设置为可以删除 没有被t_goods_spec所持有t_spec表中的spec_id 就是可以被删除的-->
+    <update id="setDeletable">
+        update t_spec ts
+        set ts.deletable = 1
+        where ts.spec_id
+        not in
+        (
+          select tgs.spec_id
+          from t_goods_spec tgs
+          group by tgs.spec_id
+        )
+    </update>
+    <delete id="deleteSpecById">
+        delete from t_spec where spec_id = #{specId}
+    </delete>
+
+    <select id="selectSpecPageSelective" resultType="com.trenska.longwang.entity.goods.Spec">
+        select
+        <include refid="Base_Column_List"/>
+        from t_spec ts
+        <trim prefix="where" prefixOverrides="and">
+            <if test="specName != null and specName != ''">
+                ts.spec_name like concat('%',#{specName},'%')
+             </if>
+            <if test="stat != null">
+              and ts.stat = #{stat}
+            </if>
+        </trim>
+    </select>
+
+    <select id="selectCountSelective" resultType="java.lang.Integer">
+        select
+        count(1)
+        from t_spec ts
+        <trim prefix="where" prefixOverrides="and">
+            <if test="specName != null and specName != ''">
+                ts.spec_name like concat('%',#{specName},'%')
+             </if>
+            <if test="stat != null">
+              and ts.stat = #{stat}
+            </if>
+        </trim>
+    </select>
+    <select id="selectSpcePageSelectiveCount" resultType="java.lang.Integer">
+        select count(1)
+        from t_spec ts
+        <trim prefix="where" prefixOverrides="and">
+            <if test="specName != null and specName != ''">
+                ts.spec_name like concat('%',#{specName},'%')
+            </if>
+            <if test="stat != null">
+                and ts.stat = #{stat}
+            </if>
+        </trim>
+    </select>
+
+</mapper>

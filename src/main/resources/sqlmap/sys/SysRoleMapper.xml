@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.trenska.longwang.dao.sys.SysRoleMapper">
+
+    <select id="selectRolesByEmpId" resultType="com.trenska.longwang.entity.sys.SysRole">
+        select <include refid="Base_Column_List"/>
+        from sys_emp as se,sys_role as sr,sys_emp_role as ser
+        where se.emp_id = #{empId}
+        and se.emp_id=ser.emp_id
+        and sr.rid=ser.rid
+    </select>
+
+    <select id="selectSysRolesCountSelective" resultType="java.lang.Integer">
+        select count(1) from sys_role sr
+        <trim prefix="where" prefixOverrides="and">
+            <if test="rname != null and rname != ''">
+              and sr.rname like concat('%',#{rname},'%')
+            </if>
+        </trim>
+    </select>
+
+    <select id="selectSysRolesSelective" resultType="com.trenska.longwang.entity.sys.SysRole">
+        select <include refid="Base_Column_List"/>
+        from sys_role sr
+        <trim prefix="where" prefixOverrides="and">
+            <if test="rname != null and rname != ''">
+                and sr.rname like concat('%',#{rname},'%')
+            </if>
+        </trim>
+    </select>
+
+    <sql id="Base_Column_List">
+        sr.rid,sr.rname,sr.rdesc,sr.role_created,sr.role_updated
+    </sql>
+</mapper>

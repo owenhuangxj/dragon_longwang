@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.trenska.longwang.dao.customer.AreaGrpMapper">
+    <select id="selectAreaGrpPage" resultType="com.trenska.longwang.entity.customer.AreaGrp">
+        select
+        <include refid="Base_Column_List"/>
+        from t_area_grp tag
+    </select>
+    <select id="selectSubAreaGrpSelective" resultType="com.trenska.longwang.entity.customer.AreaGrp">
+        select
+        <include refid="Base_Column_List"/>
+        from t_area_grp tag
+        where pid = #{areaGrpId}
+    </select>
+    <select id="selectThirdClassAreaGrpPage" resultType="com.trenska.longwang.entity.customer.AreaGrp">
+        select
+        <include refid="Base_Column_List"/>
+        from t_area_grp
+        where area_grp_deep = 3
+
+    </select>
+
+    <select id="selectFirstLevelAreaGrpPage" resultType="com.trenska.longwang.entity.customer.AreaGrp">
+        select
+        <include refid="Base_Column_List"/>
+        from t_area_grp tag
+        where pid = #{pid}
+    </select>
+
+    <!-- 查询区域分组下指定客户指定商品所对应的活动信息  -->
+    <!-- and tc.area_grp_id = taag.area_grp_id -->
+    <select id="selectCustAreaGrpActiveInfo" resultType="com.trenska.longwang.entity.goods.Active">
+        select ta.active_id, ta.active_name, ta.begin_time, ta.end_time, ta.active_type, ta.stat, ta.is_all_join, ta.min_odr_num, ta.gift_num, ta.discount, ta.deleted
+        from t_active ta,
+             t_customer tc,
+             t_active_area_grp taag,
+             t_active_goods tag,
+             t_goods tg
+        where  ta.stat = 1
+          and ta.is_all_join = 0
+          and tg.goods_id = #{goodsId}
+          and DATE_FORMAT(NOW(),'%Y-%m-%d %H:%i:%s') between ta.begin_time and ta.end_time
+          and tg.goods_id = tag.goods_id
+          and tag.active_id = ta.active_id
+          and taag.active_id = ta.active_id
+          and taag.area_grp_id in
+              (
+                  SELECT T2.area_grp_id
+                  FROM (
+                           SELECT
+                               @r                                                         AS _id,
+                               (SELECT @r := pid FROM t_area_grp WHERE area_grp_id = _id) AS pid,
+                               @l := @l + 1                                               AS lvl
+                           FROM
+                               (SELECT @r := (SELECT TC.area_grp_id FROM t_customer TC WHERE TC.cust_id = #{custId}),
+                                       @l := 0) vars,
+                               t_area_grp h
+                           WHERE @r <![CDATA[<>]]> 0) T1
+                           JOIN t_area_grp T2
+                                ON T1._id = T2.area_grp_id
+                  ORDER BY T1.lvl DESC
+              )
+        group by ta.active_id
+        union
+          all
+        select ta.active_id, ta.active_name, ta.begin_time, ta.end_time, ta.active_type, ta.stat, ta.is_all_join, ta.min_odr_num, ta.gift_num, ta.discount, ta.deleted
+        from t_active ta
+        where  ta.stat = 1
+        and ta.is_all_join = 1
+        and DATE_FORMAT(NOW(),'%Y-%m-%d %H:%i:%s') between ta.begin_time and ta.end_time
+    </select>
+
+    <!--查询节点的父级节点（包括自己）-->
+    <select id="selectParentAreaGrpIds" resultType="java.lang.Integer">
+        SELECT T2.area_grp_id
+        FROM (
+                 SELECT
+                     @r                                                         AS _id,
+                     (SELECT @r := pid FROM t_area_grp WHERE area_grp_id = _id) AS pid,
+                     @l := @l + 1                                               AS lvl
+                 FROM
+                     (SELECT @r := #{subAreaGrpId},@l := 0) vars,
+                     t_area_grp h
+                 WHERE @r <![CDATA[<>]]> 0) T1
+                 JOIN t_area_grp T2
+                      ON T1._id = T2.area_grp_id
+        ORDER BY T1.lvl DESC
+    </select>
+
+    <!-- 查询所有子节点（包括自己）的id getChildList是函数 -->
+    <select id="selectSubAreaGrpIds" resultType="java.lang.Integer">
+        select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{rootId}));
+    </select>
+    <!--获取empId所拥有的所有区域分组-->
+    <select id="selectAreaGrpsByEmpId" resultType="com.trenska.longwang.entity.customer.AreaGrp">
+        select <include refid="Base_Column_List"/>
+        from t_area_grp tag,t_emp_area_grp teag
+        where tag.area_grp_id = teag.area_grp_id
+        and teag.emp_id = #{empId}
+    </select>
+
+    <resultMap id="areaGrpResultMap" type="com.trenska.longwang.entity.customer.AreaGrp" autoMapping="true"/>
+    <sql id="Base_Column_List">
+        tag.area_grp_id,
+        tag.area_grp_name,
+        tag.pid,
+        tag.area_grp_deep
+    </sql>
+</mapper>

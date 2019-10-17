@@ -1,0 +1,36 @@
+server:
+  port: 9999
+#  servlet:
+#    context-path: /xx_admin
+spring:
+#    main:
+#      allow-bean-definition-overriding: true
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://rm-m5ehuh0rsc7p80mx3wo.mysql.rds.aliyuncs.com:3306/demo?useUnicode=true&characterEncoding=UTF-8&userSSL=false&tinyIntlisBit=true&serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL
+    username: longke
+    password: Longke123
+  redis:
+    host: localhost
+    password: xxlw
+    port: 6379
+    ##redis统一timeout 缓存有效期，毫秒
+    timeout: 360000000
+    ## token的失效时间，毫秒
+    token-timeout: 360000000
+template:
+  path: /tpl
+  #logging:
+  #  config: classpath:log4j2.xml
+mybatis-plus:
+  mapper-locations: classpath:sqlmap/**/*Mapper.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: true
+  global-config:
+    db-config:
+      logic-delete-value: 1  #配置逻辑删除字段为1是删除
+      logic-not-delete-value: 0 #配置逻辑删除字段为0是未删除
+logging:
+  level:
+    com.trenska: info

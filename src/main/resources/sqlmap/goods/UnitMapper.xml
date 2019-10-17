@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.trenska.longwang.dao.goods.UnitMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.trenska.longwang.entity.goods.Unit">
+        <id column="unit_id" property="unitId"/>
+        <result column="unit_name" property="unitName"/>
+        <result column="stat" property="stat"/>
+        <result column="deletable" property="deletable"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        tu.unit_id,
+        tu.unit_name,
+        tu.stat,
+        tu.deletable
+    </sql>
+    <!-- 将没有被使用的单位设置为可删除 -->
+    <update id="setDeletable">
+        update t_unit tu
+        set tu.deletable = 1
+        where tu.unit_id
+        not in
+        (
+          select tg.main_unit_id
+          from t_goods tg
+          where tg.deleted = 0
+          group by tg.main_unit_id
+          union all
+          select tg.sub_unit_id
+          from t_goods tg
+          where tg.deleted = 0
+          group by tg.sub_unit_id
+        )
+    </update>
+    <update id="updateUnitById">
+        update t_unit set deleted = 0 where unit_id = #{unitId}
+    </update>
+
+    <select id="selectUnitPageSelective" resultType="com.trenska.longwang.entity.goods.Unit">
+        select
+        <include refid="Base_Column_List"/>
+        from t_unit tu
+        where deleted = 0
+        <trim prefix="and" prefixOverrides="and">
+            <if test="unitName != null and unitName != ''"> tu.unit_name like concat('%',#{unitName},'%')</if>
+            <if test="stat != null">and tu.stat = #{stat}</if>
+        </trim>
+    </select>
+
+    <select id="selectCountSelective" resultType="java.lang.Integer">
+        select
+        count(1)
+        from t_unit tu
+        where deleted = 0
+        <trim prefix="and" prefixOverrides="and">
+            <if test="unitName != null and unitName != ''"> tu.unit_name like concat('%',#{unitName},'%')</if>
+            <if test="stat != null">and tu.stat = #{stat}</if>
+        </trim>
+    </select>
+    <select id="selectUnitByName" resultMap="BaseResultMap">
+        select <include refid="Base_Column_List"/>
+        from t_unit
+        where unit_name = #{unitName}
+    </select>
+</mapper>

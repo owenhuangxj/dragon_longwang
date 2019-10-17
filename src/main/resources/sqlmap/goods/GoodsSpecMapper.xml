@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.trenska.longwang.dao.goods.GoodsSpecMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.trenska.longwang.entity.goods.GoodsSpec">
+        <id column="gds_spec_id" property="gdsSpecId" />
+        <result column="goods_id" property="goodsId" />
+        <result column="spec_id" property="specId" />
+        <result column="spec_prop_id" property="specPropId" />
+        <result column="spec_name" property="specName" />
+        <result column="prop_name" property="propName" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        tgs.gds_spec_id, tgs.goods_id, tgs.spec_id, tgs.spec_prop_id, tgs.spec_name, tgs.prop_name
+    </sql>
+
+    <select id="selectGoodsSpecByGoodsId" resultType="com.trenska.longwang.entity.goods.GoodsSpec">
+        select <include refid="Base_Column_List"/>
+        from t_goods_spec tgs
+        where tgs.goods_id = #{goodsId}
+    </select>
+    <select id="selectGoodsSpecByGoodsIdAndPropName" resultType="com.trenska.longwang.entity.goods.GoodsSpec">
+        select <include refid="Base_Column_List"/>
+        from t_goods_spec tgs
+        where tgs.goods_id = #{goodsId}
+        and tgs.prop_name like concat('%',#{propName},'%');
+    </select>
+
+</mapper>

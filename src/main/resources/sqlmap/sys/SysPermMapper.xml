@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.trenska.longwang.dao.sys.SysPermMapper">
+    <!-- 获取账号权限 -->
+    <select id="selectPermsByEmpId" resultType="com.trenska.longwang.entity.sys.SysPerm">
+        select <include refid="Base_Column_List"/>
+        from sys_perm sp,sys_emp_role ser,sys_role_perm srp
+        where ser.emp_id=#{empId}
+        and srp.rid = ser.rid
+        and sp.pval=srp.pval
+    </select>
+    <!-- 获取角色的权限 -->
+    <select id="selectSubPermsByPval" resultType="com.trenska.longwang.model.sys.PermModel">
+        select sp.pname as pname , sp.pval as pval , sp.parent as parent , sp.is_leaf as isLeaf
+        from sys_perm sp
+        where sp.parent = #{pval}
+    </select>
+
+    <select id="selectSubPermsByRidAndPval" resultType="com.trenska.longwang.model.sys.PermModel">
+        select sp.pname as pname , sp.pval as pval , sp.parent as parent , sp.is_leaf as isLeaf
+        from sys_perm sp , sys_role_perm srp
+        where sp.parent = #{pval}
+        and srp.rid = #{rid}
+        and srp.pval = sp.parent
+    </select>
+
+    <select id="selectSubPermsByRid" resultType="com.trenska.longwang.model.sys.PermModel">
+        select sp.pname as pname , sp.ptype as ptype , sp.pval as pval , sp.parent as parent , sp.is_leaf as isLeaf , 1 as checked
+        from sys_perm sp , sys_role_perm srp
+        where srp.rid = #{rid}
+        and srp.pval = sp.pval
+        group by pval
+    </select>
+
+    <sql id="Base_Column_List">
+        sp.pname,sp.pval,sp.parent,sp.is_leaf,sp.ptype,sp.perm_created,sp.perm_updated
+    </sql>
+</mapper>

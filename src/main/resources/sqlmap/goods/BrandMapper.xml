@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.trenska.longwang.dao.goods.BrandMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.trenska.longwang.entity.goods.Brand">
+        <id column="brand_id" property="brandId"/>
+        <result column="brand_name" property="brandName"/>
+        <result column="stat" property="stat"/>
+        <result column="deletable" property="deletable"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        tb.brand_id,
+        tb.brand_name,
+        tb.stat,
+        tb.deletable
+    </sql>
+    <!-- 将没有被使用的规格设置为可以删除 -->
+    <update id="setDeletable">
+        update t_brand tb
+        set tb.deletable = 1
+        where tb.brand_name
+        not in(
+            select tg.brand_name
+            from t_goods tg
+            where tg.deleted = 0
+            group by tg.brand_name
+          )
+    </update>
+
+    <update id="setUndeletable">
+        update t_brand tb
+        set tb.deletable = 0
+        where tb.brand_name = #{brandName}
+    </update>
+    <select id="selectBrandPage" resultType="com.trenska.longwang.entity.goods.Brand">
+        select
+        <include refid="Base_Column_List"/>
+        from t_brand tb
+
+    </select>
+    <select id="selectBrandPageByStat" resultType="com.trenska.longwang.entity.goods.Brand">
+        select
+        <include refid="Base_Column_List"/>
+        from t_brand tb
+        where tb.stat= #{stat}
+
+    </select>
+    <select id="selectBrandPageByName" resultType="com.trenska.longwang.entity.goods.Brand">
+        select
+        <include refid="Base_Column_List"/>
+        from t_brand tb
+        where tb.brand_name like concat('%',#{brandName},'%')
+    </select>
+    <select id="selectBrandPageSelective" resultType="com.trenska.longwang.entity.goods.Brand">
+        select
+        <include refid="Base_Column_List"/>
+        from t_brand tb
+        <trim prefix="where" prefixOverrides="and">
+            <if test="brandName != null and brandName != ''">
+                tb.brand_name like concat('%',#{brandName},'%')
+            </if>
+            <if test="stat != null">
+                and tb.stat = #{stat}
+            </if>
+        </trim>
+    </select>
+
+    <select id="selectCountSelective" resultType="java.lang.Integer">
+        select
+        count(1)
+        from t_brand tb
+        <trim prefix="where" prefixOverrides="and">
+            <if test="brandName != null and brandName != ''">
+                tb.brand_name like concat('%',#{brandName},'%')
+            </if>
+            <if test="stat != null">
+                and tb.stat = #{stat}
+            </if>
+        </trim>
+    </select>
+
+</mapper>

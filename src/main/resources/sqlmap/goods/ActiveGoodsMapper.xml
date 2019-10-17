@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.trenska.longwang.dao.goods.ActiveGoodsMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.trenska.longwang.entity.goods.ActiveGoods">
+        <id column="id" property="id" />
+        <result column="active_id" property="activeId" />
+        <result column="goods_id" property="goodsId" />
+        <result column="gift_id" property="giftId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        tag.id, tag.active_id, tag.goods_id, tag.gift_id
+    </sql>
+
+    <select id="selectActivesByGoodsId" resultType="com.trenska.longwang.entity.goods.ActiveGoods">
+        select tag.id, tag.active_id, tag.goods_id, tag.gift_id
+        from t_active_goods tag,t_active ta
+        where tag.goods_id = #{goodsId}
+        and ta.stat = 1
+        and tag.active_id = ta.active_id
+        and  DATE_FORMAT(now(),'%Y-%m-%d %H:%i:%s') between ta.begin_time and ta.end_time
+
+    </select>
+
+</mapper>

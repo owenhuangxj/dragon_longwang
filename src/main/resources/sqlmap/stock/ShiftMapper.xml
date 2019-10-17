@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.trenska.longwang.dao.stock.ShiftMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.trenska.longwang.entity.stock.Shift">
+        <id column="shift_id" property="shiftId" />
+        <result column="shift_name" property="shiftName" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        shift_id, shift_name
+    </sql>
+    <select id="selectShiftPage" resultType="com.trenska.longwang.entity.stock.Shift">
+        select <include refid="Base_Column_List"/>
+        from t_shift
+    </select>
+
+</mapper>

@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.trenska.longwang.dao.indent.IndentDetailMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.trenska.longwang.entity.indent.IndentDetail">
+        <id column="detail_id" property="detailId" />
+        <result column="indent_no" property="indentNo" />
+        <result column="goods_id" property="goodsId" />
+        <result column="active_id" property="activeId"/>
+        <result column="unit_id" property="unitId" />
+        <result column="is_gift" property="isGift"/>
+        <result column="multi" property="multi" />
+        <result column="price" property="price" />
+        <result column="made_date" property="madeDate"/>
+        <result column="num" property="num" />
+        <result column="emp_id" property="empId"/>
+        <result column="stockout" property="stockout"/>
+        <result column="amount" property="amount"/>
+        <result column="discount" property="discount" />
+        <result column="discount_amount" property="discountAmount"/>
+        <result column="deleted" property="deleted" />
+        <result column="remarks" property="remarks"/>
+        <association column="unit_ID" property="unitName" select="com.trenska.longwang.dao.goods.UnitMapper.selectUnitNameById"/>
+        <association column="goods_id" property="goods" select="com.trenska.longwang.dao.goods.GoodsMapper.selectGoodsByGoodsId"/>
+    <!--<collection column="detail_id" property="gifts" select="com.trenska.longwang.dao.indent.GiftMapper.selectGiftsInfoById"/>-->
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        tid.detail_id, tid.indent_no, tid.goods_id, tid.active_id, tid.unit_id,tid.is_gift, tid.multi, tid.price, tid.made_date,tid.num,tid.emp_id, tid.stockout,tid.amount, tid.discount, tid.discount_amount,tid.deleted,tid.remarks
+    </sql>
+    <delete id="actualDeleteIndentDetail">
+        delete from t_indent_detail
+        where indent_no = #{indentNo}
+    </delete>
+    <select id="selectByIndentNo" resultMap="BaseResultMap">
+        select <include refid="Base_Column_List"/>
+        from t_indent_detail tid
+        where tid.indent_no = #{indentNo}
+    </select>
+
+    <select id="selectSingleGoodsIndentDetail" resultMap="SingleGoodsSalesIndentDetailResultMap">
+        select tid.goods_id as goodsId,tid.indent_no as indentNo, DATE_FORMAT(ti.indent_time,'%Y/%c/%e %T') as indentTime,tid.num as num,tid.price as price,
+               tc.cust_name as custName,tid.discount as discount,tid.discount_amount as discountAmount,tid.amount as indentTotal,ifnull(tid.remarks,'') as remarks
+        from t_indent_detail tid, t_indent ti,t_customer tc ,t_goods tg
+        <if test="specPropId != null">
+            , t_goods_spec tgs
+        </if>
+        <if test="shipmanId != null">
+            , t_stock ts
+        </if>
+        where tg.goods_id=#{goodsId}
+        and tid.goods_id = tg.goods_id
+        and tc.cust_id = ti.cust_id
+        and ti.indent_no = tid.indent_no
+        and ti.stat in ('已出库','已完成')
+        <trim prefixOverrides="and" prefix="and">
+            <if test="(frtCatName != null and frtCatName != '') or (scdCatName != null and scdCatName != '')">
+                and tg.goods_id = tid.goods_id
+                <if test="frtCatName != null and frtCatName != ''">
+                    and tg.frt_cat_name = #{frtCatName}
+                </if>
+                <if test="scdCatName != null and scdCatName != ''">
+                    and tg.scd_cat_name = #{scdCatName}
+                </if>
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and tg.brand_name = #{brandName}
+            </if>
+            <if test="specPropId != null">
+                and tgs.spec_prop_id = #{specPropId}
+                and tgs.goods_id = tid.goods_id
+            </if>
+            <if test="discount != null">
+                and tid.discount = #{discount}
+            </if>
+            <if test="areaGrpId != null">
+                and ti.cust_id in (
+                    select tc.cust_id from t_customer tc
+                    where tc.area_grp_id in (
+                      select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                    )
+                )
+            </if>
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.indent_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="custId != null">
+                and ti.cust_id = #{custId}
+            </if>
+            <if test="salesmanId != null">
+                and ti.salesman_id = #{salesmanId}
+            </if>
+            <if test="shipmanId != null">
+                and ts.busi_no = ti.indent_no
+                and ts.shipman_id = #{shipmanId}
+            </if>
+            <if test="empId != null">
+                and ti.emp_id = #{empId}
+            </if>
+            <choose>
+                <when test="goodsScope != null and goodsScope == -1">
+                    and tid.is_gift = 1
+                </when>
+                <when test="goodsScope != null and goodsScope == 0">
+                    and tid.is_gift = 0
+                </when>
+                <otherwise>
+                </otherwise>
+            </choose>
+        </trim>
+        order by ti.indent_time,ti.indent_no
+    </select>
+
+    <resultMap id="SingleGoodsSalesIndentDetailResultMap" type="com.trenska.longwang.model.report.SingleGoodsSalesIndentDetailModel">
+        <result column="goodsId" property="goodsId"/>
+        <result column="indentNo" property="indentNo"/>
+        <result column="indentTime" property="indentTime"/>
+        <result column="custName" property="custName"/>
+        <result column="num" property="num"/>
+        <result column="price" property="price"/>
+        <result column="discount" property="discount"/>
+        <result column="salesAmnt" property="salesAmnt"/>
+        <result column="indentTotal" property="indentTotal"/>
+        <result column="remarks" property="remarks"/>
+        <collection column="{indentNo=indentNo,goodsId=goodsId}" ofType="map" javaType="java.util.Set" property="madeDates" select="com.trenska.longwang.dao.stock.StockDetailMapper.selectSingleGoodsStockoutDetails" />
+    </resultMap>
+
+    <select id="selectSingleGoodsIndentDetailCount" resultType="int">
+        select count(1)
+        from t_indent_detail tid, t_indent ti,t_customer tc
+        <if test="(frtCatName != null and frtCatName != '') or (scdCatName != null and scdCatName != '')">
+            ,t_goods tg
+        </if>
+        <if test="specPropId != null">
+            , t_goods_spec tgs
+        </if>
+        <if test="shipmanId != null">
+            , t_stock ts
+        </if>
+        where tid.goods_id=#{goodsId}
+        and tc.cust_id = ti.cust_id
+        and ti.indent_no = tid.indent_no
+        and ti.indent_type = '订货单'
+        and ti.stat in ('已出库','已完成')
+        <trim prefixOverrides="and" prefix="and">
+            <if test="(frtCatName != null and frtCatName != '') or (scdCatName != null and scdCatName != '')">
+                and tg.goods_id = tid.goods_id
+                <if test="frtCatName != null and frtCatName != ''">
+                    and tg.frt_cat_name = #{frtCatName}
+                </if>
+                <if test="scdCatName != null and scdCatName != ''">
+                    and tg.scd_cat_name = #{scdCatName}
+                </if>
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and tg.brand_name = #{brandName}
+            </if>
+            <if test="specPropId != null">
+                and tgs.spec_prop_id = #{specPropId}
+                and tgs.goods_id = tid.goods_id
+            </if>
+            <if test="discount != null">
+                and tid.discount = #{discount}
+            </if>
+            <if test="areaGrpId != null">
+                and ti.cust_id in (
+                    select tc.cust_id from t_customer tc
+                    where tc.area_grp_id in (
+                      select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                    )
+                )
+            </if>
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.indent_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="custId != null">
+                and ti.cust_id = #{custId}
+            </if>
+            <if test="salesmanId != null">
+                and ti.salesman_id = #{salesmanId}
+            </if>
+            <if test="shipmanId != null">
+                and ts.busi_no = ti.indent_no
+                and ts.shipman_id = #{shipmanId}
+            </if>
+            <if test="empId != null">
+                and ti.emp_id = #{empId}
+            </if>
+            <choose>
+                <when test="goodsScope != null and goodsScope == -1">
+                    and tid.is_gift = 1
+                </when>
+                <when test="goodsScope != null and goodsScope == 0">
+                    and tid.is_gift = 0
+                </when>
+                <otherwise>
+                </otherwise>
+            </choose>
+        </trim>
+        order by ti.indent_time,ti.indent_no
+    </select>
+    <select id="selectUndeletable" resultType="com.trenska.longwang.entity.indent.IndentDetail">
+        select <include refid="Base_Column_List"/>
+        from t_indent ti,t_indent_detail tid
+        where ti.stat not in('已完成','已作废','已取消')
+        and ti.indent_no = tid.indent_no
+        and tid.goods_id = #{goodsId}
+    </select>
+</mapper>

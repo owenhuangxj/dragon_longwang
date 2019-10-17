@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.trenska.longwang.dao.customer.CustomerMapper">
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        tc.cust_id,tc.cust_no,tc.cust_name,tc.cust_type_id,tc.price_grp_id,tc.area_grp_id,tc.emp_id,tc.created_time,tc.updated_time,tc.linkman,
+        tc.link_phone,tc.init_debt,tc.email,tc.province,tc.city,tc.county,tc.addr,tc.deposit_bank,tc.bank_acct,tc.tax_num,tc.remarks,tc.deleted,
+        tc.debt_limit,tc.debt
+    </sql>
+    <select id="selectCustomerPage" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from t_customer tc
+        <if test="custIds != null and custIds.size() > 0">
+            <foreach collection="custIds" item="custId" open="where tc.cust_id in (" close=")" separator=",">
+                #{custId}
+            </foreach>
+        </if>
+        order by tc.cust_no , tc.area_grp_id
+
+    </select>
+    <update id="updateCustomerDebt">
+        update t_customer set debt = concat( '',IFNULL( CAST(debt AS DECIMAL),0) + IFNULL( CAST( #{variation} as DECIMAL),0)) where cust_id = #{custId}
+    </update>
+    <select id="selectCustomerPageSelective" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from t_customer tc
+        <trim prefix="where" prefixOverrides="and">
+            <if test="empId != null">
+                tc.emp_id = #{empId}
+            </if>
+            <if test="custTypeId != null">
+                and tc.cust_type_id = #{custTypeId}
+            </if>
+            <if test="priceGrpId != null">
+                and tc.price_grp_id = #{priceGrpId}
+            </if>
+            <if test="areaGrpId != null">
+                and tc.area_grp_id = #{areaGrpId}
+            </if>
+            <if test="custName != null">
+                and tc.cust_name like concat('%' ,#{custName},'%')
+            </if>
+        </trim>
+    </select>
+
+    <select id="selectCustomerWithDataPermPageSelective" resultMap="BaseResultMap">
+        select <include refid="Base_Column_List"/>
+        from t_customer tc
+        <choose>
+            <when test="custIds != null and custIds.size() > 0">
+                <foreach collection="custIds" item="custId" open="where tc.cust_id in (" close=")" separator=",">
+                    #{custId}
+                </foreach>
+            </when>
+            <otherwise>
+                where tc.cust_id = 0
+            </otherwise>
+        </choose>
+        <trim prefix="and" prefixOverrides="and">
+            <if test="empId != null">
+                tc.emp_id = #{empId}
+            </if>
+            <if test="custTypeId != null">
+                and tc.cust_type_id = #{custTypeId}
+            </if>
+            <if test="priceGrpId != null">
+                and tc.price_grp_id = #{priceGrpId}
+            </if>
+            <if test="areaGrpId != null">
+                and tc.area_grp_id = #{areaGrpId}
+            </if>
+            <if test="custName != null">
+                and tc.cust_name like concat('%' ,#{custName},'%')
+            </if>
+        </trim>
+    </select>
+    <select id="selectCustomerCountSelective" resultType="java.lang.Integer">
+        select count(1) from t_customer tc
+        <choose>
+            <when test="custIds != null and custIds.size() > 0">
+                <foreach collection="custIds" item="custId" open="where tc.cust_id in (" close=")" separator=",">
+                    #{custId}
+                </foreach>
+            </when>
+            <otherwise>
+                where tc.cust_id = 0
+            </otherwise>
+        </choose>
+        <trim prefix="and" prefixOverrides="and">
+            <if test="empId != null">
+                tc.emp_id = #{empId}
+            </if>
+            <if test="custTypeId != null">
+                and tc.cust_type_id = #{custTypeId}
+            </if>
+            <if test="priceGrpId != null">
+                and tc.price_grp_id = #{priceGrpId}
+            </if>
+            <if test="areaGrpId != null">
+                and tc.area_grp_id = #{areaGrpId}
+            </if>
+            <if test="custName != null">
+                and tc.cust_name like concat('%' ,#{custName},'%')
+            </if>
+        </trim>
+    </select>
+    <select id="selectCustomerPriceGrp" resultType="com.trenska.longwang.model.customer.CustomerPriceModel">
+        select tpg.price_grp_name as name, tgpg.price as price
+        from t_customer tc,t_price_grp tpg,t_goods_price_grp tgpg
+        where  tc.price_grp_id = tpg.price_grp_id
+        and tgpg.price_grp_id = tc.price_grp_id
+        and tc.cust_id = #{custId}
+        and tgpg.goods_id = #{goodsId}
+    </select>
+
+    <select id="selectCustomerSpecialPrice" resultType="java.lang.String">
+        select tgpg.price
+        from t_customer tc,t_price_grp tpg,t_goods_price_grp tgpg
+        where tc.price_grp_id = tpg.price_grp_id
+        and tgpg.price_grp_id = tc.price_grp_id
+        and tc.cust_id = #{custId}
+        and tgpg.goods_id = #{goodsId}
+    </select>
+    <select id="selectCustomerActiveInfo"
+            resultType="com.trenska.longwang.model.customer.GoodsActiveInfoModel">
+        select ta.active_name as name,ta.active_type as activeType,tag.gift_id as giftId,ta.gift_num as giftNum,ta.discount as discount
+        from t_active ta, t_active_goods tag,t_active_area_grp taag,t_customer tc
+        where  tag.goods_id = #{goodsId}
+        and #{num} > ta.min_odr_num
+        and tc.cust_id = #{custId}
+        and ta.stat = 1
+        and taag.active_id = tag.active_id
+        and ta.active_id = taag.active_id
+        and ta.active_id = tag.active_id
+        and tc.area_grp_id = taag.area_grp_id
+        and DATEDIFF(DATE(end_date), DATE(CURDATE())) > 0
+        and DATEDIFF(DATE(CURDATE()),DATE(start_date)) > 0
+    </select>
+
+    <resultMap id="BaseResultMap" type="com.trenska.longwang.entity.customer.Customer">
+        <association property="areaGrp" column="area_grp_id" fetchType="lazy"
+                     select="com.trenska.longwang.dao.customer.AreaGrpMapper.selectById" autoMapping="true"/>
+        <association property="priceGrp" column="price_grp_id" fetchType="lazy"
+                     select="com.trenska.longwang.dao.customer.PriceGrpMapper.selectById" autoMapping="true"/>
+        <association property="custType" column="cust_type_id" fetchType="lazy"
+                     select="com.trenska.longwang.dao.customer.CustTypeMapper.selectById" autoMapping="true"/>
+        <!--暂时先实现功能，需要优化-->
+        <association property="emp" column="emp_id" fetchType="lazy"
+                     select="com.trenska.longwang.dao.sys.SysEmpMapper.selectSimpleInfoById" autoMapping="true"/>
+    </resultMap>
+
+    <!--切记不可在excel导出时设置 fetchType="lazy"-->
+    <resultMap id="ExportInfoResultMap" type="com.trenska.longwang.model.report.CustomerInfoModel">
+        <result column="custNo" property="custNo"/>
+        <result column="linkman" property="linkman"/>
+        <result column="custName" property="custName"/>
+        <result column="debtLimit" property="debtLimit"/>
+        <result column="linkPhone" property="linkPhone"/>
+        <result column="addr" property="addr"/>
+        <association property="areaGrp" column="areaGrpId"
+                     select="com.trenska.longwang.dao.customer.AreaGrpMapper.selectAreaGrpNameByAreaGrpId" autoMapping="true"/>
+        <association property="priceGrp" column="priceGrpId"
+                     select="com.trenska.longwang.dao.customer.PriceGrpMapper.selectNameById" autoMapping="true"/>
+        <association property="custType" column="custTypeId"
+                     select="com.trenska.longwang.dao.customer.CustTypeMapper.selectNameById" autoMapping="true"/>
+        <association property="empName" column="empId"
+                     select="com.trenska.longwang.dao.sys.SysEmpMapper.selectNameById" autoMapping="true"/>
+    </resultMap>
+
+    <select id="selectExportingCustomerInfoSelective" resultMap="ExportInfoResultMap">
+        select tc.cust_no as custNo,tc.cust_name as custName,tc.price_grp_id as priceGrpId,tc.area_grp_id as areaGrpId,tc.emp_id as empId,tc.cust_type_id as custTypeId,
+               (
+                 case
+                   when tc.debt_limit = "-0.0000000001" then ""
+                   else tc.debt_limit
+                 end
+                ) as debtLimit,
+               ifnull(tc.linkman,"") as linkman,
+               ifnull(tc.link_phone,"") as linkPhone,
+               ifnull(tc.addr,"") as addr
+        from t_customer tc
+        <if test="custIds != null and custIds.size() > 0">
+            <foreach collection="custIds" item="custId" open="where tc.cust_id in (" close=")" separator=",">
+                #{custId}
+            </foreach>
+        </if>
+        <trim prefix="and" prefixOverrides="and">
+            <if test="empId != null">
+                tc.emp_id = #{empId}
+            </if>
+            <if test="custTypeId != null">
+                and tc.cust_type_id = #{custTypeId}
+            </if>
+            <if test="priceGrpId != null">
+                and tc.price_grp_id = #{priceGrpId}
+            </if>
+            <if test="areaGrpId != null">
+                and tc.area_grp_id in (
+                  select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                )
+            </if>
+        </trim>
+    </select>
+</mapper>

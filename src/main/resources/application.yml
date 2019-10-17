@@ -1,0 +1,16 @@
+spring:
+  profiles:
+    active: pro
+    include: druid
+  mvc:
+    static-path-pattern: /static/**
+  resources:
+    static-locations: classpath:/META-INF/resources/,classpath:/resources/,classpath:/static/
+  session:
+    timeout: 1800
+jasypt:
+  encryptor:
+    property:
+      prefix: "ENC@[" #配置prefix和suffix后，加密后的字符串就需要每次都用ENC()进行包围
+      suffix: "]"
+    password: dragon-erp #必须要有这个，加解密秘钥

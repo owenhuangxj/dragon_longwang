@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.trenska.longwang.dao.goods.GoodsPriceGrpMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.trenska.longwang.entity.goods.GoodsPriceGrp">
+        <id column="goods_price_grp_id" property="goodsPriceGrpId" />
+        <result column="goods_id" property="goodsId" />
+        <result column="price_grp_id" property="priceGrpId" />
+        <result column="price" property="price" />
+        <association column="price_grp_id" property="priceGrpName" select="com.trenska.longwang.dao.customer.PriceGrpMapper.selectNameById"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        tgpg.goods_price_grp_id, tgpg.goods_id, tgpg.price_grp_id, tgpg.price
+    </sql>
+
+    <select id="selectByGoodsId" resultMap="BaseResultMap">
+        select <include refid="Base_Column_List"/>
+        from t_goods_price_grp tgpg
+        where tgpg.goods_id = #{goodsId}
+    </select>
+    <select id="selectByGoodsIdAndCustId" resultType="com.trenska.longwang.entity.goods.GoodsPriceGrp">
+        select tgpg.goods_price_grp_id, tgpg.goods_id, tgpg.price_grp_id, tgpg.price
+        from t_customer tc,t_goods tg,t_goods_price_grp tgpg
+        where tg.stat = 1
+        and tg.goods_id = tgpg.goods_id
+        and tc.price_grp_id = tgpg.price_grp_id
+        and tc.cust_id = #{custId}
+        and tg.goods_id = #{goodsId}
+    </select>
+
+</mapper>

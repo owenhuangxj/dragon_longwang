@@ -1,0 +1,2676 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.trenska.longwang.dao.indent.IndentMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.trenska.longwang.entity.indent.Indent">
+        <id column="indent_id" property="indentId"/>
+        <result column="indent_no" property="indentNo"/>
+        <result column="emp_id" property="empId"/>
+        <result column="shipway" property="shipway"/>
+        <result column="payway" property="payway"/>
+        <result column="cust_id" property="custId"/>
+        <result column="indent_time" property="indentTime"/>
+        <result column="sales_time" property="salesTime"/>
+        <result column="stat" property="stat"/>
+        <result column="receipt_stat" property="receiptStat"/>
+        <result column="odr_amnt" property="odrAmnt"/>
+        <result column="iou_amnt" property="iouAmnt"/>
+        <result column="iou_stat" property="iouStat"/>
+        <result column="iou_time" property="iouTime"/>
+        <result column="iou_remarks" property="iouRemarks"/>
+        <result column="auditable" property="auditable"/>
+        <result column="audit_stat" property="auditStat"/>
+        <result column="audit_remarks" property="auditRemarks"/>
+        <result column="received_amnt" property="receivedAmnt"/>
+        <result column="payed_amnt" property="payedAmnt"/>
+        <result column="dueAmnt" property="dueAmnt"/>
+        <result column="sum" property="sum"/>
+        <result column="gift_sum" property="giftSum"/>
+        <result column="indent_total" property="indentTotal"/>
+        <result column="discount_total" property="discountTotal"/>
+        <result column="odr_src" property="odrSrc"/>
+        <result column="payed_amnt" property="payedAmnt"/>
+        <result column="indent_type" property="indentType"/>
+        <result column="indent_remarks" property="indentRemarks"/>
+        <result column="deleted" property="deleted"/>
+        <association column="emp_id" property="empName" select="com.trenska.longwang.dao.sys.SysEmpMapper.selectNameById"/>
+        <association column="cust_id" property="custName" select="com.trenska.longwang.dao.customer.CustomerMapper.selectNameById"/>
+        <association column="salesman_id" property="salesmanName" select="com.trenska.longwang.dao.sys.SysEmpMapper.selectNameById"/>
+        <collection column="indent_no" property="stocks" select="com.trenska.longwang.dao.stock.StockMapper.selectByBusiNo"/>
+        <collection column="indent_no" property="indentDetails" select="com.trenska.longwang.dao.indent.IndentDetailMapper.selectByIndentNo"/>
+    </resultMap>
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="InfoResultMap" type="com.trenska.longwang.entity.indent.Indent">
+        <id column="indent_id" property="indentId"/>
+        <result column="indent_no" property="indentNo"/>
+        <result column="emp_id" property="empId"/>
+        <result column="salesman_id" property="salesmanId"/>
+        <result column="shipway" property="shipway"/>
+        <result column="payway" property="payway"/>
+        <result column="cust_id" property="custId"/>
+        <result column="indent_time" property="indentTime"/>
+        <result column="sales_time" property="salesTime"/>
+        <result column="stat" property="stat"/>
+        <result column="receipt_stat" property="receiptStat"/>
+        <result column="odr_amnt" property="odrAmnt"/>
+        <result column="received_amnt" property="receivedAmnt"/>
+        <result column="payed_amnt" property="payedAmnt"/>
+        <result column="sum" property="sum"/>
+        <result column="gift_sum" property="giftSum"/>
+        <result column="indent_total" property="indentTotal"/>
+        <result column="discount_total" property="discountTotal"/>
+        <result column="odr_src" property="odrSrc"/>
+        <result column="pay_amnt" property="payedAmnt"/>
+        <result column="iou_amnt" property="iouAmnt"/>
+        <result column="iou_time" property="iouTime"/>
+        <result column="iou_remarks" property="iouRemarks"/>
+        <result column="iou_stat" property="iouStat"/>
+        <result column="auditable" property="auditable"/>
+        <result column="audit_stat" property="auditStat"/>
+        <result column="audit_remarks" property="auditRemarks"/>
+        <result column="indent_type" property="indentType"/>
+        <result column="indent_remarks" property="indentRemarks"/>
+        <result column="deleted" property="deleted"/>
+        <association column="emp_id" property="empName" select="com.trenska.longwang.dao.sys.SysEmpMapper.selectNameById"/>
+        <association column="cust_id" property="custName" select="com.trenska.longwang.dao.customer.CustomerMapper.selectNameById"/>
+        <association column="salesman_id" property="salesmanName" select="com.trenska.longwang.dao.sys.SysEmpMapper.selectNameById"/>
+        <collection column="indent_no" property="receipts" select="com.trenska.longwang.dao.financing.ReceiptMapper.selectByBusiNo"/>
+        <collection column="indent_no" property="stocks" select="com.trenska.longwang.dao.stock.StockMapper.selectIndentStockoutByBusiNo"/>
+        <collection column="indent_no" property="indentDetails" select="com.trenska.longwang.dao.indent.IndentDetailMapper.selectByIndentNo"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ti.indent_id, ti.indent_no, ti.emp_id,ti.salesman_id, ti.shipway, ti.payway, ti.cust_id, ti.indent_time,ti.sales_time, ti.stat, ti.receipt_stat, ti.received_amnt, ti.payed_amnt, ti.sum, ti.gift_sum,
+        ti.odr_amnt, ti.iou_amnt, ti.iou_stat, ti.iou_time, ti.iou_remarks, ti.auditable,ti.audit_stat, ti.audit_remarks, ti.indent_total, ti.discount_total, ti.odr_src, ti.indent_remarks, ti.indent_type, ti.deleted
+    </sql>
+
+    <update id="makeSureIndentStat">
+        update t_indent
+        set stat = '已完成'
+        where stat = '已出库'
+        and receipt_stat = '已收款'
+        and indent_no = #{indentNo}
+    </update>
+
+    <!--订货/退货单通用分页记录总数-->
+    <select id="selectIndentPageSelectiveCount" resultType="java.lang.Integer">
+        select count(1)
+        from t_indent ti ,t_customer tc
+        <if test="empName != null and empName != ''">
+            , sys_emp se
+        </if>
+        where ti.cust_id = tc.cust_id
+        <if test="custIds != null and custIds.size() > 0">
+            <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
+                #{custId}
+            </foreach>
+        </if>
+        <trim prefix="and" prefixOverrides="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.indent_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="indentNo != null and indent != ''">
+                and ti.indent_no like concat('%',#{indentNo},'%')
+            </if>
+            <if test="indentType != null and indentType !=''">
+                and ti.indent_type = #{indentType}
+            </if>
+            <if test="stat != null and stat != ''">
+                and ti.stat = #{stat}
+            </if>
+            <if test="empName != null and empName != ''">
+                and se.emp_name = #{empName}
+                and se.emp_id = ti.salesman_id
+            </if>
+            <if test="custName != null and custName != ''">
+                and tc.cust_name like concat('%',#{custName},'%')
+            </if>
+            <if test="shipway != null and shipway != ''">
+                and ti.shipway = #{shipway}
+            </if>
+            <if test="auditStat != null">
+                and ti.audit_stat = #{auditStat}
+            </if>
+            <if test="receiptStat != null and receiptStat != ''">
+                and ti.receipt_stat = #{receiptStat}
+            </if>
+            <if test="iouStatus != null and iouStatus == true">
+                and ti.indent_total <![CDATA[<=]]> ti.iou_amnt + ti.received_amnt + ti.payed_amnt
+            </if>
+            <if test="iouStatus != null and iouStatus == false">
+                and ti.indent_total <![CDATA[ > ]]> ti.iou_amnt + ti.received_amnt + ti.payed_amnt
+                and ti.receipt_stat = '待收款'
+            </if>
+            <if test="areaGrpId != null">
+                and tc.area_grp_id in (
+                  select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                )
+            </if>
+        </trim>
+    </select>
+
+    <!--订货/退货单通用分页-->
+    <select id="selectIndentPageSelective" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>,(ti.indent_total-ti.received_amnt-ti.payed_amnt) as dueAmnt
+        from t_indent ti ,t_customer tc
+        <if test="empName != null and empName != ''">
+            , sys_emp se
+        </if>
+        where ti.cust_id = tc.cust_id
+        <if test="custIds != null and custIds.size() > 0">
+            <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
+                #{custId}
+            </foreach>
+        </if>
+        <trim prefix="and" prefixOverrides="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.indent_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="indentNo != null and indent != ''">
+                and ti.indent_no like concat('%',#{indentNo},'%')
+            </if>
+            <if test="indentType != null and indentType !=''">
+                and ti.indent_type = #{indentType}
+            </if>
+            <if test="stat != null and stat != ''">
+                and ti.stat = #{stat}
+            </if>
+            <if test="empName != null and empName != ''">
+                and se.emp_name = #{empName}
+                and se.emp_id = ti.salesman_id
+            </if>
+            <if test="custName != null and custName != ''">
+                and tc.cust_name like concat('%',#{custName},'%')
+            </if>
+            <if test="shipway != null and shipway != ''">
+                and ti.shipway = #{shipway}
+            </if>
+            <if test="auditStat != null">
+                and ti.audit_stat = #{auditStat}
+            </if>
+            <if test="receiptStat != null and receiptStat != ''">
+                and ti.receipt_stat = #{receiptStat}
+            </if>
+            <if test="iouStatus != null and iouStatus == true">
+                and ti.indent_total <![CDATA[<=]]> ti.iou_amnt + ti.received_amnt + ti.payed_amnt
+            </if>
+            <if test="iouStatus != null and iouStatus == false">
+                and ti.indent_total <![CDATA[ > ]]> ti.iou_amnt + ti.received_amnt + ti.payed_amnt
+                and ti.receipt_stat = '待收款'
+            </if>
+            <if test="areaGrpId != null">
+                and tc.area_grp_id in (
+                  select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                )
+            </if>
+        </trim>
+        order by ti.indent_time desc
+    </select>
+
+    <select id="getIndentByNo" resultMap="InfoResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from t_indent ti
+        where ti.indent_no = #{indentNo}
+    </select>
+
+    <!--<select id="selectIndentCountForCustomerDealDetailSelective" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM t_indent ti
+        WHERE  ti.cust_id = #{custId}
+        <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+            AND ti.indent_time BETWEEN #{beginTime} and #{endTime}
+        </if>
+    </select>-->
+
+    <!--客户销售总账-->
+    <select id="selectCustSalesBillSummation" resultType="com.trenska.longwang.model.report.CustSalesSummationModel">
+        select
+        ifnull(sum(case when ti.indent_type = '订货单' then tid.amount else -tid.amount end),0) as receivableAmntSum ,
+        ifnull(sum(case when ti.indent_type = '订货单' then tid.discount_amount else -tid.discount_amount end),0) as salesDiscountSum,
+        ifnull(sum(case when ti.indent_type = '订货单' then tid.num*tid.multi else -tid.num*tid.multi end ),0) as salesNumSum
+        from t_customer tc , t_indent ti, t_goods tg , t_indent_detail tid
+        where tc.cust_id = ti.cust_id
+        and ti.stat in ('已出库','已完成')
+        and ti.indent_no = tid.indent_no
+        and tid.goods_id = tg.goods_id
+        <if test="custIds != null and custIds.size() > 0">
+            <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
+                #{custId}
+            </foreach>
+        </if>
+        <trim prefixOverrides="and" prefix="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and tg.brand_name = #{brandName}
+            </if>
+            <if test="salesmanId != null">
+                and ti.salesman_id = #{salesmanId}
+            </if>
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="areaGrpId != null">
+                and tc.area_grp_id in (
+                  select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                )
+            </if>
+        </trim>
+    </select>
+
+    <!--客户销售总账合计部分-->
+    <select id="selectRecordOfMaxId" resultType="com.trenska.longwang.entity.indent.Indent">
+        select
+        <include refid="Base_Column_List"/>
+        from t_indent ti
+        where ti.indent_id = (select max(indent_id) from t_indent where indent_type = #{indentType})
+    </select>
+
+    <select id="selectCustSalesBillPageSelective"  resultType="com.trenska.longwang.model.report.CustSalesBillRecordsModel">
+        select tc.cust_id as custId , tc.cust_no as custNo , tc.cust_name as custName , ifnull(tg.brand_name,"") as brandName ,
+        sum(case when ti.indent_type = '订货单' then tid.amount else -tid.amount end) as indentTotal ,
+        sum(case when ti.indent_type = '订货单' then tid.discount_amount else -tid.discount_amount end ) as discountTotal
+        from t_customer tc , t_indent ti, t_goods tg , t_indent_detail tid
+        where tc.cust_id = ti.cust_id
+        and ti.stat in ('已出库','已完成')
+        and ti.indent_no = tid.indent_no
+        and tid.goods_id = tg.goods_id
+        <if test="custIds != null and custIds.size() > 0">
+            <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
+                #{custId}
+            </foreach>
+        </if>
+        <trim prefixOverrides="and" prefix="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and tg.brand_name = #{brandName}
+            </if>
+            <if test="salesmanId != null">
+                and ti.salesman_id = #{salesmanId}
+            </if>
+            <if test="frtCatName != null and frtCatName !=''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName !=''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="areaGrpId != null">
+                and tc.area_grp_id in (
+                  select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                )
+            </if>
+        </trim>
+        group by tc.cust_id
+        order by tc.cust_no
+    </select>
+
+    <select id="selectCustSalesBillCountSelective" resultType="java.lang.Integer">
+        select count(1)
+        from t_customer tc , t_indent ti, t_goods tg , t_indent_detail tid
+        where tc.cust_id = ti.cust_id
+        and ti.stat in ('已出库','已完成')
+        and ti.indent_no = tid.indent_no
+        and tid.goods_id = tg.goods_id
+        <if test="custIds != null and custIds.size() > 0">
+            <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
+                #{custId}
+            </foreach>
+        </if>
+        <trim prefixOverrides="and" prefix="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and tg.brand_name = #{brandName}
+            </if>
+            <if test="salesmanId != null">
+                and ti.salesman_id = #{salesmanId}
+            </if>
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="areaGrpId != null">
+                and tc.area_grp_id in (
+                  select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                )
+            </if>
+        </trim>
+        group by tc.cust_id
+    </select>
+
+    <!--客户销售汇总合计部分-->
+    <select id="selectCustSalesSummation" resultType="com.trenska.longwang.model.report.CustSalesSummationModel">
+        select
+        ifnull(sum( case when ti.indent_type = '订货单' then tid.num else -tid.num end ),0) as salesNumSum,
+        ifnull(sum( case when ti.indent_type = '订货单' then tid.amount else -tid.amount end ) ,0) as receivableAmntSum,
+        ifnull(sum( case when ti.indent_type = '订货单' then tid.discount_amount else -tid.discount_amount end ),0) as salesDiscountSum
+        from t_customer tc , t_indent ti , t_indent_detail tid , t_goods tg , t_unit tu
+        where tc.cust_id = ti.cust_id
+        and ti.indent_no = tid.indent_no
+        and tid.unit_id = tu.unit_id
+        and tid.goods_id = tg.goods_id
+        and tg.main_unit_id = tu.unit_id
+        and ti.stat in ('已出库','已完成')
+        <if test="custIds != null and custIds.size() > 0">
+            <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
+                #{custId}
+            </foreach>
+        </if>
+        <trim prefixOverrides="and" prefix="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+
+            <if test="custId != null">
+                and ti.cust_id = #{custId}
+            </if>
+            <if test="custName != null and custName != ''">
+                and tc.cust_name like concat('%',#{custName},'%')
+            </if>
+            <if test="salesmanId != null">
+                and ti.salesman_id = #{salesmanId}
+            </if>
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and tg.brand_name = #{brandName}
+            </if>
+            <if test="remarks != null and remarks != ''">
+                and tg.remarks like concat('%',#{remarks},'%')
+            </if>
+        </trim>
+        <choose>
+            <when test="goodsScope != null and goodsScope == -1">
+                and tid.is_gift = 1
+            </when>
+            <when test="goodsScope != null and goodsScope == 0">
+                and tid.is_gift = 0
+            </when>
+            <otherwise>
+            </otherwise>
+        </choose>
+        <if test="areaGrpId != null">
+            and tc.area_grp_id in (
+              select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+            )
+        </if>
+    </select>
+
+    <!--客户销售汇总平均单价部分-->
+    <!--sum(cast(tid.amount as decimal(13,4)))/sum(tid.multi * tid.num) as avgPrice-->
+    <select id="selectCustSalesSummarizingAvgPrice" resultType="com.trenska.longwang.model.report.CustSalesSummarizingModel">
+        select
+        sum( case when ti.indent_type = '订货单' then tid.amount else -tid.amount end)/sum( case when ti.indent_type = '订货单' then tid.multi * tid.num else -tid.multi * tid.num end) as avgPrice,
+        tc.cust_id as custId,tg.goods_name as goodsName
+        from t_customer tc , t_indent ti , t_indent_detail tid , t_goods tg , t_unit tu
+        where tc.cust_id = ti.cust_id
+        and ti.indent_no = tid.indent_no
+        and tid.unit_id = tu.unit_id
+        and tid.goods_id = tg.goods_id
+        and tg.main_unit_id = tu.unit_id
+        and ti.stat in ('已出库','已完成')
+        <if test="custIds != null and custIds.size() > 0">
+            <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
+                #{custId}
+            </foreach>
+        </if>
+        <trim prefixOverrides="and" prefix="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+
+            <if test="custId != null">
+                and ti.cust_id = #{custId}
+            </if>
+            <if test="custName != null and custName != ''">
+                and tc.cust_name like concat('%',#{custName},'%')
+            </if>
+            <if test="salesmanId != null">
+                and ti.salesman_id = #{salesmanId}
+            </if>
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and tg.brand_name = #{brandName}
+            </if>
+            <if test="remarks != null and remarks != ''">
+                and tg.remarks like concat('%',#{remarks},'%')
+            </if>
+            <if test="areaGrpId != null">
+                and tc.area_grp_id in (
+                  select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                )
+            </if>
+        </trim>
+        <choose>
+            <when test="goodsScope != null and goodsScope == -1">
+                and tid.is_gift = 1
+            </when>
+            <when test="goodsScope != null and goodsScope == 0">
+                and tid.is_gift = 0
+            </when>
+            <otherwise>
+            </otherwise>
+        </choose>
+        group by tc.cust_id,tid.is_gift,tg.goods_id
+    </select>
+    <!--客户销售汇总-->
+    <select id="selectCustSalesSummarizingPageSelective" resultMap="CustSalesSummarizingModelResultMap">
+        select
+        tc.cust_id as custId,tc.cust_name as custName,tg.goods_name as goodsName,tg.goods_id as goodsId ,tu.unit_name as unitName,
+        ifnull(sum( case when ti.indent_type = '订货单' then tid.num else -tid.num end),0 ) as salesNum,
+        ifnull(sum( case when ti.indent_type = '订货单' then tid.amount else -tid.amount end ),0 ) as amount,
+        ifnull(sum( case when ti.indent_type = '订货单' then tid.discount_amount else -tid.discount_amount end ),0 ) as discountAmnt
+        from t_customer tc , t_indent ti , t_indent_detail tid , t_goods tg , t_unit tu
+        where tc.cust_id = ti.cust_id
+        and ti.indent_no = tid.indent_no
+        and tid.unit_id = tu.unit_id
+        and tid.goods_id = tg.goods_id
+        and tg.main_unit_id = tu.unit_id
+        and ti.stat in ('已出库','已完成')
+        <if test="custIds != null and custIds.size() > 0">
+            <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
+                #{custId}
+            </foreach>
+        </if>
+        <trim prefixOverrides="and" prefix="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+
+            <if test="custId != null">
+                and ti.cust_id = #{custId}
+            </if>
+            <if test="custName != null and custName != ''">
+                and tc.cust_name like concat('%',#{custName},'%')
+            </if>
+            <if test="salesmanId != null">
+                and ti.salesman_id = #{salesmanId}
+            </if>
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and tg.brand_name = #{brandName}
+            </if>
+            <if test="remarks != null and remarks != ''">
+                and tg.remarks like concat('%',#{remarks},'%')
+             </if>
+        </trim>
+        <choose>
+            <when test="goodsScope != null and goodsScope == -1">
+              and tid.is_gift = 1
+            </when>
+            <when test="goodsScope != null and goodsScope == 0">
+              and tid.is_gift = 0
+            </when>
+            <otherwise>
+            </otherwise>
+        </choose>
+        <if test="areaGrpId != null">
+            and tc.area_grp_id in (
+              select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+            )
+        </if>
+        group by tc.cust_id,tid.is_gift,tg.goods_id
+    </select>
+    <resultMap id="CustSalesSummarizingModelResultMap" type="com.trenska.longwang.model.report.CustSalesSummarizingModel">
+        <result column="custId" property="custId"/>
+        <result column="custName" property="custName"/>
+        <result column="goodsName" property="goodsName"/>
+        <result column="unitName" property="unitName"/>
+        <result column="salesNum" property="salesNum"/>
+        <result column="avgPrice" property="avgPrice"/>
+        <result column="amount" property="amount"/>
+        <result column="salesAmnt" property="salesAmnt"/>
+        <collection column="goodsId" property="propNames" select="com.trenska.longwang.dao.goods.GoodsSpecMapper.getPropNamesByGoodsId" />
+    </resultMap>
+
+    <select id="selectCustSalesSummarizingCountSelective" resultType="java.lang.Integer">
+        select count(1)
+        from t_customer tc , t_indent ti , t_indent_detail tid , t_goods tg , t_unit tu
+        where tc.cust_id = ti.cust_id
+        and ti.indent_no = tid.indent_no
+        and tid.unit_id = tu.unit_id
+        and tid.goods_id = tg.goods_id
+        and tg.main_unit_id = tu.unit_id
+        and ti.stat in ('已出库','已完成')
+        <if test="custIds != null and custIds.size() > 0">
+            <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
+                #{custId}
+            </foreach>
+        </if>
+        <trim prefixOverrides="and" prefix="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="custId != null">
+                and ti.cust_id = #{custId}
+            </if>
+            <if test="custName != null and custName != ''">
+                and tc.cust_name like concat('%',#{custName},'%')
+            </if>
+            <if test="salesmanId != null">
+                and ti.salesman_id = #{salesmanId}
+            </if>
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and tg.brand_name = #{brandName}
+            </if>
+            <if test="remarks != null and remarks != ''">
+                and tg.remarks like concat('%',#{remarks},'%')
+            </if>
+            <if test="areaGrpId != null">
+                and tc.area_grp_id in (
+                  select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                )
+            </if>
+        </trim>
+        <choose>
+            <when test="goodsScope != null and goodsScope == -1">
+                and tid.is_gift = 1
+            </when>
+            <when test="goodsScope != null and goodsScope == 0">
+                and tid.is_gift = 0
+            </when>
+            <otherwise>
+            </otherwise>
+        </choose>
+        group by tc.cust_id,tid.is_gift,tg.goods_id
+    </select>
+    <!--客户销售统计合计部分-->
+    <select id="selectCustSalesStatisticsSummation" resultType="com.trenska.longwang.model.report.CustSalesStatisticsSummationModel">
+        select
+        sum( case when ti.indent_type = '订货单' then tid.amount else -tid.amount end ) as indentTotalSum,
+        sum( case when ti.indent_type = '订货单' then tid.num*tid.multi else -tid.num*tid.multi end) as salesNumSum ,
+        sum( case when ti.indent_type = '订货单' then tid.discount_amount else -tid.discount_amount end) as discountAmntSum
+        from t_customer tc , t_indent ti , t_indent_detail tid, t_goods tg,t_unit tu
+        <if test="shipmanId != null">
+            , t_stock ts
+        </if>
+        where ti.indent_no = tid.indent_no
+        and tc.cust_id = ti.cust_id
+        and tg.goods_id = tid.goods_id
+        and ti.stat in ('已出库','已完成')
+        and tg.main_unit_id = tu.unit_id
+        <trim prefixOverrides="and" prefix="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="shipmanId != null">
+                and ts.stat = 1
+                and ts.busi_no = ti.indent_no
+                and ts.shipman_id = #{shipmanId}
+            </if>
+            <if test="custId != null">
+                and ti.cust_id = #{custId}
+            </if>
+            <if test="custName != null and custName != ''">
+                and tc.cust_name like concat('%', #{custName} ,'%')
+            </if>
+            <choose>
+                <when test="goodsScope != null and goodsScope == -1">
+                    and tid.is_gift = 1
+                </when>
+                <when test="goodsScope != null and goodsScope == 0">
+                    and tid.is_gift = 0
+                </when>
+                <otherwise>
+                </otherwise>
+            </choose>
+        </trim>
+
+    </select>
+    <!--客户销售统计平均单价部分-->
+    <!--select sum(cast(tid.amount as decimal(13,4)))/sum(tid.num*tid.multi)-->
+    <select id="selectCustSalesStatisticsAvgPrice" resultType="java.lang.String">
+        select sum(case when ti.indent_type = '订货单' then tid.amount else -tid.amount end)/sum(case when ti.indent_type = '订货单' then tid.num*tid.multi else -tid.num*tid.multi end)
+        from t_customer tc , t_indent ti , t_indent_detail tid, t_goods tg,t_unit tu
+        <if test="shipmanId != null">
+            , t_stock ts
+        </if>
+        where ti.indent_no = tid.indent_no
+        and tc.cust_id = ti.cust_id
+        and tg.goods_id = tid.goods_id
+        and ti.stat in ('已出库','已完成')
+        and tg.main_unit_id = tu.unit_id
+        and tc.cust_id = #{custId}
+        and tg.goods_id = #{goodsId}
+        <trim prefixOverrides="and" prefix="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="shipmanId != null">
+                and ts.stat = 1
+                and ts.busi_no = ti.indent_no
+                and ts.shipman_id = #{shipmanId}
+            </if>
+            <choose>
+                <when test="goodsScope != null and goodsScope == -1">
+                    and tid.is_gift = 1
+                </when>
+                <when test="goodsScope != null and goodsScope == 0">
+                    and tid.is_gift = 0
+                </when>
+                <otherwise>
+                </otherwise>
+            </choose>
+        </trim>
+    </select>
+
+    <!--客户销售统计-->
+    <select id="selectCustSalesStatisticsPageSelective" resultMap="CustSalesStatisticsResultMap">
+        select
+        sum( case when ti.indent_type = '订货单' then tid.amount else -tid.amount end )  as indentTotal,
+        sum( case when ti.indent_type = '订货单' then tid.num*tid.multi else -tid.num*tid.multi end ) as salesNum ,
+        sum( case when ti.indent_type = '订货单' then tid.discount_amount else -tid.discount_amount end ) as discountAmount,
+        tc.cust_id as custId, tg.goods_id as goodsId , ifnull(tg.goods_no,"") as goodsNo , tg.goods_name as goodsName ,tu.unit_name as unitName
+        from t_customer tc , t_indent ti , t_indent_detail tid, t_goods tg,t_unit tu
+        <if test="shipmanId != null">
+            , t_stock ts
+        </if>
+        where ti.indent_no = tid.indent_no
+        and tc.cust_id = ti.cust_id
+        and tg.goods_id = tid.goods_id
+        and ti.stat in ('已出库','已完成')
+        and tg.main_unit_id = tu.unit_id
+        <trim prefixOverrides="and" prefix="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="shipmanId != null">
+                and ts.stat = 1
+                and ts.busi_no = ti.indent_no
+                and ts.shipman_id = #{shipmanId}
+            </if>
+            <if test="custId != null">
+                and ti.cust_id = #{custId}
+            </if>
+            <if test="custName != null and custName != ''">
+                and tc.cust_name like concat('%', #{custName} ,'%')
+            </if>
+            <choose>
+                <when test="goodsScope != null and goodsScope == -1">
+                    and tid.is_gift = 1
+                </when>
+                <when test="goodsScope != null and goodsScope == 0">
+                    and tid.is_gift = 0
+                </when>
+                <otherwise>
+                </otherwise>
+            </choose>
+        </trim>
+        group by tg.goods_id
+    </select>
+
+    <resultMap id="CustSalesStatisticsResultMap" type="com.trenska.longwang.model.report.CustSalesStatisticsModel">
+        <result column="goodsId" property="goodsId"/>
+        <result column="custId" property="custId"/>
+        <result column="goodsNo" property="goodsNo"/>
+        <result column="goodsName" property="goodsName"/>
+        <result column="unitName" property="unitName"/>
+        <result column="salesNum" property="salesNum"/>
+        <result column="avgPrice" property="avgPrice"/>
+        <result column="salesAmnt" property="salesAmnt"/>
+        <result column="indentTotal" property="indentTotal"/>
+        <collection column="goodsId" property="propNames" select="com.trenska.longwang.dao.goods.GoodsSpecMapper.getPropNamesByGoodsId" />
+    </resultMap>
+
+    <select id="selectCustSalesStatisticsCountSelective" resultType="java.lang.Integer">
+        select count(1)
+        from t_customer tc , t_indent ti , t_indent_detail tid
+        <if test="shipmanId != null">
+            , t_stock ts
+        </if>
+        <if test="(frtCatName != null and frtCatName !='') or (scdCatName != null and scdCatName !='')">
+            , t_goods tg
+        </if>
+        where ti.indent_no = tid.indent_no
+        and tc.cust_id = ti.cust_id
+        <if test="(frtCatName != null and frtCatName !='') or (scdCatName != null and scdCatName !='')">
+            and tg.goods_id = tid.goods_id
+        </if>
+        and ti.stat in ('已出库','已完成')
+        <trim prefixOverrides="and" prefix="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="shipmanId != null">
+                and ts.stat = 1
+                and ts.busi_no = ti.indent_no
+                and ts.shipman_id = #{shipmanId}
+            </if>
+            <if test="custId != null">
+                and ti.cust_id = #{custId}
+            </if>
+            <if test="custName != null and custName != ''">
+                and tc.cust_name concat('%', #{custName} ,'%')
+            </if>
+            <choose>
+                <when test="goodsScope != null and goodsScope == -1">
+                    and tid.is_gift = 1
+                </when>
+                <when test="goodsScope != null and goodsScope == 0">
+                    and tid.is_gift = 0
+                </when>
+                <otherwise>
+                </otherwise>
+            </choose>
+        </trim>
+        <choose>
+            <when test="(frtCatName != null and frtCatName !='') or (scdCatName != null and scdCatName !='')">
+                group by tg.goods_id
+            </when>
+            <otherwise>
+                group by tid.goods_id
+            </otherwise>
+        </choose>
+
+    </select>
+    <!--条件都是外层统计(销售账本)带进来的-->
+    <!--<select id="selectCustSalesDetailPageSelective" resultType="com.trenska.longwang.entity.indent.Indent">
+        select ti.indent_time as indentTime , ti.indent_no as indentNo , ti.sum as sum , ti.gift_sum as giftSum ,ti.odr_amnt as odrAmnt ,ti.indent_total as indentTotal
+        from t_indent ti
+        <if test="brandName != null and brandName != ''">
+            , t_indent_detail tid , t_goods tg
+        </if>
+        <if test="areaGrpIds != null and areaGrpIds.size() > 0">
+            , t_customer tc
+        </if>
+        where ti.indent_type = '订货单'
+        and ti.stat in ('已出库','已完成')
+        <if test="(brandName != null and brandName != '') or (frtCatName != null and frtCatName != '' or scdCatName != null and scdCatName != '')">
+            and ti.indent_no = tid.indent_no
+            and tid.goods_id = tg.goods_id
+        </if>
+        <if test="areaGrpIds != null and areaGrpIds.size() > 0">
+            and ti.cust_id = tc.cust_id
+        </if>
+        <choose>
+            <when test="custIds != null and custIds.size() > 0">
+                <foreach collection="custIds" item="custId" open="and ti.cust_id in (" close=")" separator=",">
+                    #{custId}
+                </foreach>
+            </when>
+            <otherwise>
+                and tc.cust_id = 0
+            </otherwise>
+        </choose>
+        <trim prefixOverrides="and" prefix="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="custId != null">
+                and ti.cust_id = #{custId}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and tg.brand_name = #{brandName}
+            </if>
+            <if test="salesmanId != null">
+                and ti.salesman_id = #{salesmanId}
+            </if>
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+        </trim>
+        <if test="areaGrpIds != null and areaGrpIds.size() > 0">
+            <foreach collection="areaGrpIds" separator="," open="and tc.area_grp_id in (" close=")" item="areaGrpId" >
+                #{areaGrpId}
+            </foreach>
+        </if>
+        order by indentTime desc
+    </select>-->
+    <!--条件都是外层统计(销售账本)带进来的-->
+    <select id="selectCustSalesDetailPageSelective" resultMap="CustSalesDetailResultMap">
+        select
+        date(ti.indent_time) as indentTime , ti.indent_no as indentNo , tid.goods_id as goodsId , ifnull(tg.goods_no,"") as goodsNo ,tg.goods_name as goodsName ,
+        tu.unit_name as unitName , tid.num as salesNum , tid.price as price ,tid.amount as indentTotal,tid.discount_amount as discountAmount
+        from t_customer tc , t_indent ti , t_indent_detail tid , t_goods tg , t_unit tu
+        where ti.indent_no = tid.indent_no
+        and tc.cust_id = ti.cust_id
+        and tid.unit_id = tu.unit_id
+        and tid.goods_id = tg.goods_id
+        and tg.main_unit_id = tu.unit_id
+        and ti.stat in ('已出库','已完成')
+        <trim prefixOverrides="and" prefix="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="custId != null">
+                and ti.cust_id = #{custId}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and  tg.brand_name = #{brandName}
+            </if>
+            <if test="salesmanId != null">
+                and ti.salesman_id = #{salesmanId}
+            </if>
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+        </trim>
+        order by ti.indent_time desc
+    </select>
+    <resultMap id="CustSalesDetailResultMap" type="com.trenska.longwang.model.report.CustSalesDetailModel">
+        <result column="indentTime" property="indentTime"/>
+        <result column="indentNo" property="indentNo"/>
+        <result column="goodsNo" property="goodsNo"/>
+        <result column="goodsName" property="goodsName"/>
+        <result column="unitName" property="unitName"/>
+        <result column="salesNum" property="salesNum"/>
+        <result column="price" property="price"/>
+        <result column="salesAmnt" property="salesAmnt"/>
+        <result column="indentTotal" property="indentTotal"/>
+        <collection column="goodsId" property="propNames" select="com.trenska.longwang.dao.goods.GoodsSpecMapper.getPropNamesByGoodsId" />
+        <collection column="indentNo=indentNo,goodsId=goodsId" property="madeDates" select="com.trenska.longwang.dao.stock.StockDetailMapper.getUniqueMadeDatesByIndentNo"/>
+    </resultMap>
+
+    <select id="selectCustSalesDetailCountSelective" resultType="java.lang.Integer">
+        select count(1)
+        from t_customer tc , t_indent ti , t_indent_detail tid , t_goods tg , t_unit tu
+        where ti.indent_no = tid.indent_no
+        and tc.cust_id = ti.cust_id
+        and tid.unit_id = tu.unit_id
+        and tid.goods_id = tg.goods_id
+        and tg.main_unit_id = tu.unit_id
+        and ti.stat in ('已出库','已完成')
+        <trim prefixOverrides="and" prefix="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="custId != null">
+                and ti.cust_id = #{custId}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and  tg.brand_name = #{brandName}
+            </if>
+            <if test="salesmanId != null">
+                and ti.salesman_id = #{salesmanId}
+            </if>
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+        </trim>
+    </select>
+    <select id="selectFirstLevelAreaSalesRank" resultType="com.trenska.longwang.model.report.AreaSalesRankModel">
+        select sum(cast(ti.odr_amnt as decimal(13,4))) as salesAmnt , sum(ti.sum) as salesNum , tag.area_grp_id as areaGrpId
+        from t_area_grp tag , t_indent ti ,t_customer tc
+        where tag.pid = 0
+        and ti.stat in ('已出库','已完成')
+        and tc.cust_id = ti.cust_id
+        and tc.area_grp_id = tag.area_grp_id
+        <trim prefix="and" prefixOverrides="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+        </trim>
+        group by areaGrpId
+        order by salesAmnt , salesNum
+    </select>
+    <select id="selectFirstLevelAreaSalesRankCount" resultType="java.lang.Integer">
+        select count(1)
+        from t_area_grp tag , t_indent ti ,t_customer tc
+        where tag.pid = 0
+        and ti.stat in ('已出库','已完成')
+        and tc.cust_id = ti.cust_id
+        and tc.area_grp_id = tag.area_grp_id
+        <trim prefix="and" prefixOverrides="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+        </trim>
+        group by areaGrpId
+    </select>
+
+    <select id="selectAreaSalesRankByAreaGrpId" resultType="com.trenska.longwang.model.report.AreaSalesRankModel">
+        select ifnull(sum(cast(ti.odr_amnt as decimal(13,4))) , 0 ) as salesAmnt , ifnull(sum(ti.sum) ,0 ) as salesNum
+        from t_indent ti
+        where ti.stat in ('已出库','已完成')
+            and ti.indent_type = '订货单'
+            and ti.cust_id in (
+                select tc.cust_id from t_customer tc
+                where tc.area_grp_id in (
+                    select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                )
+            )
+    </select>
+    <!--<select id="selectAreaSalesRank" resultType="com.trenska.longwang.model.report.AreaSalesRankModel">
+        select concat(@rownum:=@rownum+1,'') as rankNum,
+               ifnull(sum(ti.sum) ,0 ) as salesNum ,
+               ifnull(sum(cast(ti.odr_amnt as decimal(13,4))) , 0 ) as salesAmnt ,
+               ifnull(sum(cast(ti.indent_total as decimal(13,4))) , 0 ) as indentTotal ,
+               tag.area_grp_id as areaGrpId , tag.area_grp_name as areaGrpName
+        from t_indent ti ,t_area_grp tag,t_customer tc ,(select @rownum:=0) rk
+        where ti.stat in ('已出库','已完成')
+        and tag.pid = #{areaGrpId}
+        and ti.cust_id = tc.cust_id
+        and tc.area_grp_id = tag.area_grp_id
+        <if test="custIds != null and custIds.size() > 0">
+            <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
+                #{custId}
+            </foreach>
+        </if>
+        <trim prefix="and" prefixOverrides="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+        </trim>
+        group by areaGrpId
+        <if test="byAmount != null">
+          <choose>
+              <when test="byAmount == true">
+                  order by salesAmnt desc ,salesNum desc
+              </when>
+              <otherwise>
+                  order by salesNum desc,salesAmnt desc
+              </otherwise>
+          </choose>
+        </if>
+    </select>-->
+    <select id="selectAreaSalesRank" resultType="com.trenska.longwang.model.report.AreaSalesRankModel">
+        select
+        ifnull(sum( case when ti.indent_type = '订货单' then tid.num else -tid.num end ) ,0 ) as salesNum ,
+        concat(@rownum:=@rownum+1,'') as rankNum,tag.area_grp_id as areaGrpId , tag.area_grp_name as areaGrpName,
+        ifnull(sum( case when ti.indent_type = '订货单' then tid.amount else -tid.amount end ) , 0 ) as indentTotal ,
+        ifnull(sum( case when ti.indent_type = '订货单' then tid.discount_amount else -tid.discount_amount end ) , 0 ) as discountTotal,
+        ifnull(sum( case when ti.indent_type = '订货单' then (tid.amount + tid.discount_amount) else -(tid.amount + tid.discount_amount) end ) , 0 ) as salesAmnt
+        from t_indent ti , t_indent_detail tid ,t_area_grp tag,t_customer tc ,(select @rownum:=0) rk
+        <if test="(frtCatName != null and frtCatName != '') or (scdCatName != null and scdCatName != '')">
+            ,t_goods tg
+        </if>
+        where ti.stat in ('已出库','已完成')
+        and FIND_IN_SET(tag.area_grp_id,getOnlyChildList(#{areaGrpId})) > 0
+        and ti.cust_id = tc.cust_id
+        and tid.indent_no = ti.indent_no
+        and tc.area_grp_id = tag.area_grp_id
+        <if test="custIds != null and custIds.size() > 0">
+            <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
+                #{custId}
+            </foreach>
+        </if>
+        <trim prefix="and" prefixOverrides="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="(frtCatName != null and frtCatName != '') or (scdCatName != null and scdCatName != '')">
+                and tg.goods_id = tid.goods_id
+                <if test="frtCatName != null and frtCatName != ''">
+                    and tg.frt_cat_name = #{frtCatName}
+                </if>
+                <if test="scdCatName != null and scdCatName != ''">
+                    and tg.scd_cat_name = #{scdCatName}
+                </if>
+            </if>
+        </trim>
+        group by tag.area_grp_id
+        <if test="byAmount != null">
+            <choose>
+                <when test="byAmount == true">
+                    order by salesAmnt desc ,salesNum desc
+                </when>
+                <otherwise>
+                    order by salesNum desc, salesAmnt desc
+                </otherwise>
+            </choose>
+        </if>
+    </select>
+
+    <select id="selectAreaSalesRankCount" resultType="java.lang.Integer">
+        select count(1)
+        from t_indent ti,t_indent_detail tid ,t_area_grp tag,t_customer tc
+        <if test="(frtCatName != null and frtCatName != '') or (scdCatName != null and scdCatName != '')">
+            ,t_goods tg
+        </if>
+        where ti.stat in ('已出库','已完成')
+        and FIND_IN_SET(tag.area_grp_id,getOnlyChildList(#{areaGrpId})) > 0
+        and ti.cust_id = tc.cust_id
+        and tid.indent_no = ti.indent_no
+        and tc.area_grp_id = tag.area_grp_id
+        <if test="custIds != null and custIds.size() > 0">
+            <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
+                #{custId}
+            </foreach>
+        </if>
+        <trim prefix="and" prefixOverrides="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="(frtCatName != null and frtCatName != '') or (scdCatName != null and scdCatName != '')">
+                and tg.goods_id = tid.goods_id
+                <if test="frtCatName != null and frtCatName != ''">
+                    and tg.frt_cat_name = #{frtCatName}
+                </if>
+                <if test="scdCatName != null and scdCatName != ''">
+                    and tg.scd_cat_name = #{scdCatName}
+                </if>
+            </if>
+        </trim>
+        group by tag.area_grp_id
+    </select>
+
+    <select id="selectAreaSalesRankSummation" resultType="com.trenska.longwang.model.report.CommonSummation">
+        select
+        ifnull(sum( case when ti.indent_type = '订货单' then tid.num else -tid.num end ) ,0 ) as salesNumSum ,
+        ifnull(sum( case when ti.indent_type = '订货单' then tid.amount else -tid.amount end ) , 0 ) as indentTotalSum,
+        ifnull(sum( case when ti.indent_type = '订货单' then tid.discount_amount else -tid.discount_amount end ) , 0 ) as discountAmntSum
+        from t_indent ti ,t_area_grp tag,t_customer tc,t_indent_detail tid
+        <if test="(frtCatName != null and frtCatName != '') or (scdCatName != null and scdCatName != '')">
+            ,t_goods tg
+        </if>
+        where ti.stat in ('已出库','已完成')
+        and ti.cust_id = tc.cust_id
+        and tid.indent_no = ti.indent_no
+        and tc.area_grp_id = tag.area_grp_id
+        and FIND_IN_SET(tag.area_grp_id,getOnlyChildList(#{areaGrpId})) > 0
+        <if test="custIds != null and custIds.size() > 0">
+            <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
+                #{custId}
+            </foreach>
+        </if>
+        <trim prefix="and" prefixOverrides="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="(frtCatName != null and frtCatName != '') or (scdCatName != null and scdCatName != '')">
+                and tg.goods_id = tid.goods_id
+                <if test="frtCatName != null and frtCatName != ''">
+                    and tg.frt_cat_name = #{frtCatName}
+                </if>
+                <if test="scdCatName != null and scdCatName != ''">
+                    and tg.scd_cat_name = #{scdCatName}
+                </if>
+            </if>
+        </trim>
+    </select>
+    <select id="selectSubAreaSalesRank" resultType="com.trenska.longwang.model.report.AreaSalesRankModel">
+        select
+               tag.area_grp_name as areaGrpName,
+               ifnull(sum(cast(ti.odr_amnt as decimal(13,4))) , 0 ) as salesAmnt,
+               ifnull(sum(cast(ti.indent_total as decimal(13,4))) , 0 ) as indentTotal,
+               ifnull(sum(ti.sum) ,0 ) as salesNum
+        from t_indent ti,t_customer tc,t_area_grp tag
+        where ti.stat in ('已出库','已完成')
+        and ti.cust_id = tc.cust_id
+        and tc.area_grp_id = tag.area_grp_id
+        and FIND_IN_SET(tag.area_grp_id,getChildList(#{areaGrpId})) > 0
+        <trim prefix="and" prefixOverrides="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+        </trim>
+    </select>
+    <!--客户销售排名合计部分-->
+    <select id="selectCustSalesRankSummation" resultType="com.trenska.longwang.model.report.CommonSummation">
+        select
+        ifnull(sum( case when ti.indent_type = '订货单' then ti.odr_amnt else -ti.odr_amnt end ) , 0 ) as salesAmntSum,
+        ifnull(sum( case when ti.indent_type = '订货单' then ti.indent_total else -ti.indent_total end ) , 0 ) as indentTotalSum,
+        ifnull(sum( case when ti.indent_type = '订货单' then ti.discount_total else -discount_total end ) , 0 ) as discountAmntSum,
+        ifnull(sum( case when ti.indent_type = '订货单' then (ti.sum + ti.gift_sum) else -(ti.sum + ti.gift_sum) end ) ,0 ) as salesNumSum
+        from t_indent ti , t_customer tc
+        <if test="(frtCatName != null and frtCatName != '') or (scdCatName != null and scdCatName != '')">
+            ,t_goods tg , t_indent_detail tid
+        </if>
+        where ti.stat in ('已出库','已完成')
+        <if test="(frtCatName != null and frtCatName != '') or (scdCatName != null and scdCatName != '')">
+            and ti.indent_no = tid.indent_no
+            and tid.goods_id = tg.goods_id
+        </if>
+        and tc.cust_id = ti.cust_id
+        <if test="custIds != null and custIds.size() > 0">
+            <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
+                #{custId}
+            </foreach>
+        </if>
+        <trim prefix="and" prefixOverrides="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="salesmanId != null">
+                and ti.salesman_id = #{salesmanId}
+            </if>
+            <if test="areaGrpId != null">
+                and tc.area_grp_id in (
+                  select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                )
+            </if>
+        </trim>
+    </select>
+    <!--客户销售排名-->
+    <select id="selectCustSalesRank" resultType="com.trenska.longwang.model.report.CustSalesRankModel">
+        select
+        result.salesNum ,result.salesAmnt,result.discountTotal,result.indentTotal,result.custId,result.custName,concat(@rownum:=@rownum+1,'') as rankNum
+        from
+        (
+            select
+            ti.cust_id as custId , tc.cust_name as custName,
+            ifnull(sum( case when ti.indent_type = '订货单' then ti.odr_amnt else -ti.odr_amnt end ) , 0 ) as salesAmnt ,
+            ifnull(sum( case when ti.indent_type = '订货单' then ti.indent_total else -ti.indent_total end ) , 0 ) as indentTotal ,
+            ifnull(sum( case when ti.indent_type = '订货单' then ti.discount_total else -ti.discount_total end ) , 0 ) as discountTotal ,
+            ifnull(sum( case when ti.indent_type = '订货单' then (ti.sum + ti.gift_sum) else -(ti.sum + ti.gift_sum) end ) ,0 ) as salesNum
+            from t_indent ti , t_customer tc
+            <if test="(frtCatName != null and frtCatName != '') or (scdCatName != null and scdCatName != '')">
+                ,t_goods tg , t_indent_detail tid
+            </if>
+            where ti.stat in ('已出库','已完成')
+            <if test="(frtCatName != null and frtCatName != '') or (scdCatName != null and scdCatName != '')">
+                and ti.indent_no = tid.indent_no
+                and tid.goods_id = tg.goods_id
+            </if>
+            and tc.cust_id = ti.cust_id
+            <if test="custIds != null and custIds.size() > 0">
+                <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
+                    #{custId}
+                </foreach>
+            </if>
+            <trim prefix="and" prefixOverrides="and">
+                <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                    and ti.sales_time between #{beginTime} and #{endTime}
+                </if>
+                <if test="frtCatName != null and frtCatName != ''">
+                    and tg.frt_cat_name = #{frtCatName}
+                </if>
+                <if test="scdCatName != null and scdCatName != ''">
+                    and tg.scd_cat_name = #{scdCatName}
+                </if>
+                <if test="salesmanId != null">
+                  and ti.salesman_id = #{salesmanId}
+                </if>
+                <if test="areaGrpId != null">
+                    and tc.area_grp_id in (
+                      select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                    )
+                </if>
+            </trim>
+            group by ti.cust_id
+        ) as result ,(select @rownum:=0) rk
+        <if test="byAmount != null">
+            <choose>
+                <when test="byAmount == true">
+                    order by salesAmnt desc ,salesNum desc
+                </when>
+                <otherwise>
+                    order by salesNum desc ,salesAmnt desc
+                </otherwise>
+            </choose>
+        </if>
+    </select>
+
+    <!--客户销售排名记录总数-->
+    <select id="selectCustSalesRankCount" resultType="java.lang.Integer">
+        select count(1)
+        from t_indent ti , t_customer tc
+        <if test="(frtCatName != null and frtCatName != '') or (scdCatName != null and scdCatName != '')">
+            ,t_goods tg , t_indent_detail tid
+        </if>
+        where ti.stat in ('已出库','已完成')
+        <if test="(frtCatName != null and frtCatName != '') or (scdCatName != null and scdCatName != '')">
+            and ti.indent_no = tid.indent_no
+            and tid.goods_id = tg.goods_id
+        </if>
+        and tc.cust_id = ti.cust_id
+        <if test="custIds != null and custIds.size() > 0">
+            <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
+                #{custId}
+            </foreach>
+        </if>
+        <trim prefix="and" prefixOverrides="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="salesmanId != null">
+                and ti.salesman_id = #{salesmanId}
+            </if>
+            <if test="areaGrpId != null">
+                and tc.area_grp_id in (
+                  select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                )
+            </if>
+        </trim>
+        group by ti.cust_id
+    </select>
+
+    <!--商品销售汇总 合计部分-->
+    <select id="selectGoodsSalesSummation" resultType="com.trenska.longwang.model.report.CommonSummation">
+        select
+            ifnull(sum( case when tid.indentType = '订货单' then tid.salesAmnt else -tid.salesAmnt end ),0) as salesAmntSum ,
+            ifnull(sum( case when tid.indentType = '订货单' then tid.discountAmount  else -tid.discountAmount end ),0) as discountAmntSum,
+            ifnull(sum( case when tid.indentType = '订货单' then tid.indentTotal else -tid.indentTotal end ),0) as indentTotalSum,
+            ifnull(sum( case when tid.indentType = '订货单' then tid.num else -tid.num end),0) as salesNumSum
+        from  (
+        select tg.goods_id,tg.goods_no,tg.goods_name,tu.unit_name,tg.frt_cat_name,tg.scd_cat_name,tg.brand_name
+        from t_goods tg ,t_unit tu
+        <if test="specPropId != null">
+            , t_goods_spec tgs
+        </if>
+        where tg.main_unit_id = tu.unit_id
+        <trim prefixOverrides="and" prefix="and">
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and tg.brand_name = #{brandName}
+            </if>
+            <if test="specPropId != null">
+                and tgs.spec_prop_id = #{specPropId}
+                and tgs.goods_id = tg.goods_id
+            </if>
+            <if test="combine != null and combine != ''">
+                and instr(tg.combine,#{combine})
+            </if>
+        </trim>
+        ) as tg
+        left join (
+        select
+                tid.goods_id as goods_id ,sum(tid.num) as num ,sum(cast(tid.discount_amount as decimal(13,4))) as discountAmount,
+                sum(cast(tid.amount as decimal(13,4)) + cast(tid.discount_amount as decimal(13,4))) as salesAmnt ,
+                tid.discount as discount ,sum(cast(tid.amount as decimal(13,4))) as indentTotal,tid.price as price,
+                ti.indent_type as indentType
+        from t_indent_detail tid, t_indent ti
+        <if test="shipmanId != null">
+            , t_stock ts
+        </if>
+        <if test="custName != null and custName != ''">
+            , t_customer tc
+        </if>
+        where ti.stat in ('已出库','已完成')
+        and ti.indent_no = tid.indent_no
+        <if test="shipmanId != null">
+            and ts.busi_no = ti.indent_no
+        </if>
+        <if test="custName != null and custName != ''">
+            and tc.cust_id = ti.cust_id
+        </if>
+        <trim prefixOverrides="and" prefix="and">
+            <if test="areaGrpId != null">
+                and ti.cust_id in (
+                    select cust_id from t_customer
+                    where area_grp_id in (
+                      select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                    )
+                )
+            </if>
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="custId != null">
+                and ti.cust_id = #{custId}
+            </if>
+            <if test="custName != null and custName != ''">
+                and tc.cust_name like concat('%', #{custName},'%')
+            </if>
+            <if test="salesmanId != null">
+                and ti.salesman_id = #{salesmanId}
+            </if>
+            <if test="shipmanId != null">
+                and ts.shipman_id = #{shipmanId}
+            </if>
+            <if test="empId != null">
+                and ti.emp_id = #{empId}
+            </if>
+            <choose>
+                <when test="goodsScope != null and goodsScope == -1">
+                    and tid.is_gift = 1
+                </when>
+                <when test="goodsScope != null and goodsScope == 0">
+                    and tid.is_gift = 0
+                </when>
+                <otherwise>
+                </otherwise>
+            </choose>
+        </trim>
+        group by tid.goods_id,tid.discount
+        ) as tid
+        on tg.goods_id = tid.goods_id
+        <trim prefix="where" prefixOverrides="and">
+            <if test="discount != null">
+                and tid.discount = #{discount}
+            </if>
+        </trim>
+    </select>
+
+    <!--商品销售汇总，有销售的商品才显示-->
+    <select id="selectGoodsSalesSummarizing" resultMap="GoodsSalesSummarizingResultMap">
+        select result.goodsId,result.goodsNo,result.goodsName,result.unit,result.discount,result.price,result.indentTotal,result.salesAmnt,result.discountTotal,result.num
+        from
+        ((select  tg.goods_id as goodsId,ifnull(tg.goods_no,"") as goodsNo,tg.goods_name as goodsName,tu.unit_name as unit,
+                tid.discount as discount ,tid.price as price ,sum(cast(tid.amount as decimal(13,4))) as indentTotal,
+                sum(cast(tid.amount as decimal(13,4)) + cast(tid.discount_amount as decimal(13,4))) as salesAmnt,
+                sum(cast(tid.discount_amount as decimal(13,4))) as discountTotal,sum(tid.num) as num
+        from t_goods tg ,t_unit tu , t_indent_detail tid, t_indent ti
+        <if test="specPropId != null">
+            , t_goods_spec tgs
+        </if>
+        <if test="shipmanId != null">
+            , t_stock ts
+        </if>
+        <if test="custName != null and custName != ''">
+            , t_customer tc
+        </if>
+        where tg.main_unit_id = tu.unit_id
+        and ti.stat in ('已出库','已完成')
+        and ti.indent_type = '订货单'
+        and ti.indent_no = tid.indent_no
+        and tg.goods_id = tid.goods_id
+        <trim prefixOverrides="and" prefix="and">
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and tg.brand_name = #{brandName}
+            </if>
+            <if test="specPropId != null">
+                and tgs.spec_prop_id = #{specPropId}
+                and tgs.goods_id = tg.goods_id
+            </if>
+            <if test="combine != null and combine != ''">
+                and instr(tg.combine,#{combine})
+            </if>
+            <if test="shipmanId != null">
+                and ts.busi_no = ti.indent_no
+                and ts.shipman_id = #{shipmanId}
+            </if>
+            <if test="custName != null and custName != ''">
+                and tc.cust_id = ti.cust_id
+            </if>
+            <if test="areaGrpId != null">
+                and ti.cust_id in (
+                    select tc.cust_id from t_customer tc
+                    where tc.area_grp_id in (
+                      select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                    )
+                )
+            </if>
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="salesmanId != null">
+                and ti.salesman_id = #{salesmanId}
+            </if>
+            <if test="custId != null">
+                and ti.cust_id = #{custId}
+            </if>
+            <if test="custName != null and custName != ''">
+                and tc.cust_name like concat('%', #{custName},'%')
+            </if>
+            <if test="empId != null">
+                and ti.emp_id = #{empId}
+            </if>
+            <if test="discount != null">
+                and tid.discount = #{discount}
+            </if>
+            <choose>
+                <when test="goodsScope != null and goodsScope == -1">
+                    and tid.is_gift = 1
+                </when>
+                <when test="goodsScope != null and goodsScope == 0">
+                    and tid.is_gift = 0
+                </when>
+                <otherwise>
+                </otherwise>
+            </choose>
+        </trim>
+        group by tid.goods_id,tid.discount)
+        union
+        (select  tg.goods_id as goodsId,ifnull(tg.goods_no,"") as goodsNo,tg.goods_name as goodsName,tu.unit_name as unit,
+        tid.discount as discount ,tid.price as price ,concat('-',sum(cast(tid.amount as decimal(13,4)))) as indentTotal,
+        concat('-',sum(cast(tid.amount as decimal(13,4)) + cast(tid.discount_amount as decimal(13,4)))) as salesAmnt,
+        concat('-',sum(cast(tid.discount_amount as decimal(13,4)))) as discountTotal,concat('-',sum(tid.num)) as num
+        from t_goods tg ,t_unit tu , t_indent_detail tid, t_indent ti
+        <if test="specPropId != null">
+            , t_goods_spec tgs
+        </if>
+        <if test="shipmanId != null">
+            , t_stock ts
+        </if>
+        <if test="custName != null and custName != ''">
+            , t_customer tc
+        </if>
+        where tg.main_unit_id = tu.unit_id
+        and ti.stat = '已完成'
+        and ti.indent_type = '退货单'
+        and ti.indent_no = tid.indent_no
+        and tg.goods_id = tid.goods_id
+        <trim prefixOverrides="and" prefix="and">
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and tg.brand_name = #{brandName}
+            </if>
+            <if test="specPropId != null">
+                and tgs.spec_prop_id = #{specPropId}
+                and tgs.goods_id = tg.goods_id
+            </if>
+            <if test="combine != null and combine != ''">
+                and instr(tg.combine,#{combine})
+            </if>
+            <if test="shipmanId != null">
+                and ts.busi_no = ti.indent_no
+                and ts.shipman_id = #{shipmanId}
+            </if>
+            <if test="custName != null and custName != ''">
+                and tc.cust_id = ti.cust_id
+            </if>
+            <if test="areaGrpId != null">
+                and ti.cust_id in (
+                select tc.cust_id from t_customer tc
+                where tc.area_grp_id in (
+                select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                )
+                )
+            </if>
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="salesmanId != null">
+                and ti.salesman_id = #{salesmanId}
+            </if>
+            <if test="custId != null">
+                and ti.cust_id = #{custId}
+            </if>
+            <if test="custName != null and custName != ''">
+                and tc.cust_name like concat('%', #{custName},'%')
+            </if>
+            <if test="empId != null">
+                and ti.emp_id = #{empId}
+            </if>
+            <if test="discount != null">
+                and tid.discount = #{discount}
+            </if>
+            <choose>
+                <when test="goodsScope != null and goodsScope == -1">
+                    and tid.is_gift = 1
+                </when>
+                <when test="goodsScope != null and goodsScope == 0">
+                    and tid.is_gift = 0
+                </when>
+                <otherwise>
+                </otherwise>
+            </choose>
+        </trim>
+        group by tid.goods_id)
+        ) as result order by result.goodsNo,result.salesAmnt desc
+    </select>
+    <!--商品销售汇总 所有商品都显示-->
+     <!--<select id="selectGoodsSalesSummarizing" resultMap="GoodsSalesSummarizingResultMap">
+      select tg.goods_id as goodsId,ifnull(tg.goods_no,"") as goodsNo,tg.goods_name as goodsName,tg.unit_name as unit,ifnull(tid.num,0) as num,
+             ifnull(tid.salesAmnt,0) as salesAmnt,ifnull(tid.discount,0) as discount,ifnull(tid.indentTotal,0) as indentTotal ,ifnull(tid.price,0) as price
+      from  (
+        select tg.goods_id,tg.goods_no,tg.goods_name,tu.unit_name,tg.frt_cat_name,tg.scd_cat_name,tg.brand_name
+        from t_goods tg ,t_unit tu
+         <if test="specPropId != null">
+             , t_goods_spec tgs
+         </if>
+        where tg.main_unit_id = tu.unit_id
+        <trim prefixOverrides="and" prefix="and">
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and tg.brand_name = #{brandName}
+            </if>
+            <if test="specPropId != null">
+                and tgs.spec_prop_id = #{specPropId}
+                and tgs.goods_id = tg.goods_id
+            </if>
+            <if test="combine != null and combine != ''">
+                and instr(tg.combine,#{combine})
+            </if>
+        </trim>
+        ) as tg
+      left join (
+        select tid.goods_id as goods_id ,sum(tid.num) as num ,
+               sum(cast(tid.amount as decimal(13,4)) + cast(tid.discount_amount as decimal(13,4))) as salesAmnt ,
+               tid.discount as discount ,
+               sum(cast(tid.amount as decimal(13,4))) as indentTotal,tid.price as price
+        from t_indent_detail tid, t_indent ti
+        <if test="shipmanId != null">
+            , t_stock ts
+        </if>
+         <if test="custName != null and custName != ''">
+             , t_customer tc
+         </if>
+        where ti.stat in ('已出库','已完成')
+        and ti.indent_type = '订货单'
+        and ti.indent_no = tid.indent_no
+        <if test="shipmanId != null">
+          and ts.busi_no = ti.indent_no
+        </if>
+        <if test="custName != null and custName != ''">
+          and tc.cust_id = ti.cust_id
+        </if>
+        <trim prefixOverrides="and" prefix="and">
+            <if test="areaGrpId != null">
+              and ti.cust_id in (
+                  select tc.cust_id from t_customer tc
+                  where tc.area_grp_id in (
+                      select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                  )
+              )
+            </if>
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="custId != null">
+              and ti.cust_id = #{custId}
+            </if>
+            <if test="custName != null and custName != ''">
+              and tc.cust_name like concat('%', #{custName},'%')
+            </if>
+            <if test="salesmanId != null">
+               and ti.salesman_id = #{salesmanId}
+            </if>
+            <if test="shipmanId != null">
+                and ts.shipman_id = #{shipmanId}
+            </if>
+            <if test="empId != null">
+              and ti.emp_id = #{empId}
+            </if>
+            <choose>
+                <when test="goodsScope != null and goodsScope == -1">
+                    and tid.is_gift = 1
+                </when>
+                <when test="goodsScope != null and goodsScope == 0">
+                    and tid.is_gift = 0
+                </when>
+                <otherwise>
+                </otherwise>
+            </choose>
+        </trim>
+         group by tid.goods_id,tid.discount
+        ) as tid
+        on tg.goods_id = tid.goods_id
+        <trim prefix="where" prefixOverrides="and">
+            <if test="discount != null">
+                and tid.discount = #{discount}
+            </if>
+        </trim>
+        order by tg.goods_no
+    </select>-->
+
+    <resultMap id="GoodsSalesSummarizingResultMap" type="com.trenska.longwang.model.report.GoodsSalesSummarizingModel">
+        <result column="goodsId" property="goodsId"/>
+        <result column="goodsNo" property="goodsNo"/>
+        <result column="goodsName" property="goodsName"/>
+        <result column="unit" property="unit"/>
+        <result column="num" property="num"/>
+        <result column="price" property="price"/>
+        <result column="salesAmnt" property="salesAmnt"/>
+        <result column="discount" property="discount"/>
+        <result column="indentTotal" property="indentTotal"/>
+        <collection column="goodsId" property="propNames" select="com.trenska.longwang.dao.goods.GoodsSpecMapper.getPropNamesByGoodsId"/>
+    </resultMap>
+
+    <select id="selectGoodsSalesSummarizingCount" resultType="java.lang.Integer">
+        select count(1)
+        from
+        (
+          (select  tg.goods_id as goodsId,ifnull(tg.goods_no,"") as goodsNo,tg.goods_name as goodsName,tu.unit_name as unit,
+          tid.discount as discount ,tid.price as price ,sum(cast(tid.amount as decimal(13,4))) as indentTotal,
+          sum(cast(tid.amount as decimal(13,4)) + cast(tid.discount_amount as decimal(13,4))) as salesAmnt,
+          sum(cast(tid.discount_amount as decimal(13,4))) as discountTotal,sum(tid.num) as num
+          from t_goods tg ,t_unit tu , t_indent_detail tid, t_indent ti
+          <if test="specPropId != null">
+            , t_goods_spec tgs
+          </if>
+          <if test="shipmanId != null">
+            , t_stock ts
+          </if>
+          <if test="custName != null and custName != ''">
+            , t_customer tc
+          </if>
+          where tg.main_unit_id = tu.unit_id
+          and ti.stat in ('已出库','已完成')
+          and ti.indent_type = '订货单'
+          and ti.indent_no = tid.indent_no
+          and tg.goods_id = tid.goods_id
+          <trim prefixOverrides="and" prefix="and">
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and tg.brand_name = #{brandName}
+            </if>
+            <if test="specPropId != null">
+                and tgs.spec_prop_id = #{specPropId}
+                and tgs.goods_id = tg.goods_id
+            </if>
+            <if test="combine != null and combine != ''">
+                and instr(tg.combine,#{combine})
+            </if>
+            <if test="shipmanId != null">
+                and ts.busi_no = ti.indent_no
+                and ts.shipman_id = #{shipmanId}
+            </if>
+            <if test="custName != null and custName != ''">
+                and tc.cust_id = ti.cust_id
+            </if>
+            <if test="areaGrpId != null">
+                and ti.cust_id in (
+                select tc.cust_id from t_customer tc
+                where tc.area_grp_id in (
+                select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                )
+                )
+            </if>
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="salesmanId != null">
+                and ti.salesman_id = #{salesmanId}
+            </if>
+            <if test="custId != null">
+                and ti.cust_id = #{custId}
+            </if>
+            <if test="custName != null and custName != ''">
+                and tc.cust_name like concat('%', #{custName},'%')
+            </if>
+            <if test="empId != null">
+                and ti.emp_id = #{empId}
+            </if>
+            <if test="discount != null">
+                and tid.discount = #{discount}
+            </if>
+            <choose>
+                <when test="goodsScope != null and goodsScope == -1">
+                    and tid.is_gift = 1
+                </when>
+                <when test="goodsScope != null and goodsScope == 0">
+                    and tid.is_gift = 0
+                </when>
+                <otherwise>
+                </otherwise>
+            </choose>
+        </trim>
+        group by tid.goods_id,tid.discount)
+        union
+        (select  tg.goods_id as goodsId,ifnull(tg.goods_no,"") as goodsNo,tg.goods_name as goodsName,tu.unit_name as unit,
+        tid.discount as discount ,tid.price as price ,concat('-',sum(cast(tid.amount as decimal(13,4)))) as indentTotal,
+        concat('-',sum(cast(tid.amount as decimal(13,4)) + cast(tid.discount_amount as decimal(13,4)))) as salesAmnt,
+        concat('-',sum(cast(tid.discount_amount as decimal(13,4)))) as discountTotal,sum(tid.num) as num
+        from t_goods tg ,t_unit tu , t_indent_detail tid, t_indent ti
+        <if test="specPropId != null">
+            , t_goods_spec tgs
+        </if>
+        <if test="shipmanId != null">
+            , t_stock ts
+        </if>
+        <if test="custName != null and custName != ''">
+            , t_customer tc
+        </if>
+        where tg.main_unit_id = tu.unit_id
+        and ti.stat = '已完成'
+        and ti.indent_type = '退货单'
+        and ti.indent_no = tid.indent_no
+        and tg.goods_id = tid.goods_id
+        <trim prefixOverrides="and" prefix="and">
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and tg.brand_name = #{brandName}
+            </if>
+            <if test="specPropId != null">
+                and tgs.spec_prop_id = #{specPropId}
+                and tgs.goods_id = tg.goods_id
+            </if>
+            <if test="combine != null and combine != ''">
+                and instr(tg.combine,#{combine})
+            </if>
+            <if test="shipmanId != null">
+                and ts.busi_no = ti.indent_no
+                and ts.shipman_id = #{shipmanId}
+            </if>
+            <if test="custName != null and custName != ''">
+                and tc.cust_id = ti.cust_id
+            </if>
+            <if test="areaGrpId != null">
+                and ti.cust_id in (
+                select tc.cust_id from t_customer tc
+                where tc.area_grp_id in (
+                select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                )
+                )
+            </if>
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="salesmanId != null">
+                and ti.salesman_id = #{salesmanId}
+            </if>
+            <if test="custId != null">
+                and ti.cust_id = #{custId}
+            </if>
+            <if test="custName != null and custName != ''">
+                and tc.cust_name like concat('%', #{custName},'%')
+            </if>
+            <if test="empId != null">
+                and ti.emp_id = #{empId}
+            </if>
+            <if test="discount != null">
+                and tid.discount = #{discount}
+            </if>
+            <choose>
+                <when test="goodsScope != null and goodsScope == -1">
+                    and tid.is_gift = 1
+                </when>
+                <when test="goodsScope != null and goodsScope == 0">
+                    and tid.is_gift = 0
+                </when>
+                <otherwise>
+                </otherwise>
+            </choose>
+        </trim>
+        group by tid.goods_id)
+        ) as result
+    </select>
+
+    <!-- 商品销售明细统计合计部分 -->
+    <select id="selectSingleGoodsSalesDetailSummation" resultType="com.trenska.longwang.model.report.CommonSummation">
+        select sum(tid.amount + tid.discount_amount) as salesAmntSum,sum(tid.num) as salesNumSum
+        from t_indent_detail tid ,t_indent ti
+        where ti.indent_no = tid.indent_no
+        and ti.stat in ('已出库','已完成')
+        and tid.goods_id = #{goodsId}
+        <trim prefix="and" prefixOverrides="and">
+            <if test="isGift != null and isGift == 0">
+                and tid.is_gift = #{isGift}
+            </if>
+            <if test="discount != null">
+                and tid.discount = #{discount}
+            </if>
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+        </trim>
+    </select>
+
+    <!-- 商品销售明细统计=>最外层数据只有一条-->
+    <select id="selectSingleGoodsSalesDetail" resultMap="SingleGoodsSalesDetailResultMap">
+        select
+        tg.goods_id as goodsId,tg.goods_name as goodsName,ifnull(tg.goods_no,"") as goodsNo,tg.main_unit_id as unitId,
+        sum(case when ti.indent_type = '订货单' then tid.num else -tid.num end ) as salesNumSum,
+        sum(case when ti.indent_type = '订货单' then (tid.amount  + tid.discount_amount) else -(tid.amount +tid.discount_amount) end ) as salesAmntSum
+        from t_goods tg,t_unit tu,t_indent_detail tid, t_indent ti
+        <if test="specPropId != null">
+            , t_goods_spec tgs
+        </if>
+        <if test="shipmanId != null">
+            , t_stock ts
+        </if>
+        where tg.main_unit_id = tu.unit_id
+        and tg.goods_id = tid.goods_id
+        and ti.indent_no = tid.indent_no
+        and ti.stat in ('已出库','已完成')
+        and tg.goods_id = #{goodsId}
+        <trim prefixOverrides="and" prefix="and">
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and tg.brand_name = #{brandName}
+            </if>
+            <if test="specPropId != null">
+                and tgs.spec_prop_id = #{specPropId}
+                and tgs.goods_id = tg.goods_id
+            </if>
+            <if test="combine != null and combine != ''">
+                and instr(tg.combine,#{combine})
+            </if>
+            <if test="discount != null">
+                and tid.discount = #{discount}
+            </if>
+            <if test="areaGrpId != null">
+                and ti.cust_id in (
+                    select tc.cust_id from t_customer tc
+                    where tc.area_grp_id in (
+                      select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                    )
+                )
+            </if>
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="custId != null">
+                and ti.cust_id = #{custId}
+            </if>
+            <if test="salesmanId != null">
+                and ti.salesman_id = #{salesmanId}
+            </if>
+            <if test="shipmanId != null">
+                and ts.busi_no = ti.indent_no
+                and ts.shipman_id = #{shipmanId}
+            </if>
+            <if test="empId != null">
+                and ti.emp_id = #{empId}
+            </if>
+            <choose>
+                <when test="goodsScope != null and goodsScope == -1">
+                    and tid.is_gift = 1
+                </when>
+                <when test="goodsScope != null and goodsScope == 0">
+                    and tid.is_gift = 0
+                </when>
+                <otherwise>
+                </otherwise>
+            </choose>
+        </trim>
+
+    </select>
+
+    <resultMap id="SingleGoodsSalesDetailResultMap" type="com.trenska.longwang.model.report.SingleGoodsSalesDetailModel">
+        <result column="goodsId" property="goodsId" />
+        <result column="goodsName" property="goodsName" />
+        <result column="goodsNo" property="goodsNo" />
+        <result column="salesAmntSum" property="salesAmntSum"/>
+        <result column="salesNumSum" property="salesNumSum"/>
+        <association column="unitId" property="unit" select="com.trenska.longwang.dao.goods.UnitMapper.selectUnitNameById" />
+        <collection column="goodsId" property="propNames" select="com.trenska.longwang.dao.goods.GoodsSpecMapper.getPropNamesByGoodsId"/>
+        <!--<collection column="goodsId" property="indentDetails" select="selectSingleGoodsIndentDetailDetail"  />-->
+    </resultMap>
+
+    <!-- 商品销售明细分页的记录总数应该是对应条件下商品的订货单数 -->
+    <select id="selectSingleGoodsSalesDetailCount" resultType="java.lang.Integer">
+        select count(1)
+        from t_indent_detail tid,t_indent ti
+        where ti.stat in ('已出库','已完成')
+        and ti.indent_type = '订货单'
+        and ti.indent_no = tid.indent_no
+        and tid.goods_id = #{goodsId}
+        <trim prefix="and" prefixOverrides="and">
+            <if test="isGift != null and isGift == 0">
+                and tid.is_gift = #{isGift}
+            </if>
+            <if test="discount != null">
+                and tid.discount = #{discount}
+            </if>
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+        </trim>
+    </select>
+
+
+    <select id="selectGoodsSalesRank" resultType="com.trenska.longwang.model.report.GoodsSalesRankModel">
+        select
+        result.salesAmnt,result.indentTotal,result.discountAmount,result.salesNum,result.goodsNo,result.goodsName,result.brandName ,result.catName ,concat(@rownum:=@rownum+1,'') as rankNum
+        from
+        (
+            select
+            ifnull(sum( case when ti.indent_type = '订货单' then (tid.amount + tid.discount_amount) else -(tid.amount + tid.discount_amount)  end ),0) as salesAmnt,
+            ifnull(sum( case when ti.indent_type = '订货单' then tid.discount_amount  else -tid.discount_amount end ),0) as discountAmount,
+            ifnull(sum( case when ti.indent_type = '订货单' then tid.amount else -tid.amount end ),0) as indentTotal,
+            ifnull(sum( case when ti.indent_type = '订货单' then tid.num else -tid.num end),0) as salesNum,
+            tg.goods_no as goodsNo , tg.goods_name as goodsName , tg.brand_name as brandName , tg.frt_cat_name as catName
+            from t_indent_detail tid , t_indent ti , t_goods tg
+            <if test="custName != null and custName != ''">
+                , t_customer tc
+            </if>
+            where ti.stat in ('已出库','已完成')
+            and ti.indent_no = tid.indent_no
+            and tid.goods_id = tg.goods_id
+            <if test="custName != null and custName != ''">
+                and ti.cust_id = tc.cust_id
+            </if>
+            <trim prefixOverrides="and" prefix="and">
+                <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                    and ti.sales_time between #{beginTime} and #{endTime}
+                </if>
+                <if test="areaGrpId != null">
+                    and ti.cust_id in (
+                    select tc.cust_id from t_customer tc
+                    where tc.area_grp_id in (
+                    select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                    )
+                    )
+                </if>
+                <if test="custName != null and custName != ''">
+                    and tc.cust_name like concat('%',#{custName},'%')
+                </if>
+                <if test="salesmanId != null">
+                    and ti.salesman_id = #{salesmanId}
+                </if>
+                <if test="frtCatName != null and frtCatName != ''">
+                    and tg.frt_cat_name = #{frtCatName}
+                </if>
+                <if test="scdCatName != null and scdCatName != ''">
+                    and tg.scd_cat_name = #{scdCatName}
+                </if>
+                <if test="brandName != null and brandName != ''">
+                    and tg.brand_name = #{brandName}
+                </if>
+            </trim>
+            <choose>
+                <when test="statisticsWay==1">
+                    group by tg.goods_name
+                </when>
+                <when test="statisticsWay==2">
+                    group by tg.brand_name
+                </when>
+                <when test="statisticsWay==3">
+                    group by tg.frt_cat_name
+                </when>
+            </choose>
+            <choose>
+                <when test="byAmount == true">
+                    order by salesAmnt desc ,salesNum desc
+                </when>
+                <otherwise>
+                    order by salesNum desc ,salesAmnt desc
+                </otherwise>
+            </choose>
+        ) as result ,(select @rownum:=0) rk
+    </select>
+
+    <!--商品销售统计部分-->
+    <select id="selectGoodsSalesRankSummation" resultType="com.trenska.longwang.model.report.CommonSummation">
+        select
+        ifnull(sum( case when ti.indent_type = '订货单' then (tid.amount + tid.discount_amount) else -(tid.amount + tid.discount_amount) end ),0) as salesAmntSum,
+        ifnull(sum( case when ti.indent_type = '订货单' then tid.discount_amount else -tid.discount_amount end ),0) as discountAmntSum,
+        ifnull(sum( case when ti.indent_type = '订货单' then tid.amount else -tid.amount end ),0) as indentTotalSum,
+        ifnull(sum( case when ti.indent_type = '订货单' then tid.num else -tid.num end),0) as salesNumSum
+        from t_indent_detail tid , t_indent ti , t_goods tg
+        <if test="custName != null and custName != ''">
+            , t_customer tc
+        </if>
+        where ti.stat in ('已出库','已完成')
+        and ti.indent_no = tid.indent_no
+        and tid.goods_id = tg.goods_id
+        <if test="custName != null and custName != ''">
+            and ti.cust_id = tc.cust_id
+        </if>
+        <trim prefixOverrides="and" prefix="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="areaGrpId != null">
+                and ti.cust_id in (
+                select tc.cust_id from t_customer tc
+                where tc.area_grp_id in (
+                select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                )
+                )
+            </if>
+            <if test="custName != null and custName != ''">
+                and tc.cust_name like concat('%',#{custName},'%')
+            </if>
+            <if test="salesmanId != null">
+                and ti.salesman_id = #{salesmanId}
+            </if>
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and tg.brand_name = #{brandName}
+            </if>
+        </trim>
+    </select>
+    <select id="selectGoodsSalesRankCount" resultType="java.lang.Integer">
+        select count(1)
+        from t_indent_detail tid , t_indent ti , t_goods tg
+        <if test="custName != null and custName != ''">
+            , t_customer tc
+        </if>
+        where ti.stat in ('已出库','已完成')
+        and ti.indent_type = '订货单'
+        and ti.indent_no = tid.indent_no
+        and tid.goods_id = tg.goods_id
+        <if test="custName != null and custName != ''">
+            and ti.cust_id = tc.cust_id
+        </if>
+        <trim prefixOverrides="and" prefix="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="areaGrpId != null">
+                and ti.cust_id in (
+                select tc.cust_id from t_customer tc
+                where tc.area_grp_id in (
+                select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                )
+                )
+            </if>
+            <if test="custName != null and custName != ''">
+                and tc.cust_name like concat('%',#{custName},'%')
+            </if>
+            <if test="salesmanId != null">
+                and ti.salesman_id = #{salesmanId}
+            </if>
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and tg.brand_name = #{brandName}
+            </if>
+        </trim>
+        <choose>
+            <when test="statisticsWay==1">
+                group by tg.goods_name
+            </when>
+            <when test="statisticsWay==2">
+                group by tg.brand_name
+            </when>
+            <when test="statisticsWay==3">
+                group by tg.frt_cat_name
+            </when>
+        </choose>
+    </select>
+
+    <!--订单统计合计部分-->
+    <select id="selectIndentStatisticsSummation" resultType="com.trenska.longwang.model.report.IndentStatisticsSummationModel">
+        SELECT
+               IFNULL(COUNT(CASE WHEN ti.indent_type = '订货单' THEN ti.indent_type END), 0)      AS orderNumSum,
+               IFNULL(COUNT(CASE WHEN ti.indent_type = '退货单' THEN ti.indent_type END), 0)      AS returnNumSum,
+               IFNULL(SUM(IF(ti.indent_type = '订货单', cast(ti.odr_amnt as decimal(13,4)), 0)), 0) AS orderAmntSum,
+               IFNULL(SUM(IF(ti.indent_type = '退货单', cast(ti.odr_amnt as decimal(13,4)), 0)), 0) AS returnAmntSum,
+               IFNULL(COUNT(DISTINCT CASE WHEN ti.indent_type = '订货单' THEN ti.cust_id END), 0) AS orderCustNumSum,
+               IFNULL(COUNT(DISTINCT CASE WHEN ti.indent_type = '退货单' THEN ti.cust_id END), 0) AS returnCustNumSum,
+               IFNULL(SUM(cast(ti.odr_amnt as decimal(13,4))-cast(ti.received_amnt as decimal(13,4))-cast(ti.payed_amnt as decimal(13,4)) ), 0) AS owedAmnt
+        FROM t_indent ti
+        <if test="brandName != null and brandName != ''">
+            ,t_goods tg , t_indent_detail tid
+        </if>
+        WHERE ti.stat IN ('已出库','已完成')
+        <if test="salesmanId != null">
+            and ti.salesman_id = #{salesmanId}
+        </if>
+        <if test="areaGrpId != null">
+            and ti.cust_id in (
+                select cust_id from t_customer
+                where area_grp_id in (
+                    select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                )
+            )
+        </if>
+        <if test="brandName != null and brandName != ''">
+            tg.goods_id = tid.goods_id
+            ti.indent_no = tid.indent_no
+            tg.brand_name = #{brandName}
+        </if>
+        AND ti.sales_time BETWEEN #{beginTime} AND #{endTime}
+    </select>
+
+    <select id="selectIndentStatistics" resultType="com.trenska.longwang.model.report.IndentStatisticsModel">
+        SELECT DATE_FORMAT(ti.sales_time, '%Y-%m-%d')                                                 AS statisticsTime,
+               IFNULL(COUNT(CASE WHEN ti.indent_type = '订货单' THEN ti.indent_type END), 0)          AS orderNum,
+               IFNULL(COUNT(CASE WHEN ti.indent_type = '退货单' THEN ti.indent_type END), 0)          AS returnNum,
+               IFNULL(SUM(IF(ti.indent_type = '订货单', cast(ti.odr_amnt as decimal(13,4)), 0)), 0)   AS orderAmnt,
+               IFNULL(SUM(IF(ti.indent_type = '退货单', cast(ti.odr_amnt as decimal(13,4)), 0)), 0)   AS returnAmnt,
+               IFNULL(COUNT(DISTINCT CASE WHEN ti.indent_type = '订货单' THEN ti.cust_id END), 0)     AS orderCustNum,
+               IFNULL(COUNT(DISTINCT CASE WHEN ti.indent_type = '退货单' THEN ti.cust_id END), 0)     AS returnCustNum
+        FROM t_indent ti
+        <if test="brandName != null and brandName != ''">
+            ,t_goods tg , t_indent_detail tid
+        </if>
+        WHERE ti.stat IN ('已出库','已完成')
+
+        <if test="salesmanId != null">
+            and ti.salesman_id = #{salesmanId}
+        </if>
+        <if test="areaGrpId != null">
+            and ti.cust_id in (
+                select cust_id from t_customer
+                where area_grp_id in (
+                  select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                )
+            )
+        </if>
+        <if test="brandName != null and brandName != ''">
+            tg.goods_id = tid.goods_id
+            ti.indent_no = tid.indent_no
+            tg.brand_name = #{brandName}
+        </if>
+        AND ti.sales_time BETWEEN #{beginTime} AND #{endTime}
+        GROUP BY DATE_FORMAT(ti.sales_time, '%Y-%m-%d')
+    </select>
+
+    <select id="selectIndentStatisticsCount" resultType="java.lang.Integer">
+        SELECT  count(1)
+        FROM t_indent ti
+        <if test="brandName != null and brandName != ''">
+            ,t_goods tg , t_indent_detail tid
+        </if>
+        WHERE ti.stat IN ('已出库','已完成')
+        <if test="salesmanId != null">
+            and ti.salesman_id = #{salesmanId}
+        </if>
+        <if test="areaGrpId != null">
+            and ti.cust_id in (
+                select cust_id from t_customer
+                where area_grp_id in (
+                  select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                )
+            )
+        </if>
+        <if test="brandName != null and brandName != ''">
+            tg.goods_id = tid.goods_id
+            ti.indent_no = tid.indent_no
+            tg.brand_name = #{brandName}
+        </if>
+        AND ti.sales_time BETWEEN #{beginTime} AND #{endTime}
+        GROUP BY DATE_FORMAT(ti.sales_time, '%Y-%m-%d')
+    </select>
+
+    <select id="selectCustSalesDetailSummarizing" resultType="com.trenska.longwang.model.report.CustSalesDetailSummarizingModel">
+        select sum( case when ti.indent_type = '订货单' then tid.num else -tid.num end ) as salesNumSum ,
+               sum( case when ti.indent_type = '订货单' then tid.amount else -tid.amount end ) as receivableAmntSum ,
+               sum( case when ti.indent_type = '订货单' then tid.discount_amount else -tid.discount_amount end ) as salesDiscountSum
+        from t_customer tc , t_indent ti , t_indent_detail tid , t_goods tg , t_unit tu
+        where ti.indent_no = tid.indent_no
+        and tc.cust_id = ti.cust_id
+        and tid.unit_id = tu.unit_id
+        and tid.goods_id = tg.goods_id
+        and tg.main_unit_id = tu.unit_id
+        and ti.stat in ('已出库','已完成')
+        <trim prefixOverrides="and" prefix="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="custId != null">
+                and ti.cust_id = #{custId}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and  tg.brand_name = #{brandName}
+            </if>
+            <if test="salesmanId != null">
+                and ti.salesman_id = #{salesmanId}
+            </if>
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+        </trim>
+    </select>
+    <select id="hasUnfinishedIndents" resultType="java.lang.Boolean">
+        select count(1)
+        from t_indent ti , t_indent_detail tid
+        where ti.indent_no = tid.indent_no
+        and tid.active_id in 
+        <foreach collection="activeIds" item="activeId" separator="," open="(" close=")" >
+            #{activeId}
+        </foreach>
+    </select>
+
+    <select id="selectDiscounts" resultType="java.lang.String">
+        select tid.discount as discount
+        from t_indent ti,t_indent_detail tid
+        where ti.indent_time between #{beginTime} and #{endTime}
+        and ti.indent_no = tid.indent_no
+        and ti.indent_type = '订货单'
+        and cast(tid.discount as decimal(13,4)) > 0
+        group by discount
+    </select>
+
+    <select id="selectDiscountsCount" resultType="java.lang.Integer">
+        select count(1)
+        from t_indent ti,t_indent_detail tid
+        where ti.indent_time between #{beginTime} and #{endTime}
+        and ti.indent_no = tid.indent_no
+        and ti.indent_type = '订货单'
+        and cast(tid.discount as decimal(13,4)) > 0
+        group by discount
+    </select>
+
+    <select id="selectDealDetailSummarizingForAdd" resultType="com.trenska.longwang.entity.financing.DealDetailSummarizing">
+        select ifnull(sum(cast(ti.indent_total as decimal(13,4))),0) as plusDebt
+        from t_indent ti
+        where ti.cust_id = #{custId}
+        and ti.indent_type = '订货单'
+        and ti.stat in( '已出库','已完成')
+        <trim prefix="and" prefixOverrides="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                AND ti.sales_time between #{beginTime} AND #{endTime}
+            </if>
+        </trim>
+    </select>
+    <!--欠款减少退货单部分-->
+    <select id="selectDealDetailSummarizingForDecrease"
+            resultType="com.trenska.longwang.entity.financing.DealDetailSummarizing">
+        select ifnull(sum( cast(ti.indent_total as decimal(13,4))),0) as cutDebt
+        from t_indent ti
+        where ti.stat = '已完成'
+        and ti.indent_type = '退货单'
+        and ti.cust_id = #{custId}
+        <trim prefix="and" prefixOverrides="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                AND ti.sales_time BETWEEN #{beginTime} AND #{endTime}
+            </if>
+        </trim>
+    </select>
+    <select id="selectAccountCheckingSummationIndentPart" resultType="com.trenska.longwang.model.report.AccountCheckingSummationModel">
+        SELECT
+        ifnull (sum(cast(ti.indent_total as decimal(13,4))) ,0) AS salesAmountTotal
+        FROM ( select * from t_customer
+        <trim prefixOverrides="AND" prefix="WHERE">
+            <if test="custName != null and custName != ''">
+                AND cust_name LIKE concat('%',#{custName},'%')
+            </if>
+            <if test="priceGrpId != null and priceGrpId != 0">
+                AND price_grp_id = #{priceGrpId}
+            </if>
+        </trim>
+        ) as tc
+        LEFT JOIN (
+        select * from t_indent
+        where stat in ('已完成','已出库')
+        and indent_type = '订货单'
+        and sales_time between #{beginTime} and #{endTime}
+        <trim prefixOverrides="and" prefix="and">
+            <if test="salesmanId">
+                AND salesman_id = #{salesmanId}
+            </if>
+        </trim>
+        ) as ti
+        ON tc.cust_id = ti.cust_id
+        <if test="areaGrpIds != null and areaGrpIds.size() > 0">
+            <foreach collection="areaGrpIds" item="areaGrpId" open=" WHERE tc.area_grp_id IN(" close=")" separator=",">
+                #{areaGrpId}
+            </foreach>
+        </if>
+    </select>
+    <select id="selectGoodsDeliveryStaticsCount" resultType="java.lang.Integer">
+        select count(1)
+        from t_indent ti, t_stock ts, sys_emp se
+        <if test="custName != null and custName != ''">
+            , t_customer tc
+        </if>
+        where ts.stat = 1
+        and ti.stat in ('已出库','已完成')
+        and ts.busi_no = ti.indent_no
+        and ts.shipman_id = se.emp_id
+        <trim prefixOverrides="and" prefix="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ts.stock_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="custName != null and custName != ''">
+                and ts.cust_id = tc.cust_id
+                and tc.cust_name like concat('%',#{custName},'%')
+            </if>
+            <if test="shipmanId != null">
+                and ts.shipman_id = #{shipmanId}
+            </if>
+        </trim>
+    </select>
+
+    <select id="selectGoodsDeliveryStatics" resultType="com.trenska.longwang.model.report.DeliveryStaticsModel">
+        select  ts.shipman_id as shipmanId, se.emp_name as shipman ,sum(ti.discount_total) as discountTotal,
+                sum(ti.sum + ti.gift_sum) as num, sum(ti.odr_amnt) as salesAmnt,sum(ti.indent_total) as indentTotal
+        from t_indent ti, t_stock ts, sys_emp se
+        <if test="custName != null and custName != ''">
+            , t_customer tc
+        </if>
+        where ts.stat = 1
+        and ti.stat in ('已出库','已完成')
+        and ts.busi_no = ti.indent_no
+        and ts.shipman_id = se.emp_id
+        <trim prefixOverrides="and" prefix="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ts.stock_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="custName != null and custName != ''">
+                and ts.cust_id = tc.cust_id
+                and tc.cust_name like concat('%',#{custName},'%')
+            </if>
+            <if test="shipmanId != null">
+                and ts.shipman_id = #{shipmanId}
+            </if>
+        </trim>
+        group by se.emp_id
+    </select>
+
+    <select id="selectGoodsDeliveryStaticsSummarizing" resultType="com.trenska.longwang.model.report.CommonSummation">
+        select sum(ti.sum + ti.gift_sum) as salesNumSum, sum(ti.discount_total) as discountAmntSum, sum(ti.odr_amnt) as salesAmntSum,sum(ti.indent_total) as indentTotalSum
+        from t_indent ti, t_stock ts, sys_emp se
+        <if test="custName != null and custName != ''">
+            , t_customer tc
+        </if>
+        where ts.stat = 1
+        and ti.stat in ('已出库','已完成')
+        and ts.busi_no = ti.indent_no
+        and ts.shipman_id = se.emp_id
+        <trim prefixOverrides="and" prefix="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ts.stock_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="custName != null and custName != ''">
+                and ts.cust_id = tc.cust_id
+                and tc.cust_name like concat('%',#{custName},'%')
+            </if>
+            <if test="shipmanId != null">
+                and ts.shipman_id = #{shipmanId}
+            </if>
+        </trim>
+    </select>
+    <select id="selectGoodsDeliveryDetailsStaticsSummarizing" resultType="com.trenska.longwang.model.report.DeliveryStaticsModel">
+        select se.emp_name as shipman , sum(ti.sum + ti.gift_sum) as num,sum(ti.discount_total) as discountTotal , sum(ti.odr_amnt) as salesAmnt,sum(ti.indent_total) as indentTotal
+        from t_indent ti, t_stock ts , sys_emp se
+        <if test="custName != null and custName != ''">
+            , t_customer tc
+        </if>
+        where ts.stat = 1
+        and ti.stat in ('已出库','已完成')
+        and ts.busi_no = ti.indent_no
+        and ts.shipman_id = se.emp_id
+        and ts.shipman_id = #{shipmanId}
+        <trim prefixOverrides="and" prefix="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ts.stock_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="custName != null and custName != ''">
+                and ts.cust_id = tc.cust_id
+                and tc.cust_name like concat('%',#{custName},'%')
+            </if>
+        </trim>
+    </select>
+    <select id="selectGoodsDeliveryDetailsStatics" resultType="com.trenska.longwang.model.report.DeliveryDetailsStaticsModel">
+        select ts.stock_time as deliveryDate, ti.indent_no as indentNo,tc.cust_name as custName,
+        (ti.sum + ti.gift_sum) as num, ti.odr_amnt as salesAmnt,ti.indent_total as indentTotal,ti.discount_total as discountTotal
+        from t_indent ti,  t_stock ts , t_customer tc
+        where ts.stat = 1
+        and ti.stat in ('已出库','已完成')
+        and ts.busi_no = ti.indent_no
+        and tc.cust_id = ti.cust_id
+        and ts.shipman_id = #{shipmanId}
+        <trim prefixOverrides="and" prefix="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ts.stock_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="custName != null and custName != ''">
+                and tc.cust_name like concat('%',#{custName},'%')
+            </if>
+        </trim>
+        order by ts.stock_time desc
+    </select>
+    <select id="selectGoodsDeliveryDetailStaticsCount" resultType="java.lang.Integer">
+        select count(1)
+        from t_indent ti,  t_stock ts , t_customer tc
+        where ts.stat = 1
+        and ti.stat in ('已出库','已完成')
+        and ts.busi_no = ti.indent_no
+        and ts.cust_id = tc.cust_id
+        and ts.shipman_id = #{shipmanId}
+        <trim prefixOverrides="and" prefix="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ts.stock_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="custName != null and custName != ''">
+                and tc.cust_name like concat('%',#{custName},'%')
+            </if>
+        </trim>
+    </select>
+    <select id="selectIndentNos" resultType="java.lang.String">
+        select indent_no
+        from t_indent
+        where receipt_stat = '待收款'
+        and indent_type = '订货单'
+        <if test="str != null and str != ''">
+            and indent_no like concat('%',#{str},'%')
+        </if>
+        group by indent_no
+        order by indent_time desc
+    </select>
+    <select id="selectIndentNosCount" resultType="java.lang.Integer">
+        select count(1)
+        from t_indent
+        where receipt_stat = '待收款'
+        and indent_type = '订货单'
+        <if test="str != null and str != ''">
+            and indent_no like concat('%',#{str},'%')
+        </if>
+        group by indent_no
+    </select>
+    <select id="selectIndentNoCustName" resultType="com.trenska.longwang.model.indent.IndentNoCustIdNameModel">
+        select ti.indent_no as indentNo,tc.cust_id as custId, tc.cust_name as custName
+        from t_indent ti,t_customer tc
+        where receipt_stat = '待收款'
+        and indent_type = '订货单'
+        and ti.cust_id = tc.cust_id
+        <if test="str != null and str != ''">
+            and indent_no like concat('%',#{str},'%')
+        </if>
+        group by indent_no
+        order by indent_time desc
+    </select>
+    <select id="selectIndentNoCustNameCount" resultType="java.lang.Integer">
+        select count(1)
+        from t_indent ti,t_customer tc
+        where receipt_stat = '待收款'
+        and indent_type = '订货单'
+        and ti.cust_id = tc.cust_id
+        <if test="str != null and str != ''">
+            and indent_no like concat('%',#{str},'%')
+        </if>
+        group by indent_no
+    </select>
+
+    <select id="selectSalesmanSalesRankCount" resultType="java.lang.Integer">
+        select count(1)
+        from t_indent_detail tid , t_indent ti , sys_emp se
+        <if test="(frtCatName != null and frtCatName != '') || (scdCatName != null and scdCatName != '') || (brandName != null || brandName != '')">
+            ,t_goods tg
+        </if>
+        where ti.stat in ('已出库','已完成')
+        and ti.indent_no = tid.indent_no
+        and se.emp_id = ti.salesman_id
+        <if test="(frtCatName != null and frtCatName != '') || (scdCatName != null and scdCatName != '') || (brandName != null || brandName != '')">
+            and tg.goods_id = tid.goods_id
+        </if>
+        <trim prefixOverrides="and" prefix="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="areaGrpId != null">
+                and ti.salesman_id in (
+                select teag.emp_id from t_emp_area_grp teag
+                where teag.area_grp_id in (
+                select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                )
+                )
+            </if>
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and tg.brand_name = #{brandName}
+            </if>
+        </trim>
+        group by ti.salesman_id
+    </select>
+    <select id="selectSalesmanSalesRank" resultType="com.trenska.longwang.model.report.SalesmanSalesRankModel">
+        select  result.salesAmnt,result.indentTotal,result.discountTotal,result.salesNum,result.salesmanId,result.salesmanName,concat(@rownum:=@rownum+1,'') as rankNum
+        from
+        (
+        select
+        se.emp_id as salesmanId,se.emp_name as salesmanName,
+        ifnull(sum( case when ti.indent_type = '订货单' then tid.num else -tid.num end ),0) as salesNum,
+        ifnull(sum( case when ti.indent_type = '订货单' then tid.amount else -tid.amount end ),0) as indentTotal,
+        ifnull(sum( case when ti.indent_type = '订货单' then tid.discount_amount else -tid.discount_amount end ),0) as discountTotal,
+        ifnull(sum( case when ti.indent_type = '订货单' then (tid.amount  + tid.discount_amount) else -(tid.amount  + tid.discount_amount) end ),0 ) as salesAmnt
+        from t_indent_detail tid , t_indent ti , sys_emp se
+        <if test="(frtCatName != null and frtCatName != '') || (scdCatName != null and scdCatName != '') || (brandName != null || brandName != '')">
+            ,t_goods tg
+        </if>
+        where ti.stat in ('已出库','已完成')
+        and ti.indent_no = tid.indent_no
+        and se.emp_id = ti.salesman_id
+        <if test="(frtCatName != null and frtCatName != '') || (scdCatName != null and scdCatName != '') || (brandName != null || brandName != '')">
+            and tg.goods_id = tid.goods_id
+        </if>
+        <trim prefixOverrides="and" prefix="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="areaGrpId != null">
+                and ti.salesman_id in (
+                select teag.emp_id from t_emp_area_grp teag
+                where teag.area_grp_id in (
+                    select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                )
+                )
+            </if>
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and tg.brand_name = #{brandName}
+            </if>
+        </trim>
+        group by salesmanId
+        <choose>
+            <when test="byAmount == true">
+                order by salesAmnt desc ,salesNum desc
+            </when>
+            <otherwise>
+                order by salesNum desc ,salesAmnt desc
+            </otherwise>
+        </choose>
+        ) as result ,(select @rownum:=0) rk
+    </select>
+    <select id="selectSalesmanSalesRankSummation" resultType="com.trenska.longwang.model.report.CommonSummation">
+        select
+        ifnull(sum( case when ti.indent_type = '订货单' then tid.num else -tid.num end ), 0) as salesNumSum,
+        ifnull(sum( case when ti.indent_type = '订货单' then tid.amount else -tid.amount end ),0) as indentTotalSum,
+        ifnull(sum( case when ti.indent_type = '订货单' then tid.discount_amount  else -tid.discount_amount end ),0) as discountAmntSum
+        from t_indent_detail tid , t_indent ti , sys_emp se
+        <if test="(frtCatName != null and frtCatName != '') || (scdCatName != null and scdCatName != '') || (brandName != null || brandName != '')">
+            ,t_goods tg
+        </if>
+        where ti.stat in ('已出库','已完成')
+        and ti.indent_no = tid.indent_no
+        and se.emp_id = ti.salesman_id
+        <if test="(frtCatName != null and frtCatName != '') || (scdCatName != null and scdCatName != '') || (brandName != null || brandName != '')">
+            and tg.goods_id = tid.goods_id
+        </if>
+        <trim prefixOverrides="and" prefix="and">
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and ti.sales_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="areaGrpId != null">
+                and ti.salesman_id in (
+                select teag.emp_id from t_emp_area_grp teag
+                where teag.area_grp_id in (
+                select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                )
+                )
+            </if>
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="brandName != null and brandName != ''">
+                and tg.brand_name = #{brandName}
+            </if>
+        </trim>
+    </select>
+</mapper>

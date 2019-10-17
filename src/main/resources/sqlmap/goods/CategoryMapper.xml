@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.trenska.longwang.dao.goods.CategoryMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.trenska.longwang.entity.goods.Category">
+        <id column="cat_id" property="catId"/>
+        <result column="cat_name" property="catName"/>
+        <result column="pid" property="pid"/>
+        <result column="stat" property="stat"/>
+        <result column="deletable" property="deletable"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        tc.cat_id,tc.cat_name,tc.pid,tc.stat,tc.deletable
+    </sql>
+    <!-- 将没有被t_goods表中的使用的分类设置为可以被删除 -->
+    <update id="setDeletable">
+        update t_category tc
+        set tc.deletable = 1
+        where tc.cat_name not in
+        (
+          select tg.frt_cat_name
+          from t_goods tg
+          where tg.deleted = 0
+          group by tg.frt_cat_name
+          union all
+          select tg.scd_cat_name
+          from t_goods tg
+          where tg.deleted = 0
+          group by tg.scd_cat_name)
+    </update>
+    <update id="setUndeletable">
+        update t_category
+        set deletable = 0
+        where cat_name = #{catName}
+    </update>
+
+    <select id="selectCategoryPageByStat" resultType="com.trenska.longwang.entity.goods.Category">
+        select
+        <include refid="Base_Column_List"/>
+        from t_category tc
+        where tc.stat = #{stat}
+    </select>
+    <select id="selectSubCategoryPageByCatId" resultType="com.trenska.longwang.entity.goods.Category">
+        select
+        <include refid="Base_Column_List"/>
+        from t_category tc
+        where tc.pid = #{catId}
+        <if test="stat != null">
+            and tc.stat = #{stat}
+        </if>
+    </select>
+    <select id="selectCategoryPageByName" resultType="com.trenska.longwang.entity.goods.Category">
+        select <include refid="Base_Column_List"/>
+        from t_category tc
+        where tc.cat_name like concat('%', #{catName}, '%')
+    </select>
+    <select id="selectCategoryPageSelective" resultType="com.trenska.longwang.entity.goods.Category">
+        select
+        <include refid="Base_Column_List"/>
+        from t_category tc
+        <trim prefix="where" prefixOverrides="and">
+            <if test="catName != null and catName != ''">
+                tc.cat_name like concat('%',#{catName},'%')
+            </if>
+            <if test="stat != null">
+                and tc.stat = #{stat}
+            </if>
+        </trim>
+    </select>
+
+    <select id="selectCountSelective" resultType="java.lang.Integer">
+        select
+        count(1)
+        from t_category tc
+        <trim prefix="where" prefixOverrides="and">
+            <if test="catName != null and catName != ''">
+                tc.cat_name like concat('%',#{catName},'%')
+            </if>
+            <if test="stat != null">
+                and tc.stat = #{stat}
+            </if>
+        </trim>
+    </select>
+    <select id="selectCategoryPage" resultType="com.trenska.longwang.entity.goods.Category">
+        select
+        <include refid="Base_Column_List"/>
+        from t_category tc
+    </select>
+</mapper>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.trenska.longwang.dao.indent.GiftMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.trenska.longwang.entity.indent.Gift">
+        <id column="id" property="id" />
+        <result column="detail_id" property="detailId" />
+        <result column="active_id" property="activeId" />
+        <result column="goods_id" property="goodsId" />
+        <result column="gift_id" property="giftId" />
+        <result column="num" property="num" />
+        <association column="gift_id" property="gift" select="com.trenska.longwang.dao.goods.GoodsMapper.selectGoodsByGoodsId"/>
+    </resultMap>
+
+    <select id="selectGiftsInfoById" resultMap="BaseResultMap">
+        select <include refid="Base_Column_List"/>
+        from t_gift tg
+        where tg.detail_id = #{detailId}
+    </select>
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        tg.id, tg.detail_id, tg.active_id, tg.goods_id, tg.gift_id, tg.num
+    </sql>
+
+</mapper>

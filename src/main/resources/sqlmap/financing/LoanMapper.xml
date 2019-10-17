@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.trenska.longwang.dao.financing.LoanMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.trenska.longwang.entity.financing.Loan">
+        <id column="loan_id" property="loanId" />
+        <result column="loan_no" property="loanNo"/>
+        <result column="borrow_cust_id" property="borrowCustId" />
+        <result column="lend_cust_id" property="lendCustId" />
+        <result column="amount" property="amount" />
+        <result column="emp_id" property="empId"/>
+        <result column="stat" property="stat"/>
+        <result column="loan_time" property="loanTime" />
+        <result column="remarks" property="remarks" />
+        <association property="borrowCustName" column="borrow_cust_id" select="com.trenska.longwang.dao.customer.CustomerMapper.selectNameById"/>
+        <association property="lendCustName" column="lend_cust_id" select="com.trenska.longwang.dao.customer.CustomerMapper.selectNameById"/>
+    </resultMap>
+
+
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        loan_id, loan_no, borrow_cust_id, lend_cust_id, amount, emp_id, stat, loan_time, remarks
+    </sql>
+    <select id="getLastLoanNo" resultType="java.lang.String">
+        select loan_no from t_loan
+        where loan_id = (
+          select max(loan_id)
+          from t_loan
+        )
+    </select>
+    <select id="selectLoanPageSelective" resultMap="BaseResultMap">
+        select <include refid="Base_Column_List"/>
+        from t_loan tl
+        <if test="custName != null and custName != ''">
+            ,t_customer tc
+        </if>
+        <trim prefix="where" prefixOverrides="and">
+            <if test="stat != null">
+                and tl.stat = #{stat}
+            </if>
+            <if test="custName != null and custName != ''">
+                and tl.cust_id = tc.cust_id
+                and tc.cust_name like concat('%', #{custName},'%')
+            </if>
+            <if test="endTime != null and endTime != '' and beginTime != '' and begingTime != ''">
+                and tl.loan_time between #{beginTime} and #{endTime}
+            </if>
+        </trim>
+
+    </select>
+    <select id="selectLoanPageSelectiveCount" resultType="java.lang.Integer">
+        select count(1)
+        from t_loan tl
+        <if test="custName != null and custName != ''">
+            ,t_customer tc
+        </if>
+        <trim prefix="where" prefixOverrides="and">
+            <if test="stat != null">
+                and tl.stat = #{stat}
+            </if>
+            <if test="custName != null and custName != ''">
+                and tl.cust_id = tc.cust_id
+                and tc.cust_name like concat('%', #{custName},'%')
+            </if>
+            <if test="endTime != null and endTime != '' and beginTime != '' and begingTime != ''">
+                and tl.loan_time between #{beginTime} and #{endTime}
+            </if>
+        </trim>
+    </select>
+
+    <!--<select id="selectAccountCheckingPageSelective"-->
+            <!--resultType="com.trenska.longwang.model.finaning.AccountCheckingModel">-->
+        <!--select sum(-->
+                    <!--case-->
+                      <!--when borrow_cust_id  = #{custId} then amount-->
+                      <!--when lend_cust_id = #{custid} then amount-->
+                      <!--else 0-->
+                    <!--end-->
+                   <!--)-->
+        <!--from t_loan tl-->
+        <!--where tl.stat = 1-->
+        <!---->
+    <!--</select>-->
+
+</mapper>

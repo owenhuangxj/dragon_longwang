@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.trenska.longwang.dao.goods.ActiveMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.trenska.longwang.entity.goods.Active">
+        <id column="active_id" property="activeId" />
+        <result column="active_name" property="activeName" />
+        <result column="begin_time" property="beginTime" />
+        <result column="end_time" property="endTime" />
+        <result column="stat" property="stat" />
+        <result column="is_all_join" property="isAllJoin" />
+        <result column="active_type" property="activeType" />
+        <result column="min_odr_num" property="minOdrNum" />
+        <result column="gift_num" property="giftNum"/>
+        <result column="discount" property="discount" />
+        <result column="deleted" property="deleted" />
+        <collection property="areaGrps" select="selectAreaGrpByActiveId" column="active_id" autoMapping="true"/>
+        <collection property="goods" select="selectGoodsByActiveId" column="active_id" autoMapping="true"/>
+        <collection property="gifts" select="selectGiftsByActiveId" column="active_id" autoMapping="true"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ta.active_id, ta.active_name, ta.begin_time, ta.end_time, ta.stat, ta.active_type, ta.is_all_join, ta.min_odr_num, ta.gift_num, ta.discount, ta.deleted
+    </sql>
+    <update id="updateActiveStat">
+        update t_active ta set ta.stat = 0
+        where DATE_FORMAT(now(),'%Y-%m-%d %H:%i:%s') not between ta.begin_time and ta.end_time
+    </update>
+    <select id="selectActivePage" resultMap="BaseResultMap">
+        select <include refid="Base_Column_List"/>
+        from t_active ta
+    </select>
+    <select id="selectCountSelective" resultType="java.lang.Integer">
+        select COUNT(1)
+        from t_active ta
+        <trim prefix="where" prefixOverrides="and">
+            <if test="activeName != null and activeName != ''">
+                ta.active_name like concat('%',#{activeName},'%')
+            </if>
+            <if test="stat != null ">
+                and ta.stat = #{stat}
+            </if>
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and DATE_FORMAT(ta.begin_time,'%Y-%m-%d %H:%i:%s') <![CDATA[ >= ]]> #{beginTime}
+                and DATE_FORMAT(ta.end_time,'%Y-%m-%d %H:%i:%s') <![CDATA[ <= ]]> #{endTime}
+            </if>
+        </trim>
+    </select>
+    <select id="selectActivePageSelective" resultMap="BaseResultMap">
+        select <include refid="Base_Column_List"/>
+        from t_active ta
+        <trim prefix="where" prefixOverrides="and">
+            <if test="activeName != null and activeName != ''">
+                ta.active_name like concat('%',#{activeName},'%')
+            </if>
+            <if test="stat != null ">
+                and ta.stat = #{stat}
+            </if>
+            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+                and DATE_FORMAT(ta.begin_time,'%Y-%m-%d %H:%i:%s') <![CDATA[ >= ]]> #{beginTime}
+                and DATE_FORMAT(ta.end_time,'%Y-%m-%d %H:%i:%s') <![CDATA[ <= ]]> #{endTime}
+            </if>
+        </trim>
+    </select>
+
+    <select id="selectGoodsByActiveId" resultMap="com.trenska.longwang.dao.goods.GoodsMapper.BaseResultMap">
+        select <include refid="com.trenska.longwang.dao.goods.GoodsMapper.Base_Column_List"/>
+        from t_active_goods tag,t_goods tg
+        where tag.active_id = #{activeId}
+        and tg.goods_id = tag.goods_id
+    </select>
+    
+    <select id="selectGiftsByActiveId" resultMap="com.trenska.longwang.dao.goods.GoodsMapper.BaseResultMap">
+        select <include refid="com.trenska.longwang.dao.goods.GoodsMapper.Base_Column_List"/>
+        from t_active_goods tag,t_goods tg
+        where tag.active_id = #{activeId}
+        and tg.goods_id = tag.gift_id
+    </select>
+    
+    <select id="selectAreaGrpByActiveId" resultMap="com.trenska.longwang.dao.customer.AreaGrpMapper.areaGrpResultMap" >
+        select <include refid="com.trenska.longwang.dao.customer.AreaGrpMapper.Base_Column_List"/>
+        from t_active_area_grp taag,t_area_grp tag
+        where tag.area_grp_id=taag.area_grp_id
+        and taag.active_id = #{activeId}
+    </select>
+    <select id="selectActiveById" resultMap="BaseResultMap">
+        select * from t_active where active_id = #{activeId}
+    </select>
+
+</mapper>
