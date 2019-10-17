@@ -46,7 +46,6 @@ public class StockUtil {
 
 		// 查询库存表中的库存类型为stockType的最后一条记录
 		// Stock lastStockRecord = stockMapper.selectRecordOfMaxId(stockType);
-
 		String stockNoOfMaxId = stockMapper.selectStockNoOfMaxId(stockType);
 		String stockNo = null;
 		/**
