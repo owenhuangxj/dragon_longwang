@@ -170,57 +170,46 @@ public class StockUtil {
 	 * @return
 	 */
 	public static ResponseModel stockout(Stock stock, GoodsMapper goodsMapper) {
-
-		stock.insert();
-
 		List<StockDetail> stockoutDetails = stock.getStockouts();
-
 		String stockNo = stock.getStockNo();
-
 		String stockTime = stock.getStockTime();
-
 		// 商品纬度
 		for (StockDetail stockoutDetail : stockoutDetails) {
-
 			// 商品出库量
 			int totalStockoutNumForOneGood = 0;
-
 			List<StockMadedate> stockMadeDates = stockoutDetail.getStockoutMadedates();
 			if (CollectionUtils.isEmpty(stockMadeDates)) {
 				return ResponseModel.getInstance().succ(false).msg("请选择批次.");
 			}
-
 			Integer goodsId = stockoutDetail.getGoodsId();
-			Goods dbGoods = goodsMapper.selectGoodsByGoodsId(goodsId);
-
-			/**
-			 * *****************************************按照批次出库*******************************************
-			 * *******************按照批次出库时前端做了取整处理，不会出现不按照批次出库的情况*******************
-			 */
-			// 批次纬度
-			for (StockMadedate stockMadedate : stockMadeDates) {
-				Integer multi = stockoutDetail.getMulti();
-				if (Objects.isNull(multi)) {
-					multi = 1;
+			synchronized (new Integer(goodsId)) {
+				Goods dbGoods = goodsMapper.selectGoodsByGoodsId(goodsId);
+				// 批次纬度
+				for (StockMadedate stockMadedate : stockMadeDates) {
+					Integer multi = stockoutDetail.getMulti();
+					if (Objects.isNull(multi)) {
+						multi = 1;
+					}
+					Integer num = stockMadedate.getNum();
+					// 商品出库量+(以最小单位进行处理的，所以要要处理multi)
+					totalStockoutNumForOneGood += num * multi;
+					//处理出库记录
+					stockoutDetail.setStockNo(stockNo);
+					stockoutDetail.setStockTime(stockTime);
+					stockoutDetail.setNum(stockMadedate.getNum()); // 出库数量
+					stockoutDetail.setHistory(num * multi); // 设置本次出库历史数量 = history * multi
+					stockoutDetail.setStock(dbGoods.getStock() - totalStockoutNumForOneGood); // 同步批次出库后的商品库存
+					stockoutDetail.setMadeDate(stockMadedate.getMadeDate()); // 设置出库批次
+					stockoutDetail.setStockPrice(stockMadedate.getStockPrice());
+					stockoutDetail.insert(); // 保存出库记录
+					//保存库存详情
+					StockDetailsUtil.saveStockDetails(stockoutDetail);
 				}
-				Integer num = stockMadedate.getNum();
-				// 商品出库量+(以最小单位进行处理的，所以要要处理multi)
-				totalStockoutNumForOneGood += num * multi;
-				/*******************************处理出库记录*******************************/
-				stockoutDetail.setStockNo(stockNo);
-				stockoutDetail.setStockTime(stockTime);
-				stockoutDetail.setNum(stockMadedate.getNum()); // 出库数量
-				stockoutDetail.setHistory(num * multi); // 设置本次出库历史数量 = history * multi
-				stockoutDetail.setStock(dbGoods.getStock() - num * multi); // 同步批次出库后的商品库存
-				stockoutDetail.setMadeDate(stockMadedate.getMadeDate()); // 设置出库批次
-				stockoutDetail.setStockPrice(stockMadedate.getStockPrice());
-				stockoutDetail.insert(); // 保存出库记录
-				/*******************************保存库存详情*******************************/
-				StockDetailsUtil.saveStockDetails(stockoutDetail);
+				//更新商品库存信息
+				new Goods(goodsId, dbGoods.getStock() - totalStockoutNumForOneGood).updateById();
 			}
-			/************************************* 更新商品库存信息 *************************************/
-			new Goods(goodsId, dbGoods.getStock() - totalStockoutNumForOneGood).updateById();
 		}
+		stock.insert();
 		return ResponseModel.getInstance().succ(true).msg(Constant.STOCKOUT_SUCC);
 	}
 
