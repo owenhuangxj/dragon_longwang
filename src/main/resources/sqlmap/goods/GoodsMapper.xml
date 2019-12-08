@@ -187,6 +187,7 @@
         select <include refid="Base_Column_List"/>
         from t_goods tg
         where  tg.goods_id = #{goodsId}
+        for update
     </select>
     <select id="selectGoodsPageSelectiveCount" resultType="java.lang.Integer">
         select count(1)

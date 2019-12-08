@@ -2,7 +2,6 @@ package com.trenska.longwang.util;
 
 import com.alibaba.fastjson.JSON;
 import com.trenska.longwang.model.sys.ResponseModel;
-import freemarker.ext.servlet.ServletContextHashModel;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -16,7 +15,7 @@ import java.io.PrintWriter;
  */
 public class ResponseUtil {
 
-	public static void accessDenied(int statusCode , String msg) throws IOException {
+	public static void accessDenied(int statusCode, String msg, String reason) throws IOException {
 
 		ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
 
@@ -30,7 +29,7 @@ public class ResponseUtil {
 
 		PrintWriter writer = response.getWriter();
 
-		writer.write(JSON.toJSONString(ResponseModel.getInstance().succ(false).msg(msg)));
+		writer.write(JSON.toJSONString(ResponseModel.getInstance().succ(false).code(statusCode).reason(reason).msg(msg)));
 
 		writer.flush();
 

@@ -55,7 +55,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.shiro.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -225,7 +224,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		List<String> indentNos = dbIndents.stream().map(Indent::getIndentNo).collect(Collectors.toList());
 
-		indentNos.forEach(indentNo->this.deleteRelativeInfos(indentNo)); // 删除关联记录
+		indentNos.forEach(indentNo -> this.deleteRelativeInfos(indentNo)); // 删除关联记录
 
 		return ResponseModel.getInstance().succ(true).msg("批量删除".concat(indentType).concat("成功"));
 	}
@@ -451,7 +450,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		);
 
 		Customer dbCustomer = null;
-		BigDecimal amount = new BigDecimal( dbIndent.getIndentTotal());
+		BigDecimal amount = new BigDecimal(dbIndent.getIndentTotal());
 
 		Integer custId = dbIndent.getCustId();
 		String nameNo = StringUtil.makeNameNo(Constant.DHD_CHINESE, dbIndent.getIndentNo());
@@ -536,7 +535,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 * stockoutMadedates:[
 	 * madeDate,
 	 * stockPrice,
-	 * history
+	 * num
 	 * ]
 	 * ]
 	 * }
@@ -552,7 +551,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		String stockNo = StockUtil.getStockNo(Constant.CK_TITLE, Constant.CKD_CHINESE, stockMapper);
 
 		Integer empIdInRedis = SysUtil.getEmpIdInRedis(request);
-		if (Objects.isNull(empIdInRedis)) {
+		if (null == empIdInRedis) {
 			return ResponseModel.getInstance().succ(false).msg(Constant.ACCESS_TIMEOUT_MSG);
 		}
 		Stock stockout = new Stock();
@@ -575,151 +574,141 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		List<IndentDetail> indentDetails = indent.getIndentDetails();
 
 		List<StockDetail> stockoutDetails = new ArrayList<>();
-		if (CollectionUtils.isNotEmpty(indentDetails)) {
-			for (IndentDetail indentDetail : indentDetails) {
-				StockDetail stkoutDetail = new StockDetail();
-				stkoutDetail.setEmpId(empIdInRedis);
-				stkoutDetail.setBusiNo(indent.getIndentNo()); // 关联业务单号:订货单号
-				stkoutDetail.setMulti(indentDetail.getMulti());
-				stkoutDetail.setSalesPrice(indentDetail.getPrice()); // 保存出库时商品的销售单价，方便统计送货金额/出库金额
-				stkoutDetail.setStockType(Constant.CKD_CHINESE); // 库存类型 : 出库单
-				stkoutDetail.setOperType(Constant.XSCK_CHINESE); // 操作类型 : 销售出库
-				stkoutDetail.setUnitId(indentDetail.getUnitId());
-				stkoutDetail.setGoodsId(indentDetail.getGoodsId());
-				// 商品出库数量
-				int stockoutNum = 0;
-				/************************************** 按照批次出库 **************************************/
-				List<StockMadedate> stockMadedates = indentDetail.getStockoutMadedates();
-				if (CollectionUtils.isNotEmpty(stockMadedates)) {
-					stkoutDetail.setStockoutMadedates(stockMadedates);
-					for (StockMadedate stockMadedate : stockMadedates) {
-						Integer num = stockMadedate.getNum();
-						Integer multi = indentDetail.getMulti();
-						stockoutNum += num * multi;
-					}
-					/********************************************不按批次出库********************************************/
-				} else {
-					System.out.println("*****************************************INTERESTING*****************************************");
+		for (IndentDetail indentDetail : indentDetails) {
+			StockDetail stkoutDetail = new StockDetail();
+			stkoutDetail.setEmpId(empIdInRedis);
+			stkoutDetail.setBusiNo(indent.getIndentNo()); // 关联业务单号:订货单号
+			stkoutDetail.setMulti(indentDetail.getMulti());
+			stkoutDetail.setSalesPrice(indentDetail.getPrice()); // 保存出库时商品的销售单价，方便统计送货金额/出库金额
+			stkoutDetail.setStockType(Constant.CKD_CHINESE); // 库存类型 : 出库单
+			stkoutDetail.setOperType(Constant.XSCK_CHINESE); // 操作类型 : 销售出库
+			stkoutDetail.setUnitId(indentDetail.getUnitId());
+			stkoutDetail.setGoodsId(indentDetail.getGoodsId());
+			// 商品出库数量
+			int stockoutNum = 0;
+			/************************************** 按照批次出库 **************************************/
+			List<StockMadedate> stockMadedates = indentDetail.getStockoutMadedates();
+			if (CollectionUtils.isNotEmpty(stockMadedates)) {
+				stkoutDetail.setStockoutMadedates(stockMadedates);
+				for (StockMadedate stockMadedate : stockMadedates) {
+					Integer num = stockMadedate.getNum();
+					Integer multi = indentDetail.getMulti();
+					stockoutNum += num * multi;
 				}
-				stockoutDetails.add(stkoutDetail);
-				/************************************** 更新订货单出库数量 **************************************/
-				//indentDetailMapper.updateStockoutNum(indentDetail.getDetailId(),stockoutNum); // 方式一
-				//方式二
-				Long detailId = indentDetail.getDetailId();
-				IndentDetail dbIndentDetail = indentDetailMapper.selectById(detailId);
-				IndentDetail updatingIndentDetail = new IndentDetail();
-				updatingIndentDetail.setDetailId(detailId);
-				Integer stockouted = dbIndentDetail.getStockout();
-				updatingIndentDetail.setStockout(stockouted + stockoutNum);
-				indentDetailMapper.updateById(updatingIndentDetail);
-
 			}
-			/******************************************** 添加出库详情 ********************************************/
-			stockout.setStockouts(stockoutDetails);
-			/******************************************** 出库 ********************************************/
-			ResponseModel stockoutResult = StockUtil.stockout(stockout);
-			// 如果出库失败return并且返回出库失败原因
-			Boolean succ = stockoutResult.getSucc();
-			if (!succ) {
-				return stockoutResult;
-			}
-			/**************************判断订货单是否出库完成->比较出库数量和订单数量是否相等***************************/
-			/**
-			 * 判断订货单是否收款完成->首先看收款状态已经为"已收款"，没有则计算已收款额是否等于订单应该收款额
-			 * 是并且为"已出库"状态则将订单状态设置为"待财审"状态
-			 * */
-			//订单详情->获取总订货数量
-			List<IndentDetail> dbIndentDetails = indentDetailMapper.selectList(
-					new LambdaQueryWrapper<IndentDetail>()
-							.eq(IndentDetail::getIndentNo, indent.getIndentNo())
-			);
-			//出库详情->获取总出库数量
-			List<StockDetail> dbStockoutDetails = stockDetailMapper.selectList(
-					new LambdaQueryWrapper<StockDetail>()
-							.eq(StockDetail::getStat, true)
-							.eq(StockDetail::getBusiNo, indent.getIndentNo())
-							.eq(StockDetail::getStockType, Constant.CKD_CHINESE)
-			);
-			int indentNum = 0;
-			int histroyStockoutNum = 0;
+			stockoutDetails.add(stkoutDetail);
+			//更新订货单出库数量
+			// 方式一
+			//indentDetailMapper.updateStockoutNum(indentDetail.getDetailId(),stockoutNum);
+			//方式二
+			Long detailId = indentDetail.getDetailId();
+			IndentDetail dbIndentDetail = indentDetailMapper.selectByDetailId(detailId);
+			IndentDetail updatingIndentDetail = new IndentDetail();
+			updatingIndentDetail.setDetailId(detailId);
+			Integer stockouted = dbIndentDetail.getStockout();
+			updatingIndentDetail.setStockout(stockouted + stockoutNum);
+			indentDetailMapper.updateById(updatingIndentDetail);
 
-			for (IndentDetail indentDetail : dbIndentDetails) {
-				indentNum += indentDetail.getNum() * indentDetail.getMulti();
-			}
+		}
+		/******************************************** 添加出库详情 ********************************************/
+		stockout.setStockouts(stockoutDetails);
+		/******************************************** 出库 ********************************************/
+		ResponseModel stockoutResult = StockUtil.stockout(stockout, goodsMapper);
+		// 如果出库失败返回出库失败原因
+		Boolean succ = stockoutResult.getSucc();
+		if (!succ) {
+			return stockoutResult;
+		}
+		/**************************判断订货单是否出库完成->比较出库数量和订单数量是否相等***************************/
+		/**
+		 * 判断订货单是否收款完成->首先看收款状态已经为"已收款"，没有则计算已收款额是否等于订单应该收款额
+		 * 是并且为"已出库"状态则将订单状态设置为"待财审"状态
+		 * */
+		//订单详情->获取总订货数量
+		List<IndentDetail> dbIndentDetails = indentDetailMapper.selectList(
+				new LambdaQueryWrapper<IndentDetail>()
+						.eq(IndentDetail::getIndentNo, indent.getIndentNo())
+		);
+		//出库详情->获取总出库数量
+		List<StockDetail> dbStockoutDetails = stockDetailMapper.selectList(
+				new LambdaQueryWrapper<StockDetail>()
+						.eq(StockDetail::getStat, true)
+						.eq(StockDetail::getBusiNo, indent.getIndentNo())
+						.eq(StockDetail::getStockType, Constant.CKD_CHINESE)
+		);
+		int indentNum = 0;
+		int histroyStockoutNum = 0;
 
-			for (StockDetail stockDetail : dbStockoutDetails) {
-				histroyStockoutNum += stockDetail.getNum() * stockDetail.getMulti();
-			}
+		for (IndentDetail indentDetail : dbIndentDetails) {
+			indentNum += indentDetail.getNum() * indentDetail.getMulti();
+		}
 
-			// 已出库完成 订单量 == 出库量
-			boolean allStockouted = (indentNum == histroyStockoutNum);
+		for (StockDetail stockDetail : dbStockoutDetails) {
+			histroyStockoutNum += stockDetail.getNum() * stockDetail.getMulti();
+		}
 
-			if (NumberUtil.isLongUsable(indentId)) { // 确保订单是有效的
-				Indent dbIndent = this.getById(indentId);
-				boolean payed = PaymentStat.RECEIPRED.getName().equals(dbIndent.getReceiptStat());
-				Boolean audited = dbIndent.getAuditStat();
-				// 如果已付款并且已出库->设置状态为"已出库"、"已收款"、auditable=true(不管之前的状态)
-				if (allStockouted) { // 如果已出完库
+		// 已出库完成 订单量 == 出库量
+		boolean allStockouted = (indentNum == histroyStockoutNum);
 
-					String dbIndentTotal = dbIndent.getIndentTotal();
-					// 1.增加客户欠款 ==>改到了出完库才增加欠款
-					Customer dbCustomer = new Customer(custId).selectById();
-					String oldDebt = dbCustomer.getDebt();
-					BigDecimal amount = new BigDecimal(dbIndentTotal);
-					CustomerUtil.addCustomerDebt(custId, oldDebt, amount);
+		if (NumberUtil.isLongUsable(indentId)) { // 确保订单是有效的
+			Indent dbIndent = this.getById(indentId);
+			boolean payed = PaymentStat.RECEIPRED.getName().equals(dbIndent.getReceiptStat());
+			Boolean audited = dbIndent.getAuditStat();
+			// 如果已付款并且已出库->设置状态为"已出库"、"已收款"、auditable=true(不管之前的状态)
+			if (allStockouted) { // 如果已出完库
 
-					// 2.记录交易明细 ,增加应收款,前缀 "+" ==>改到了出完库才记账
-					String nameNo = StringUtil.makeNameNo(Constant.DHD_CHINESE, indentNo);
-					String currentTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
-					String newDebt = new BigDecimal(dbCustomer.getDebt()).add(amount).toString();
-					String auditRemarks = dbIndent.getAuditRemarks();
+				String dbIndentTotal = dbIndent.getIndentTotal();
+				// 1.增加客户欠款 ==>改到了出完库才增加欠款
+				Customer dbCustomer = new Customer(custId).selectById();
+				String oldDebt = dbCustomer.getDebt();
+				BigDecimal amount = new BigDecimal(dbIndentTotal);
+				CustomerUtil.addCustomerDebt(custId, oldDebt, amount);
 
-					DealDetailUtil.saveDealDetail(custId, nameNo, currentTime, "+".concat(amount.toString()), newDebt, Constant.XSSP, "", "",auditRemarks);
+				// 2.记录交易明细 ,增加应收款,前缀 "+" ==>改到了出完库才记账
+				String nameNo = StringUtil.makeNameNo(Constant.DHD_CHINESE, indentNo);
+				String currentTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
+				String newDebt = new BigDecimal(dbCustomer.getDebt()).add(amount).toString();
+				String auditRemarks = dbIndent.getAuditRemarks();
 
-					Indent updatingIndent = new Indent();
-					updatingIndent.setSalesTime(currentTime); // 设置销售时间为订单完成出库时间
-					if (payed) { //如果已经付款
+				DealDetailUtil.saveDealDetail(custId, nameNo, currentTime, "+".concat(amount.toString()), newDebt, Constant.XSSP, "", "", auditRemarks);
+
+				Indent updatingIndent = new Indent();
+				updatingIndent.setSalesTime(currentTime); // 设置销售时间为订单完成出库时间
+				if (payed) { //如果已经付款
+					updatingIndent.setAuditable(true);
+					updatingIndent.setIndentId(indentId);
+					updatingIndent.setStat(IndentStat.STOCKOUTED.getName());
+					updatingIndent.setReceiptStat(PaymentStat.RECEIPRED.getName());
+					/********************************** 确保完成状态 **********************************/
+					if (!Objects.isNull(audited) && BooleanUtils.isTrue(audited)) {
+						updatingIndent.setStat(IndentStat.FINISHED.getName());
+					}
+					// 如果已出库未付款完成->比较收款金额+付款金额是否等于代收款金额
+				} else {
+					BigDecimal iouAmnt = new BigDecimal(dbIndent.getIouAmnt());
+					BigDecimal payedAmnt = new BigDecimal(dbIndent.getPayedAmnt());
+					BigDecimal indentTotal = new BigDecimal(dbIndent.getIndentTotal());
+					BigDecimal receivedAmnt = new BigDecimal(dbIndent.getReceivedAmnt());
+					// 再次计算比较收款金额+付款金额+欠条>=应收款 确保"可以财审"状态;收款金额+付款金额==应收款 确保"已收款"状态
+					boolean auditable = indentTotal.compareTo(payedAmnt.add(receivedAmnt).add(iouAmnt)) <= 0;
+					if (auditable) {
 						updatingIndent.setAuditable(true);
 						updatingIndent.setIndentId(indentId);
 						updatingIndent.setStat(IndentStat.STOCKOUTED.getName());
-						updatingIndent.setReceiptStat(PaymentStat.RECEIPRED.getName());
-						/********************************** 确保完成状态 **********************************/
-						if (!Objects.isNull(audited) && BooleanUtils.isTrue(audited)) {
-							updatingIndent.setStat(IndentStat.FINISHED.getName());
+						payed = indentTotal.compareTo(payedAmnt.add(receivedAmnt)) == 0;
+						if (payed) {
+							updatingIndent.setReceiptStat(PaymentStat.RECEIPRED.getName());
 						}
-						//updatingIndent.updateById();
-						// 如果已出库未付款完成->比较收款金额+付款金额是否等于代收款金额
 					} else {
-						BigDecimal iouAmnt = new BigDecimal(dbIndent.getIouAmnt());
-						BigDecimal payedAmnt = new BigDecimal(dbIndent.getPayedAmnt());
-						BigDecimal indentTotal = new BigDecimal(dbIndent.getIndentTotal());
-						BigDecimal receivedAmnt = new BigDecimal(dbIndent.getReceivedAmnt());
-						// 再次计算比较收款金额+付款金额+欠条>=应收款 确保"可以财审"状态;收款金额+付款金额==应收款 确保"已收款"状态
-						boolean auditable = indentTotal.compareTo(payedAmnt.add(receivedAmnt).add(iouAmnt)) <= 0;
-						if (auditable) {
-							//Indent updatingIndent = new Indent();
-							updatingIndent.setAuditable(true);
-							updatingIndent.setIndentId(indentId);
-							updatingIndent.setStat(IndentStat.STOCKOUTED.getName());
-							payed = indentTotal.compareTo(payedAmnt.add(receivedAmnt)) == 0;
-							if (payed) {
-								updatingIndent.setReceiptStat(PaymentStat.RECEIPRED.getName());
-							}
-							//updatingIndent.updateById();
-						} else {
-							//Indent updatingIndent = new Indent();
-							updatingIndent.setAuditable(false);
-							updatingIndent.setIndentId(indentId);
-							updatingIndent.setStat(IndentStat.STOCKOUTED.getName());
-						}
+						updatingIndent.setAuditable(false);
+						updatingIndent.setIndentId(indentId);
+						updatingIndent.setStat(IndentStat.STOCKOUTED.getName());
 					}
-					updatingIndent.updateById();
 				}
+				updatingIndent.updateById();
 			}
-		} else {
-			return ResponseModel.getInstance().succ(false).msg("订单信息不能为空");
 		}
-		return ResponseModel.getInstance().succ(true).msg("订货单出库成功");
+		return ResponseModel.getInstance().succ(true).msg("订货单出库成功.");
 	}
 
 	/**
@@ -1248,23 +1237,23 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		String dbAuditRemarks = dbIndent.getAuditRemarks();
 		String indentStat = dbIndent.getStat();
 
-		if (StringUtils.isEmpty(dbAuditRemarks)){
+		if (StringUtils.isEmpty(dbAuditRemarks)) {
 			dbAuditRemarks = "";
 		}
 		// 保证不传此参数时或传null时清空备注
-		if(StringUtils.isEmpty(auditRemarks)){
+		if (StringUtils.isEmpty(auditRemarks)) {
 			dbIndent.setAuditRemarks("");
 		}
 		boolean equals = dbAuditRemarks.equals(auditRemarks);
 
 		// 如果旧财审备注和新财审备注不相同则更新财审备注
-		if(false == equals) {
+		if (false == equals) {
 			dbIndent.setAuditRemarks(auditRemarks);
 		}
 		// 如果订货单已经出库并且旧财审备注和新财审备注不相同才同步财审备注到欠款明细里面去
-		if(IndentStat.STOCKOUTED.getName().equals(indentStat) && false == equals){
+		if (IndentStat.STOCKOUTED.getName().equals(indentStat) && false == equals) {
 			String indentNo = dbIndent.getIndentNo();
-			DealDetailUtil.saveOrUpdateAuditRemarks(auditRemarks,indentNo);
+			DealDetailUtil.saveOrUpdateAuditRemarks(auditRemarks, indentNo);
 		}
 
 		boolean successful = IndentUtil.handleIndentStat(dbIndent);
@@ -1351,9 +1340,9 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 * 2.不操作收/付款单、欠条
 	 * 3.获取出库记录，还回库存，删除出库记录
 	 * 4.修改订单
-	 * 	4.1 删除原商品信息
-	 * 	4.2 保存新商品信息
-	 * 	4.3 判断是否已出库，已出库则保存一条核准修改 减少客户欠款的欠款明细
+	 * 4.1 删除原商品信息
+	 * 4.2 保存新商品信息
+	 * 4.3 判断是否已出库，已出库则保存一条核准修改 减少客户欠款的欠款明细
 	 * 修改订单应收款，不处理财审状态，不处理已收款、已付款、欠条
 	 *
 	 * @param indent 前端传回的订单
@@ -1380,25 +1369,25 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		Long indentId = indent.getIndentId();
 
-		if(NumberUtil.isLongNotUsable(indentId)){
+		if (NumberUtil.isLongNotUsable(indentId)) {
 			return ResponseModel.getInstance().succ(false).msg(Constant.INVALID_INDENT);
 		}
 
 		Indent dbIndent = new Indent().selectById(indentId);
 
-		if(null == dbIndent){
+		if (null == dbIndent) {
 			return ResponseModel.getInstance().succ(false).msg(Constant.INVALID_INDENT);
 		}
 
 		Boolean auditStat = dbIndent.getAuditStat();
 
-		if(true == auditStat){
+		if (true == auditStat) {
 			return ResponseModel.getInstance().succ(false).msg("订单已财审，不能核改");
 		}
 
 		String indentStat = dbIndent.getStat();
 
-		if(IndentStat.FINISHED.getName().equals(indentStat)){
+		if (IndentStat.FINISHED.getName().equals(indentStat)) {
 			return ResponseModel.getInstance().succ(false).msg("订单已完成，不能核改");
 		}
 
@@ -1406,28 +1395,28 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 
 		// 如果为已出库状态，则需要处理客户欠款问题
-		if(IndentStat.STOCKOUTED.getName().equals(indentStat)){
+		if (IndentStat.STOCKOUTED.getName().equals(indentStat)) {
 			Integer custId = dbIndent.getCustId();
 			BigDecimal dbIndentTotal = new BigDecimal(dbIndent.getIndentTotal());
-			String nameNo = StringUtil.makeNameNo(Constant.DHD_CHINESE,indentNo);
+			String nameNo = StringUtil.makeNameNo(Constant.DHD_CHINESE, indentNo);
 			String currentTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
 			Customer dbCustomer = new Customer(custId).selectById();
 			BigDecimal oldDebt = new BigDecimal(dbCustomer.getDebt());
 			BigDecimal newDebt = oldDebt.subtract(dbIndentTotal);
 			// 减少客户欠款
-			CustomerUtil.subtractCustomerDebt(custId,oldDebt.toString(),dbIndentTotal);
+			CustomerUtil.subtractCustomerDebt(custId, oldDebt.toString(), dbIndentTotal);
 			//保存一条欠款明细
-			DealDetailUtil.saveDealDetail(custId,nameNo,currentTime,dbIndentTotal.negate().toPlainString(),newDebt.toString(),Constant.XSSP_HG,"","","");
+			DealDetailUtil.saveDealDetail(custId, nameNo, currentTime, dbIndentTotal.negate().toPlainString(), newDebt.toString(), Constant.XSSP_HG, "", "", "");
 		}
 
 		// 获取出库信息
 		List<Stock> stockouts = new Stock().selectList(
 				new LambdaQueryWrapper<Stock>()
-						.eq(Stock::getBusiNo,indentNo)
+						.eq(Stock::getBusiNo, indentNo)
 		);
 
 		// 处理订货单商品信息
-		if(CollectionUtils.isNotEmpty(stockouts)){
+		if (CollectionUtils.isNotEmpty(stockouts)) {
 			stockouts.forEach(stock -> {
 				String stockNo = stock.getStockNo();
 				List<StockDetail> stockoutDetails = stockDetailMapper.selectByStockNo(stockNo);
@@ -1437,12 +1426,12 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		Integer empIdInRedis = SysUtil.getEmpIdInRedis(request);
 
 		// 删除出库信息
-		StockUtil.deleteStockout(stockouts,empIdInRedis);
+		StockUtil.deleteStockout(stockouts, empIdInRedis);
 
 		// 删除旧订货单信息
 		new IndentDetail().delete(
 				new LambdaQueryWrapper<IndentDetail>()
-						.eq(IndentDetail::getIndentNo,indentNo)
+						.eq(IndentDetail::getIndentNo, indentNo)
 		);
 
 		// 前端传来的订货商品参数包含了旧的参数，比如stockout(已出库数量)，需求进行清理
@@ -1481,6 +1470,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 	/**
 	 * 修改订货单的财审备注
+	 *
 	 * @param indentNo
 	 * @param auditRemarks
 	 * @return
@@ -1489,28 +1479,28 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	public ResponseModel updateAuditRemarks(String indentNo, String auditRemarks) {
 		this.update(
 				new LambdaUpdateWrapper<Indent>()
-						.eq(Indent::getIndentNo,indentNo)
-						.set(Indent::getAuditRemarks,auditRemarks)
+						.eq(Indent::getIndentNo, indentNo)
+						.set(Indent::getAuditRemarks, auditRemarks)
 		);
-		DealDetailUtil.saveOrUpdateAuditRemarks(auditRemarks,indentNo);
+		DealDetailUtil.saveOrUpdateAuditRemarks(auditRemarks, indentNo);
 		return ResponseModel.getInstance().succ(true).msg(Constant.CHANGE_SUCC);
 	}
 
 	@Override
 	public Page<DeliveryStaticsModel> getGoodsDeliveryStatics(Page page, Map<String, Object> params, HttpServletRequest request) {
 		int total = super.baseMapper.selectGoodsDeliveryStaticsCount(params).size();
-		List<DeliveryStaticsModel> deliveryStatics =  super.baseMapper.selectGoodsDeliveryStatics(page,params);
+		List<DeliveryStaticsModel> deliveryStatics = super.baseMapper.selectGoodsDeliveryStatics(page, params);
 
 		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
 
 		for (DeliveryStaticsModel deliveryStatic : deliveryStatics) {
 
 			BigDecimal discountTotal = new BigDecimal(deliveryStatic.getDiscountTotal());
-			discountTotal = discountTotal.setScale(retain,RoundingMode.HALF_UP);
+			discountTotal = discountTotal.setScale(retain, RoundingMode.HALF_UP);
 			deliveryStatic.setDiscountTotal(discountTotal.toString());
 
 			BigDecimal indentTotal = new BigDecimal(deliveryStatic.getIndentTotal());
-			indentTotal = indentTotal.setScale(retain,RoundingMode.HALF_UP);
+			indentTotal = indentTotal.setScale(retain, RoundingMode.HALF_UP);
 			deliveryStatic.setIndentTotal(indentTotal.toString());
 
 			BigDecimal salesAmnt = indentTotal.add(discountTotal);
@@ -1528,7 +1518,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		CommonSummation summation = super.baseMapper.selectGoodsDeliveryStaticsSummarizing(params);
 		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
 
-		return this.dealRetain(summation,retain);
+		return this.dealRetain(summation, retain);
 	}
 
 	@Override
@@ -1536,17 +1526,17 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		DeliveryStaticsModel deliveryStaticsModel = super.baseMapper.selectGoodsDeliveryDetailsStaticsSummarizing(params);
 		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
 
-		BigDecimal indentTotal = new BigDecimal( deliveryStaticsModel.getIndentTotal());
-		BigDecimal discountTotal = new BigDecimal( deliveryStaticsModel.getDiscountTotal());
+		BigDecimal indentTotal = new BigDecimal(deliveryStaticsModel.getIndentTotal());
+		BigDecimal discountTotal = new BigDecimal(deliveryStaticsModel.getDiscountTotal());
 
 		BigDecimal salesAmnt = indentTotal.add(discountTotal);
-		salesAmnt = salesAmnt.setScale(retain,RoundingMode.HALF_UP);
+		salesAmnt = salesAmnt.setScale(retain, RoundingMode.HALF_UP);
 		deliveryStaticsModel.setSalesAmnt(salesAmnt.toString());
 
-		indentTotal = indentTotal.setScale(retain,RoundingMode.HALF_UP);
+		indentTotal = indentTotal.setScale(retain, RoundingMode.HALF_UP);
 		deliveryStaticsModel.setIndentTotal(indentTotal.toString());
 
-		discountTotal = discountTotal.setScale(retain,RoundingMode.HALF_UP);
+		discountTotal = discountTotal.setScale(retain, RoundingMode.HALF_UP);
 		deliveryStaticsModel.setDiscountTotal(discountTotal.toString());
 
 
@@ -1558,20 +1548,20 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
 
-		List<DeliveryDetailsStaticsModel> records = super.baseMapper.selectGoodsDeliveryDetailsStatics(page,params);
+		List<DeliveryDetailsStaticsModel> records = super.baseMapper.selectGoodsDeliveryDetailsStatics(page, params);
 
 		for (DeliveryDetailsStaticsModel record : records) {
-			BigDecimal indentTotal = new BigDecimal( record.getIndentTotal());
-			BigDecimal discountTotal = new BigDecimal( record.getDiscountTotal());
+			BigDecimal indentTotal = new BigDecimal(record.getIndentTotal());
+			BigDecimal discountTotal = new BigDecimal(record.getDiscountTotal());
 
 			BigDecimal salesAmnt = indentTotal.add(discountTotal);
-			salesAmnt = salesAmnt.setScale(retain,RoundingMode.HALF_UP);
+			salesAmnt = salesAmnt.setScale(retain, RoundingMode.HALF_UP);
 			record.setSalesAmnt(salesAmnt.toString());
 
-			indentTotal = indentTotal.setScale(retain,RoundingMode.HALF_UP);
+			indentTotal = indentTotal.setScale(retain, RoundingMode.HALF_UP);
 			record.setIndentTotal(indentTotal.toString());
 
-			discountTotal = discountTotal.setScale(retain,RoundingMode.HALF_UP);
+			discountTotal = discountTotal.setScale(retain, RoundingMode.HALF_UP);
 			record.setDiscountTotal(discountTotal.toString());
 
 		}
@@ -1585,7 +1575,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 	@Override
 	public Page<String> getIndentNosSelective(Page page, String str) {
-		List<String> records = super.baseMapper.selectIndentNos(page,str);
+		List<String> records = super.baseMapper.selectIndentNos(page, str);
 		int total = super.baseMapper.selectIndentNosCount(str).size();
 		page.setTotal(total);
 		page.setRecords(records);
@@ -1594,7 +1584,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 	@Override
 	public Page<IndentNoCustIdNameModel> getIndentNoCustNameSelective(Page page, String str) {
-		List<IndentNoCustIdNameModel> records = super.baseMapper.selectIndentNoCustName(page,str);
+		List<IndentNoCustIdNameModel> records = super.baseMapper.selectIndentNoCustName(page, str);
 		int total = super.baseMapper.selectIndentNoCustNameCount(str).size();
 		page.setTotal(total);
 		page.setRecords(records);
@@ -1608,22 +1598,22 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		int total = super.baseMapper.selectSalesmanSalesRankCount(params).size();
 
-		List<SalesmanSalesRankModel> records = super.baseMapper.selectSalesmanSalesRank(page,params);
+		List<SalesmanSalesRankModel> records = super.baseMapper.selectSalesmanSalesRank(page, params);
 
 		for (SalesmanSalesRankModel record : records) {
 
-			BigDecimal discountTotal = new BigDecimal( record.getDiscountTotal());
+			BigDecimal discountTotal = new BigDecimal(record.getDiscountTotal());
 
 			BigDecimal indentTotal = new BigDecimal(record.getIndentTotal());
 
 			BigDecimal salesAmnt = indentTotal.add(discountTotal);
-			salesAmnt = salesAmnt.setScale(retain,RoundingMode.HALF_UP);
+			salesAmnt = salesAmnt.setScale(retain, RoundingMode.HALF_UP);
 			record.setSalesAmnt(salesAmnt.toString());
 
-			discountTotal = discountTotal.setScale(retain,RoundingMode.HALF_UP);
+			discountTotal = discountTotal.setScale(retain, RoundingMode.HALF_UP);
 			record.setDiscountTotal(discountTotal.toString());
 
-			indentTotal = indentTotal.setScale(retain,RoundingMode.HALF_UP);
+			indentTotal = indentTotal.setScale(retain, RoundingMode.HALF_UP);
 			record.setIndentTotal(indentTotal.toString());
 
 		}
@@ -1646,13 +1636,13 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		BigDecimal indentTotalSum = new BigDecimal(summation.getIndentTotalSum());
 
 		BigDecimal salesAmntSum = indentTotalSum.add(discountAmntSum);
-		salesAmntSum = salesAmntSum.setScale(retain,RoundingMode.HALF_UP);
+		salesAmntSum = salesAmntSum.setScale(retain, RoundingMode.HALF_UP);
 		summation.setSalesAmntSum(salesAmntSum.toString());
 
-		discountAmntSum = discountAmntSum.setScale(retain,RoundingMode.HALF_UP);
+		discountAmntSum = discountAmntSum.setScale(retain, RoundingMode.HALF_UP);
 		summation.setDiscountAmntSum(discountAmntSum.toString());
 
-		indentTotalSum = indentTotalSum.setScale(retain,RoundingMode.HALF_UP);
+		indentTotalSum = indentTotalSum.setScale(retain, RoundingMode.HALF_UP);
 		summation.setIndentTotalSum(indentTotalSum.toString());
 
 		return summation;
@@ -1694,37 +1684,37 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 			BigDecimal dicountTotal = new BigDecimal(indent.getDiscountTotal());
 
-			dicountTotal = dicountTotal.setScale(retain,RoundingMode.HALF_UP);
+			dicountTotal = dicountTotal.setScale(retain, RoundingMode.HALF_UP);
 
 			indent.setDiscountTotal(dicountTotal.toString());
 
 			BigDecimal indentTotal = new BigDecimal(indent.getIndentTotal());
 
-			indentTotal = indentTotal.setScale(retain,RoundingMode.HALF_UP);
+			indentTotal = indentTotal.setScale(retain, RoundingMode.HALF_UP);
 
 			indent.setIndentTotal(indentTotal.toString());
 
 			BigDecimal receivedAmnt = new BigDecimal(indent.getReceivedAmnt());
 
-			receivedAmnt = receivedAmnt.setScale(retain,RoundingMode.HALF_UP);
+			receivedAmnt = receivedAmnt.setScale(retain, RoundingMode.HALF_UP);
 
 			indent.setReceivedAmnt(receivedAmnt.toString());
 
 			BigDecimal payedAmnt = new BigDecimal(indent.getPayedAmnt());
 
-			payedAmnt = payedAmnt.setScale(retain,RoundingMode.HALF_UP);
+			payedAmnt = payedAmnt.setScale(retain, RoundingMode.HALF_UP);
 
 			indent.setPayedAmnt(payedAmnt.toString());
 
 			BigDecimal dueAmnt = new BigDecimal(indent.getDueAmnt());
 
-			dueAmnt = dueAmnt.setScale(retain,RoundingMode.HALF_UP);
+			dueAmnt = dueAmnt.setScale(retain, RoundingMode.HALF_UP);
 
 			indent.setDueAmnt(dueAmnt.toString());
 
 			BigDecimal iouAmnt = new BigDecimal(indent.getIouAmnt());
 
-			iouAmnt = iouAmnt.setScale(retain,RoundingMode.HALF_UP);
+			iouAmnt = iouAmnt.setScale(retain, RoundingMode.HALF_UP);
 
 			indent.setIouAmnt(iouAmnt.toString());
 
@@ -1815,11 +1805,11 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			params.put("shipMan", shipMan); // 送货人
 
 			StringBuilder stockoutMan = new StringBuilder();
-			for(String man : stockoutMans){
+			for (String man : stockoutMans) {
 				stockoutMan.append(man).append(" ");
 			}
 //			String stockoutManStr = stockoutMan.substring(0, stockoutMan.length() - 1);
-			params.put("stockoutMan",stockoutMan.toString()); //出库经手人
+			params.put("stockoutMan", stockoutMan.toString()); //出库经手人
 		}
 		params.put("ddremark", indent.getIndentRemarks());//订单备注
 
@@ -2000,13 +1990,13 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		BigDecimal receivableAmntSum = new BigDecimal(summation.getReceivableAmntSum());
 
 		BigDecimal salesAmntSum = salesDiscountSum.add(receivableAmntSum);
-		salesAmntSum = salesAmntSum.setScale(retain,RoundingMode.HALF_UP);
+		salesAmntSum = salesAmntSum.setScale(retain, RoundingMode.HALF_UP);
 		summation.setSalesAmntSum(salesAmntSum.toString());
 
-		salesDiscountSum = salesDiscountSum.setScale(retain,RoundingMode.HALF_UP);
+		salesDiscountSum = salesDiscountSum.setScale(retain, RoundingMode.HALF_UP);
 		summation.setSalesDiscountSum(salesDiscountSum.toString());
 
-		receivableAmntSum = receivableAmntSum.setScale(retain,RoundingMode.HALF_UP);
+		receivableAmntSum = receivableAmntSum.setScale(retain, RoundingMode.HALF_UP);
 		summation.setReceivableAmntSum(receivableAmntSum.toString());
 
 		//设置销售应收/实收
@@ -2016,17 +2006,17 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		for (CustSalesBillRecordsModel custSalesBillRecord : custSalesBillRecords) {
 
-			BigDecimal indentTotal = new BigDecimal( custSalesBillRecord.getIndentTotal());
-			BigDecimal discountTotal = new BigDecimal( custSalesBillRecord.getDiscountTotal());
+			BigDecimal indentTotal = new BigDecimal(custSalesBillRecord.getIndentTotal());
+			BigDecimal discountTotal = new BigDecimal(custSalesBillRecord.getDiscountTotal());
 
 			BigDecimal odrAmnt = indentTotal.add(discountTotal);
-			odrAmnt = odrAmnt.setScale(retain,RoundingMode.HALF_UP);
+			odrAmnt = odrAmnt.setScale(retain, RoundingMode.HALF_UP);
 			custSalesBillRecord.setOdrAmnt(odrAmnt.toString());
 
-			indentTotal = indentTotal.setScale(retain,RoundingMode.HALF_UP);
+			indentTotal = indentTotal.setScale(retain, RoundingMode.HALF_UP);
 			custSalesBillRecord.setIndentTotal(indentTotal.toString());
 
-			discountTotal = discountTotal.setScale(retain,RoundingMode.HALF_UP);
+			discountTotal = discountTotal.setScale(retain, RoundingMode.HALF_UP);
 			custSalesBillRecord.setDiscountTotal(discountTotal.toString());
 
 		}
@@ -2068,13 +2058,13 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			BigDecimal amount = new BigDecimal(record.getAmount());
 
 			BigDecimal salesAmnt = amount.add(discountAmnt);
-			salesAmnt = salesAmnt.setScale(retain,RoundingMode.HALF_UP);
+			salesAmnt = salesAmnt.setScale(retain, RoundingMode.HALF_UP);
 			record.setSalesAmnt(salesAmnt.toString());
 
-			discountAmnt = discountAmnt.setScale(retain,RoundingMode.HALF_UP);
+			discountAmnt = discountAmnt.setScale(retain, RoundingMode.HALF_UP);
 			record.setDiscountAmnt(discountAmnt.toString());
 
-			amount = amount.setScale(retain,RoundingMode.HALF_UP);
+			amount = amount.setScale(retain, RoundingMode.HALF_UP);
 			record.setAmount(amount.toString());
 
 		}
@@ -2113,17 +2103,17 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
 
-		BigDecimal indentTotalSum = new BigDecimal( custSalesStatisticsSummationModel.getIndentTotalSum());
+		BigDecimal indentTotalSum = new BigDecimal(custSalesStatisticsSummationModel.getIndentTotalSum());
 		BigDecimal discountAmntSum = new BigDecimal(custSalesStatisticsSummationModel.getDiscountAmntSum());
 
 		BigDecimal salesAmntSum = indentTotalSum.add(discountAmntSum);
-		salesAmntSum = salesAmntSum.setScale(retain,RoundingMode.HALF_UP);
+		salesAmntSum = salesAmntSum.setScale(retain, RoundingMode.HALF_UP);
 		custSalesStatisticsSummationModel.setSalesAmntSum(salesAmntSum.toString());
 
-		indentTotalSum = indentTotalSum.setScale(retain,RoundingMode.HALF_UP);
+		indentTotalSum = indentTotalSum.setScale(retain, RoundingMode.HALF_UP);
 		custSalesStatisticsSummationModel.setIndentTotalSum(indentTotalSum.toString());
 
-		discountAmntSum = discountAmntSum.setScale(retain,RoundingMode.HALF_UP);
+		discountAmntSum = discountAmntSum.setScale(retain, RoundingMode.HALF_UP);
 		custSalesStatisticsSummationModel.setDiscountAmntSum(discountAmntSum.toString());
 
 		return custSalesStatisticsSummationModel;
@@ -2172,13 +2162,13 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			BigDecimal indentTotal = new BigDecimal(record.getIndentTotal());
 
 			BigDecimal salesAmnt = indentTotal.add(discountAmount);
-			salesAmnt = salesAmnt.setScale(retain,RoundingMode.HALF_UP);
+			salesAmnt = salesAmnt.setScale(retain, RoundingMode.HALF_UP);
 			record.setSalesAmnt(salesAmnt.toString());
 
-			discountAmount = discountAmount.setScale(retain,RoundingMode.HALF_UP);
+			discountAmount = discountAmount.setScale(retain, RoundingMode.HALF_UP);
 			record.setDiscountAmount(discountAmount.toString());
 
-			indentTotal = indentTotal.setScale(retain,RoundingMode.HALF_UP);
+			indentTotal = indentTotal.setScale(retain, RoundingMode.HALF_UP);
 			record.setIndentTotal(indentTotal.toString());
 
 		}
@@ -2205,18 +2195,18 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		for (CustSalesDetailModel record : records) {
 
 			BigDecimal price = new BigDecimal(record.getPrice());
-			price = price.setScale(retain,RoundingMode.HALF_UP);
+			price = price.setScale(retain, RoundingMode.HALF_UP);
 			record.setPrice(price.toString());
 
 			BigDecimal discountAmount = new BigDecimal(record.getDiscountAmount());
 			BigDecimal indentTotal = new BigDecimal(record.getIndentTotal());
 
 			BigDecimal salesAmnt = indentTotal.add(discountAmount);
-			salesAmnt = salesAmnt.setScale(retain,RoundingMode.HALF_UP);
-			indentTotal = indentTotal.setScale(retain,RoundingMode.HALF_UP);
-			discountAmount = discountAmount.setScale(retain,RoundingMode.HALF_UP);
+			salesAmnt = salesAmnt.setScale(retain, RoundingMode.HALF_UP);
+			indentTotal = indentTotal.setScale(retain, RoundingMode.HALF_UP);
+			discountAmount = discountAmount.setScale(retain, RoundingMode.HALF_UP);
 
-			if(record.getIndentNo().startsWith("TH")){
+			if (record.getIndentNo().startsWith("TH")) {
 				salesAmnt = salesAmnt.negate();
 				indentTotal = indentTotal.negate();
 				discountAmount = discountAmount.negate();
@@ -2328,17 +2318,17 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		List<AreaSalesRankModel> records = super.baseMapper.selectAreaSalesRank(page, params);
 		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
 		for (AreaSalesRankModel record : records) {
-			BigDecimal indentTotal = new BigDecimal( record.getIndentTotal());
-			BigDecimal discountTotal = new BigDecimal( record.getDiscountTotal());
+			BigDecimal indentTotal = new BigDecimal(record.getIndentTotal());
+			BigDecimal discountTotal = new BigDecimal(record.getDiscountTotal());
 
 			BigDecimal salesAmnt = indentTotal.add(discountTotal);
-			salesAmnt = salesAmnt.setScale(retain,RoundingMode.HALF_UP);
+			salesAmnt = salesAmnt.setScale(retain, RoundingMode.HALF_UP);
 			record.setSalesAmnt(salesAmnt.toString());
 
-			indentTotal = indentTotal.setScale(retain,RoundingMode.HALF_UP);
+			indentTotal = indentTotal.setScale(retain, RoundingMode.HALF_UP);
 			record.setIndentTotal(indentTotal.toString());
 
-			discountTotal = discountTotal.setScale(retain,RoundingMode.HALF_UP);
+			discountTotal = discountTotal.setScale(retain, RoundingMode.HALF_UP);
 			record.setDiscountTotal(discountTotal.toString());
 
 		}
@@ -2357,7 +2347,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
 
-		summation = this.dealRetain(summation,retain);
+		summation = this.dealRetain(summation, retain);
 
 		return summation;
 	}
@@ -2388,13 +2378,13 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			BigDecimal indentTotal = new BigDecimal(record.getIndentTotal());
 
 			BigDecimal salesAmnt = indentTotal.add(discountTotal);
-			salesAmnt = salesAmnt.setScale(retain,RoundingMode.HALF_UP);
+			salesAmnt = salesAmnt.setScale(retain, RoundingMode.HALF_UP);
 			record.setSalesAmnt(salesAmnt.toString());
 
-			discountTotal = discountTotal.setScale(retain,RoundingMode.HALF_UP);
+			discountTotal = discountTotal.setScale(retain, RoundingMode.HALF_UP);
 			record.setDiscountTotal(discountTotal.toString());
 
-			indentTotal = indentTotal.setScale(retain,RoundingMode.HALF_UP);
+			indentTotal = indentTotal.setScale(retain, RoundingMode.HALF_UP);
 			record.setIndentTotal(indentTotal.toString());
 
 
@@ -2435,24 +2425,24 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		for (GoodsSalesSummarizingModel record : records) {
 
 			BigDecimal discount = new BigDecimal(record.getDiscount());
-			discount = discount.setScale(retain,RoundingMode.HALF_UP);
+			discount = discount.setScale(retain, RoundingMode.HALF_UP);
 			record.setDiscount(discount.toString());
 
-			BigDecimal price = new BigDecimal( record.getPrice());
-			price = price.setScale(retain,RoundingMode.HALF_UP);
+			BigDecimal price = new BigDecimal(record.getPrice());
+			price = price.setScale(retain, RoundingMode.HALF_UP);
 			record.setPrice(price.toString());
 
 			BigDecimal discountTotal = new BigDecimal(record.getDiscountTotal());
 			BigDecimal indentTotal = new BigDecimal(record.getIndentTotal());
 
 			BigDecimal salesAmnt = indentTotal.add(discountTotal);
-			salesAmnt = salesAmnt.setScale(retain,RoundingMode.HALF_UP);
+			salesAmnt = salesAmnt.setScale(retain, RoundingMode.HALF_UP);
 			record.setSalesAmnt(salesAmnt.toString());
 
-			discountTotal = discountTotal.setScale(retain,RoundingMode.HALF_UP);
+			discountTotal = discountTotal.setScale(retain, RoundingMode.HALF_UP);
 			record.setDiscountTotal(discountTotal.toString());
 
-			indentTotal = indentTotal.setScale(retain,RoundingMode.HALF_UP);
+			indentTotal = indentTotal.setScale(retain, RoundingMode.HALF_UP);
 			record.setIndentTotal(indentTotal.toString());
 
 		}
@@ -2469,7 +2459,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		CommonSummation summation = super.baseMapper.selectGoodsSalesSummation(params);
 		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
-		return this.dealRetain(summation,retain);
+		return this.dealRetain(summation, retain);
 
 	}
 
@@ -2486,7 +2476,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		BigDecimal salesAmntSum = new BigDecimal(singleGoodsSalesDetailModel.getSalesAmntSum());
 
-		salesAmntSum = salesAmntSum.setScale(retain,RoundingMode.HALF_UP);
+		salesAmntSum = salesAmntSum.setScale(retain, RoundingMode.HALF_UP);
 
 		singleGoodsSalesDetailModel.setSalesAmntSum(salesAmntSum.toString());
 
@@ -2495,27 +2485,27 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		for (SingleGoodsSalesIndentDetailModel record : singleGoodsSalesIndentDetailModels) {
 
 			BigDecimal discount = new BigDecimal(record.getDiscount());
-			discount = discount.setScale(retain,RoundingMode.HALF_UP);
+			discount = discount.setScale(retain, RoundingMode.HALF_UP);
 			record.setDiscount(discount.toString());
 
 			BigDecimal price = new BigDecimal(record.getPrice());
-			price = price.setScale(retain,RoundingMode.HALF_UP);
+			price = price.setScale(retain, RoundingMode.HALF_UP);
 			record.setPrice(price.toString());
 
 			BigDecimal indentTotal = new BigDecimal(record.getIndentTotal());
 			BigDecimal discountAmount = new BigDecimal(record.getDiscountAmount());
 			BigDecimal salesAmnt = indentTotal.add(discountAmount);
 
-			if (record.getIndentNo().startsWith("TH")){
+			if (record.getIndentNo().startsWith("TH")) {
 				salesAmnt = salesAmnt.negate();
 				indentTotal = indentTotal.negate();
 				discountAmount = discountAmount.negate();
 				record.setNum("-".concat(record.getNum()));
 			}
 
-			salesAmnt = salesAmnt.setScale(retain,RoundingMode.HALF_UP);
-			indentTotal = indentTotal.setScale(retain,RoundingMode.HALF_UP);
-			discountAmount = discountAmount.setScale(retain,RoundingMode.HALF_UP);
+			salesAmnt = salesAmnt.setScale(retain, RoundingMode.HALF_UP);
+			indentTotal = indentTotal.setScale(retain, RoundingMode.HALF_UP);
+			discountAmount = discountAmount.setScale(retain, RoundingMode.HALF_UP);
 
 			record.setSalesAmnt(salesAmnt.toString());
 			record.setIndentTotal(indentTotal.toString());
@@ -2555,13 +2545,13 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			BigDecimal discountAmount = new BigDecimal(record.getDiscountAmount());
 
 			BigDecimal salesAmnt = indentTotal.add(discountAmount);
-			salesAmnt = salesAmnt.setScale(retain,RoundingMode.HALF_UP);
+			salesAmnt = salesAmnt.setScale(retain, RoundingMode.HALF_UP);
 			record.setSalesAmnt(salesAmnt.toString());
 
-			indentTotal = indentTotal.setScale(retain,RoundingMode.HALF_UP);
+			indentTotal = indentTotal.setScale(retain, RoundingMode.HALF_UP);
 			record.setIndentTotal(indentTotal.toString());
 
-			discountAmount = discountAmount.setScale(retain,RoundingMode.HALF_UP);
+			discountAmount = discountAmount.setScale(retain, RoundingMode.HALF_UP);
 			record.setDiscountAmount(discountAmount.toString());
 
 		}
@@ -2579,7 +2569,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	public CommonSummation getGoodsSalesRankSummation(Map<String, Object> params) {
 		CommonSummation summation = super.baseMapper.selectGoodsSalesRankSummation(params);
 		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
-		return this.dealRetain(summation,retain);
+		return this.dealRetain(summation, retain);
 	}
 
 	@Override
@@ -2595,13 +2585,13 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			BigDecimal returnAmnt = new BigDecimal(record.getReturnAmnt());
 
 			BigDecimal total = orderAmnt.subtract(returnAmnt);
-			total = total.setScale(retain,RoundingMode.HALF_UP);
+			total = total.setScale(retain, RoundingMode.HALF_UP);
 			record.setTotal(total.toString());
 
-			orderAmnt = orderAmnt.setScale(retain,RoundingMode.HALF_UP);
+			orderAmnt = orderAmnt.setScale(retain, RoundingMode.HALF_UP);
 			record.setOrderAmnt(orderAmnt.toString());
 
-			returnAmnt = returnAmnt.setScale(retain,RoundingMode.HALF_UP);
+			returnAmnt = returnAmnt.setScale(retain, RoundingMode.HALF_UP);
 			record.setReturnAmnt(returnAmnt.toString());
 
 		});
@@ -2622,17 +2612,17 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		BigDecimal returnAmntSum = new BigDecimal(summation.getReturnAmntSum());
 
 		BigDecimal total = orderAmntSum.subtract(returnAmntSum);
-		total = total.setScale(retain,RoundingMode.HALF_UP);
+		total = total.setScale(retain, RoundingMode.HALF_UP);
 		summation.setTotal(total.toString());
 
-		orderAmntSum = orderAmntSum.setScale(retain,RoundingMode.HALF_UP);
+		orderAmntSum = orderAmntSum.setScale(retain, RoundingMode.HALF_UP);
 		summation.setOrderAmntSum(orderAmntSum.toString());
 
-		returnAmntSum = returnAmntSum.setScale(retain,RoundingMode.HALF_UP);
+		returnAmntSum = returnAmntSum.setScale(retain, RoundingMode.HALF_UP);
 		summation.setReturnAmntSum(returnAmntSum.toString());
 
-		BigDecimal owedAmnt = new BigDecimal( summation.getOwedAmnt());
-		owedAmnt = owedAmnt.setScale(retain,RoundingMode.HALF_UP);
+		BigDecimal owedAmnt = new BigDecimal(summation.getOwedAmnt());
+		owedAmnt = owedAmnt.setScale(retain, RoundingMode.HALF_UP);
 		summation.setOwedAmnt(owedAmnt.toString());
 
 		return summation;
@@ -2657,13 +2647,13 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 
 		BigDecimal salesAmntSum = salesDiscountSum.add(receivableAmntSum);
-		salesAmntSum = salesAmntSum.setScale(retain,RoundingMode.HALF_UP);
+		salesAmntSum = salesAmntSum.setScale(retain, RoundingMode.HALF_UP);
 		custSalesDetailSummarizingModel.setSalesAmntSum(salesAmntSum.toString());
 
-		salesDiscountSum = salesDiscountSum.setScale(retain,RoundingMode.HALF_UP);
+		salesDiscountSum = salesDiscountSum.setScale(retain, RoundingMode.HALF_UP);
 		custSalesDetailSummarizingModel.setSalesDiscountSum(salesDiscountSum.toString());
 
-		receivableAmntSum = receivableAmntSum.setScale(retain,RoundingMode.HALF_UP);
+		receivableAmntSum = receivableAmntSum.setScale(retain, RoundingMode.HALF_UP);
 		custSalesDetailSummarizingModel.setReceivableAmntSum(receivableAmntSum.toString());
 
 
@@ -2681,13 +2671,13 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		BigDecimal salesDiscountSum = new BigDecimal(custSalesSummationModel.getSalesDiscountSum());
 
 		BigDecimal salesAmntSum = salesDiscountSum.add(receivableAmntSum);
-		salesAmntSum = salesAmntSum.setScale(retain,RoundingMode.HALF_UP);
+		salesAmntSum = salesAmntSum.setScale(retain, RoundingMode.HALF_UP);
 		custSalesSummationModel.setSalesAmntSum(salesAmntSum.toString());
 
-		salesDiscountSum = salesDiscountSum.setScale(retain,RoundingMode.HALF_UP);
+		salesDiscountSum = salesDiscountSum.setScale(retain, RoundingMode.HALF_UP);
 		custSalesSummationModel.setSalesDiscountSum(salesDiscountSum.toString());
 
-		receivableAmntSum = receivableAmntSum.setScale(retain,RoundingMode.HALF_UP);
+		receivableAmntSum = receivableAmntSum.setScale(retain, RoundingMode.HALF_UP);
 		custSalesSummationModel.setReceivableAmntSum(receivableAmntSum.toString());
 
 		return custSalesSummationModel;
@@ -2703,24 +2693,24 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		for (IndentDetail indentDetail : indentDetails) {
 
 			BigDecimal price = new BigDecimal(indentDetail.getPrice());
-			price = price.setScale(retain,RoundingMode.HALF_UP);
+			price = price.setScale(retain, RoundingMode.HALF_UP);
 			indentDetail.setPrice(price.toString());
 
 			BigDecimal amount = new BigDecimal(indentDetail.getAmount());
 			BigDecimal discountAmount = new BigDecimal(indentDetail.getDiscountAmount());
 
 			BigDecimal total = amount.add(discountAmount);
-			total = total.setScale(retain,RoundingMode.HALF_UP);
+			total = total.setScale(retain, RoundingMode.HALF_UP);
 			indentDetail.setTotal(total.toString());
 
-			amount = amount.setScale(retain,RoundingMode.HALF_UP);
+			amount = amount.setScale(retain, RoundingMode.HALF_UP);
 			indentDetail.setAmount(amount.toString());
 
 			BigDecimal discount = new BigDecimal(indentDetail.getDiscount());
-			discount = discount.setScale(retain,RoundingMode.HALF_UP);
+			discount = discount.setScale(retain, RoundingMode.HALF_UP);
 			indentDetail.setDiscount(discount.toString());
 
-			discountAmount = discountAmount.setScale(retain,RoundingMode.HALF_UP);
+			discountAmount = discountAmount.setScale(retain, RoundingMode.HALF_UP);
 			indentDetail.setDiscountAmount(discountAmount.toString());
 
 
@@ -2729,16 +2719,16 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		}
 
 		BigDecimal indentTotal = new BigDecimal(indent.getIndentTotal());
-		BigDecimal discountTotal =new BigDecimal(indent.getDiscountTotal());
+		BigDecimal discountTotal = new BigDecimal(indent.getDiscountTotal());
 
 		BigDecimal odrAmnt = indentTotal.add(discountTotal);
-		odrAmnt = odrAmnt.setScale(retain,RoundingMode.HALF_UP);
+		odrAmnt = odrAmnt.setScale(retain, RoundingMode.HALF_UP);
 		indent.setOdrAmnt(odrAmnt.toString());
 
-		indentTotal = indentTotal.setScale(retain,RoundingMode.HALF_UP);
+		indentTotal = indentTotal.setScale(retain, RoundingMode.HALF_UP);
 		indent.setIndentTotal(indentTotal.toString());
 
-		discountTotal = discountTotal.setScale(retain,RoundingMode.HALF_UP);
+		discountTotal = discountTotal.setScale(retain, RoundingMode.HALF_UP);
 		indent.setDiscountTotal(discountTotal.toString());
 
 		indent.setIndentDetailsCopy(indentDetails);
@@ -2786,8 +2776,8 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		// 作废收/付款单
 		new Receipt().update(
 				new LambdaUpdateWrapper<Receipt>()
-						.eq(Receipt::getBusiNo,indentNo)
-						.set(Receipt::getStat,false)
+						.eq(Receipt::getBusiNo, indentNo)
+						.set(Receipt::getStat, false)
 		);
 
 		// 2.1作废出库单
@@ -2907,7 +2897,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		return indentInfoModel;
 	}
 
-	private void deleteRelativeInfos(String indentNo){
+	private void deleteRelativeInfos(String indentNo) {
 		indentDetailMapper.delete(
 				new LambdaUpdateWrapper<IndentDetail>()
 						.eq(IndentDetail::getIndentNo, indentNo)
@@ -2915,33 +2905,33 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		stockMapper.delete(
 				new LambdaQueryWrapper<Stock>()
-						.eq(Stock::getBusiNo,indentNo)
+						.eq(Stock::getBusiNo, indentNo)
 		);
 
 		stockDetailMapper.delete(
 				new LambdaQueryWrapper<StockDetail>()
-						.eq(StockDetail::getBusiNo,indentNo)
+						.eq(StockDetail::getBusiNo, indentNo)
 		);
 
 		receiptMapper.delete(
 				new LambdaQueryWrapper<Receipt>()
-						.eq(Receipt::getBusiNo,indentNo)
+						.eq(Receipt::getBusiNo, indentNo)
 		);
 	}
 
-	private static CommonSummation dealRetain(CommonSummation summation,int retain){
+	private static CommonSummation dealRetain(CommonSummation summation, int retain) {
 
-		BigDecimal discountAmntSum = new BigDecimal (summation.getDiscountAmntSum());
-		BigDecimal indentTotalSum = new BigDecimal (summation.getIndentTotalSum());
+		BigDecimal discountAmntSum = new BigDecimal(summation.getDiscountAmntSum());
+		BigDecimal indentTotalSum = new BigDecimal(summation.getIndentTotalSum());
 
 		BigDecimal salesAmntSum = indentTotalSum.add(discountAmntSum);
-		salesAmntSum = salesAmntSum.setScale(retain,RoundingMode.HALF_UP);
+		salesAmntSum = salesAmntSum.setScale(retain, RoundingMode.HALF_UP);
 		summation.setSalesAmntSum(salesAmntSum.toString());
 
-		discountAmntSum = discountAmntSum.setScale(retain,RoundingMode.HALF_UP);
+		discountAmntSum = discountAmntSum.setScale(retain, RoundingMode.HALF_UP);
 		summation.setDiscountAmntSum(discountAmntSum.toString());
 
-		indentTotalSum = indentTotalSum.setScale(retain,RoundingMode.HALF_UP);
+		indentTotalSum = indentTotalSum.setScale(retain, RoundingMode.HALF_UP);
 		summation.setIndentTotalSum(indentTotalSum.toString());
 
 		return summation;

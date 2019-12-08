@@ -29,20 +29,17 @@ import java.util.stream.Collectors;
  * 创建人:Owen
  * 处理数据权限
  * 	首先判断登陆是否超时
- * 	如果没有超时就获取数据权限(当前用户可以访问的客户)注入到类型为Map的参数里面以便dao层使用
+ * 	如果没有超时就获取数据权限(当前用户可以访问的客户)注入到类型为Map<String,Set<Integer>>,名为custIds的Map里面以便dao层使用
  */
 @Slf4j
 @Aspect
 @Component
-public class DataAuthAop {
-	@Pointcut("execution(public * com.trenska.longwang.service.impl..*.*(..))")
-	public void dataPowerPointcut(){
-	}
-	@Before("dataPowerPointcut() && @annotation(dataAuthority)")
+public class DataAuthAspect {
+
+	@Before("@annotation(dataAuthority)")
 	public void before(JoinPoint joinPoint, DataAuthVerification dataAuthority) throws IOException {
 		ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
 		HttpServletRequest request = requestAttributes.getRequest();
-//		log.debug("request : {}",request );
 		Integer empIdInRedis = SysUtil.getEmpIdInRedis(request);
 		if(NumberUtil.isIntegerNotUsable(empIdInRedis)){
 			HttpServletResponse response = requestAttributes.getResponse();

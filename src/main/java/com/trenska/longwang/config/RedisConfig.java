@@ -19,6 +19,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.integration.redis.util.RedisLockRegistry;
 
 import java.time.Duration;
 @SuppressWarnings("all")
@@ -26,6 +27,8 @@ import java.time.Duration;
 @Configuration
 //@ConfigurationProperties(prefix = "spring.redis")
 public class RedisConfig extends CachingConfigurerSupport {
+
+	private final static String REGISTRY_KEY = "com.trenska.dragon";
 //	@Value("${spring.redis.host}")
 	private String host;
 //	@Value("${spring.redis.port}")
@@ -105,17 +108,28 @@ public class RedisConfig extends CachingConfigurerSupport {
 			String proxyName = clazz.getSuperclass().getName();
 			String className = method.getDeclaringClass().getName();
 			sb.append(className);
-			sb.append(Constant.COLLECTOR_LABLE);
+			sb.append(Constant.COLLECTOR_LABEL);
 			String methodName = method.getName();
 			sb.append(methodName);
 			for (Object param : params) {
 				// 由于参数可能不同, hashCode肯定不一样, 缓存的key也需要不一样
-				sb.append(Constant.COLLECTOR_LABLE);
+				sb.append(Constant.COLLECTOR_LABEL);
 				sb.append(param);
 //				sb.append(JSON.toJSONString(param));
 			}
 			String key = sb.toString();
 			return key;
 		};
+	}
+
+	/**
+	 * 注册Redis分布式锁
+	 * @param redisConnectionFactory
+	 * @return
+	 */
+	@Bean
+	public RedisLockRegistry redisLockRegistry(RedisConnectionFactory redisConnectionFactory){
+		RedisLockRegistry redisLockRegistry = new RedisLockRegistry(redisConnectionFactory,REGISTRY_KEY);
+		return redisLockRegistry;
 	}
 }

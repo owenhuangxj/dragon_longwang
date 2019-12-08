@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.generator.config.IFileCreate;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.constant.Constant;
 import com.trenska.longwang.context.ApplicationContextHolder;
@@ -372,6 +373,106 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
 		page.setTotal(total);
 		page.setRecords(records);
 		return page;
+	}
+
+	@Override
+	@Transactional
+	public ResponseModel batchImportGoods(List<Goods> goods) {
+
+		List<Unit> usedUnits = new ArrayList<>();
+		List<Category> usedCategories = new ArrayList<>();
+
+		for (Goods good : goods) {
+
+			// 处理期初库存
+			if(good.getInitStock() == null || good.getInitStock() < 0)
+				good.setInitStock(0);
+
+			// 处理总库存
+			good.setStock(good.getInitStock());
+
+			// 处理复合字段 goodsNo,goodsName,barcode
+			String combine = GoodsUtil.dealGoodsCombineProperty(good);
+			good.setCombine(combine);
+
+			// 处理主单位
+			String mainUnit = good.getMainUnit();
+			if(StringUtils.isNotEmpty(mainUnit)) {
+				Unit unit = new Unit().selectOne(
+						new LambdaQueryWrapper<Unit>()
+								.eq(Unit::getUnitName, mainUnit)
+				);
+				// 如果没有主单位不进行导入==>从链表中移除
+				if (unit == null)
+					goods.remove(good);
+				else {
+					good.setMainUnitId(unit.getUnitId());
+					// 如果单位可以被删除（没有被使用），存入已使用集合中去
+					if (unit.getDeletable() == true)
+						usedUnits.add(unit);
+				}
+			}
+			// 处理辅助单位
+			String subUnit = good.getSubUnit();
+			if(StringUtils.isNotEmpty(subUnit)){
+				Unit unit = new Unit().selectOne(
+						new LambdaQueryWrapper<Unit>()
+								.eq(Unit::getUnitName,subUnit)
+				);
+				// 如果输入的辅助单位不存在==>设置辅助单位为null
+				if(unit == null) {
+					good.setSubUnitId(null);
+					good.setSubUnit(null);
+				}
+			}
+
+			// 处理主/辅 单位的乘积因子 ,如果 < 0 ，设置倍率为
+			Integer multi = good.getMulti();
+			if(NumberUtil.isIntegerNotUsable(multi))
+				good.setMulti(1);
+
+			// 处理分类
+			String frtCatName = good.getFrtCatName();
+			if(StringUtils.isNotEmpty(frtCatName)){
+				Category category = new Category().selectOne(
+						new LambdaQueryWrapper<Category>()
+								.eq(Category::getCatName,frtCatName)
+				);
+
+				// 如果分类不存在，设置为无分类
+				if(category == null)
+					good.setFrtCatName("无分类");
+				else{
+					// 有一级分类
+					usedCategories.add(category);
+					// 处理二级分类
+					String scdCatName = good.getScdCatName();
+					if(StringUtils.isNotEmpty(scdCatName)){
+						Category scdCategory = new Category().selectOne(
+								new LambdaQueryWrapper<Category>()
+										.eq(Category::getCatName,scdCatName)
+										.eq(Category::getPid,category.getCatId())
+						);
+						// 如果二级分类为空或者没有匹配的二级分类，设置二级分类为null
+						if(scdCategory == null)
+							good.setScdCatName(null);
+						else {
+							// 如果分类还没有被使用
+							if(scdCategory.getDeletable() == true)
+								usedCategories.add(scdCategory);
+						}
+					}
+				}
+			}else{ // 为空==>设置为无分类
+				good.setFrtCatName("无分类");
+			}
+
+			// 处理过期时间,如果为 < 0 设置为null
+			Integer expire = good.getExpire();
+			if(NumberUtil.isIntegerNotUsable(expire))
+				good.setExpire(null);
+		}
+		return ResponseModel.getInstance().succ(true).msg("导入成功！");
 	}
 
 

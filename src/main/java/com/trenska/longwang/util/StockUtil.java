@@ -3,9 +3,8 @@ package com.trenska.longwang.util;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.trenska.longwang.constant.Constant;
-import com.trenska.longwang.context.ApplicationContextHolder;
+import com.trenska.longwang.dao.goods.GoodsMapper;
 import com.trenska.longwang.dao.stock.StockMapper;
-import com.trenska.longwang.entity.customer.Customer;
 import com.trenska.longwang.entity.goods.Goods;
 import com.trenska.longwang.entity.indent.Indent;
 import com.trenska.longwang.entity.indent.IndentDetail;
@@ -13,60 +12,72 @@ import com.trenska.longwang.entity.indent.StockMadedate;
 import com.trenska.longwang.entity.stock.GoodsStock;
 import com.trenska.longwang.entity.stock.Stock;
 import com.trenska.longwang.entity.stock.StockDetail;
-import com.trenska.longwang.entity.stock.StockDetails;
 import com.trenska.longwang.enums.IndentStat;
-import com.trenska.longwang.enums.PaymentStat;
+import com.trenska.longwang.exception.ServiceException;
 import com.trenska.longwang.model.sys.ResponseModel;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.web.context.request.RequestAttributes;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
+import org.checkerframework.checker.i18n.qual.LocalizableKey;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.NotNull;
-import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
+import javax.servlet.http.HttpServletResponse;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
 /**
  * 2019/4/19
  * 创建人:Owen
  */
+@Slf4j
 public class StockUtil {
-	private Stream<Indent> stream;
+
+	private final static int LOCK_TIME = 10;
+	private final static Lock lock = new ReentrantLock();
+
 	/**
 	 * @param stockType 入库单/出库单；
 	 * @return
 	 */
-	public static String getStockNo(String prefix, String stockType, StockMapper stockMapper) {
+	public static String getStockNo(String prefix, String stockType, StockMapper stockMapper) throws ServiceException {
+		try {
+			if (lock.tryLock(LOCK_TIME, TimeUnit.MILLISECONDS)) {
+				try {
+					// 查询库存表中的库存类型为stockType的最后一条记录
+					// Stock lastStockRecord = stockMapper.selectRecordOfMaxId(stockType);
+					String stockNoOfMaxId = stockMapper.selectStockNoOfMaxId(stockType);
+					/**
+					 * 处理流水号的问题
+					 * 如果库存表中还没有任何记录，则需要生成第一个单号 或者 如果有记录，需要比较最后一条记录的日期是否是当天，如果不是则流水号需要从1开始
+					 */
+					String todayDate = TimeUtil.getCurrentTime(Constant.BILL_TIME_FORMAT);
 
-		// 查询库存表中的库存类型为stockType的最后一条记录
-		// Stock lastStockRecord = stockMapper.selectRecordOfMaxId(stockType);
-		String stockNoOfMaxId = stockMapper.selectStockNoOfMaxId(stockType);
-		String stockNo = null;
-		/**
-		 * 处理流水号的问题
-		 * 如果库存表中还没有任何记录，则需要生成第一个单号 或者 如果有记录，需要比较最后一条记录的日期是否是当天，如果不是则流水号需要从1开始
-		 */
-		String todayDate = TimeUtil.getCurrentTime(Constant.BILL_TIME_FORMAT);
+					boolean isStockNoOfMaxIdEmpty = StringUtils.isEmpty(stockNoOfMaxId);
 
-		boolean stockNoOfMaxIdIsEmpty = StringUtils.isEmpty(stockNoOfMaxId);
-
-		if (stockNoOfMaxIdIsEmpty || !todayDate.equals(BillsUtil.getDate(stockNoOfMaxId))) {
-			stockNo = BillsUtil.makeBillNo(prefix, 1);
-		} else {
-			// 如果有记录并且最后一条记录的日期是当天，则流水号为最大值 + 1
-			// 首先获取最后一条库存的单号
-			Integer num = BillsUtil.getSerialNumber(stockNoOfMaxId) + 1;
-			// 通过最后一条的库存单号生成新的库存单号
-			stockNo = BillsUtil.makeBillNo(prefix, num);
+					if (isStockNoOfMaxIdEmpty || !todayDate.equals(BillsUtil.getDate(stockNoOfMaxId))) {
+						return BillsUtil.makeBillNo(prefix, 1);
+					} else {
+						// 如果有记录并且最后一条记录的日期是当天，则流水号为最大值 + 1
+						// 首先获取最后一条库存的单号
+						Integer num = BillsUtil.getSerialNumber(stockNoOfMaxId) + 1;
+						// 通过最后一条的库存单号生成新的库存单号
+						return BillsUtil.makeBillNo(prefix, num);
+					}
+				} finally {
+					lock.unlock();
+				}
+			}
+		} catch (InterruptedException e) {
+			log.debug("exception:",e);
+			throw new ServiceException(HttpServletResponse.SC_BAD_REQUEST, "lock exception", "The server is blocked,please try again later", "trenska.utils.stock.bill.001");
 		}
-		return stockNo;
+		return null;
 	}
+
 
 	/**
 	 * 获取商品的批次-库存
@@ -99,15 +110,12 @@ public class StockUtil {
 	 *
 	 * @param stock
 	 * @param stockMapper
+	 * @param goodsMapper
 	 * @return
 	 */
 
-	public static ResponseModel stockin(Stock stock, StockMapper stockMapper) {
-
+	public static ResponseModel stockin(Stock stock, StockMapper stockMapper, GoodsMapper goodsMapper) {
 		String stockNo = StockUtil.getStockNo(stock.getPrefix(), Constant.RKD_CHINESE, stockMapper);
-		/**
-		 * 入库处理
-		 */
 		//入库时间
 		String stockTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
 		List<StockDetail> stockinDetails = stock.getStockins();
@@ -131,70 +139,37 @@ public class StockUtil {
 			stockinDetail.setEmpId(stock.getEmpId());
 			stockinDetail.setStockType(Constant.RKD_CHINESE);
 
-			// 获取商品
-			Goods dbGoods = new Goods().selectById(stockinDetail.getGoodsId());
-			// 同步商品库存
-			stockinDetail.setStock(dbGoods.getStock() + stockinNum);
-			// 设置库存->旧方式的批次库存
-			// stockinDetail.setLeftStock(stockinNum);
-			/*********************************************保存入库记录********************************************/
-			stockinDetail.insert();
-			/*********************************************保存库存明细********************************************/
-			StockDetailsUtil.saveStockDetails(stockinDetail);
-
-			/*********************************************更新商品总库存********************************************/
-			new Goods(dbGoods.getGoodsId(), dbGoods.getBrandName(), dbGoods.getStock() + stockinNum).updateById();
-		}
-
-		/*********************************************处理库存开始********************************************/
-		for (StockDetail stockin : stockinDetails) {
-			int goodsId = stockin.getGoodsId();
-			String madeDate = stockin.getMadeDate();
-			GoodsStock goodsStock = new GoodsStock();
-			goodsStock.setGoodsId(goodsId);
-			GoodsStock dbGoodsStock = new GoodsStock().selectOne(
-					new LambdaQueryWrapper<GoodsStock>()
-							.eq(GoodsStock::getGoodsId, goodsId)
-							.eq(GoodsStock::getMadeDate, madeDate)
-							.eq(GoodsStock::getStockPrice, stockin.getStockPrice())
-			);
-			// 入库数量
-			int stockinNum = stockin.getNum() * stockin.getMulti();
-
-			if (!Objects.isNull(dbGoodsStock)) {
-				goodsStock.setId(dbGoodsStock.getId());
-				// 如果存在相同批次的库存->更新库存->库存+
-				goodsStock.setNum(stockinNum + dbGoodsStock.getNum());
-				goodsStock.updateById();
-			} else {
-				// 如果不存在相同批次的库存->插入新库存信息
-				goodsStock.setGoodsId(goodsId);
-				goodsStock.setMadeDate(madeDate);
-				goodsStock.setNum(stockinNum);
-				goodsStock.setStockPrice(stockin.getStockPrice());
-				/**************************************************入库*************************************************/
-				goodsStock.insert();
+			// 所特定商品
+			synchronized (new Integer(stockinDetail.getGoodsId())) {
+				// 获取商品
+				Goods dbGoods = goodsMapper.selectGoodsByGoodsId(stockinDetail.getGoodsId());
+				// 同步商品库存
+				stockinDetail.setStock(dbGoods.getStock() + stockinNum);
+				//保存入库记录
+				stockinDetail.insert();
+				//保存库存明细
+				StockDetailsUtil.saveStockDetails(stockinDetail);
+				//更新商品总库存
+				new Goods(dbGoods.getGoodsId(), dbGoods.getStock() + stockinNum).updateById();
 			}
 		}
 		stock.setStockNo(stockNo);
 		stock.setStockTime(stockTime);
-		stockMapper.insert(stock);
+		synchronized (stockNo) {
+			stockMapper.insert(stock);
+		}
 		return ResponseModel.getInstance().succ(true).msg(Constant.STOCKIN_SUCC);
 	}
 
 	/**
-	 * 处理出库时的库存(商品总库存和批次库存)和保存出库记录
-	 * 按批次出库
-	 * 减少对应批次的库存->一次出库可能出多个批次
-	 * 不按批次出库
-	 * 按照生产日期的先后出库
-	 * 减少商品的总库存
 	 * 保存出库记录
+	 * 减少商品的总库存
 	 *
 	 * @param stock
+	 * @param goodsMapper
 	 * @return
 	 */
-	public static ResponseModel stockout(Stock stock) {
+	public static ResponseModel stockout(Stock stock, GoodsMapper goodsMapper) {
 
 		stock.insert();
 
@@ -204,132 +179,47 @@ public class StockUtil {
 
 		String stockTime = stock.getStockTime();
 
+		// 商品纬度
 		for (StockDetail stockoutDetail : stockoutDetails) {
 
 			// 商品出库量
-			int goodsStockoutNum = 0;
+			int totalStockoutNumForOneGood = 0;
 
 			List<StockMadedate> stockMadeDates = stockoutDetail.getStockoutMadedates();
+			if (CollectionUtils.isEmpty(stockMadeDates)) {
+				return ResponseModel.getInstance().succ(false).msg("请选择批次.");
+			}
 
 			Integer goodsId = stockoutDetail.getGoodsId();
-			Goods dbGoods = new Goods().selectById(goodsId);
-
-			// 商品总库存
-			int dbStock = dbGoods.getStock();
+			Goods dbGoods = goodsMapper.selectGoodsByGoodsId(goodsId);
 
 			/**
 			 * *****************************************按照批次出库*******************************************
 			 * *******************按照批次出库时前端做了取整处理，不会出现不按照批次出库的情况*******************
 			 */
-			if (CollectionUtils.isNotEmpty(stockMadeDates)) {
-				int decreasingGoodsStockNum = dbStock;
-				for (StockMadedate stockMadedate : stockMadeDates) {
-					// 获取批次库存
-					GoodsStock batchGoodsStock = new GoodsStock().selectOne(
-							new LambdaQueryWrapper<GoodsStock>()
-									.eq(GoodsStock::getGoodsId, goodsId)
-									.eq(GoodsStock::getMadeDate, stockMadedate.getMadeDate())
-									.eq(GoodsStock::getStockPrice, stockMadedate.getStockPrice())
-					);
-
-					Integer multi = stockoutDetail.getMulti();
-					if (Objects.isNull(multi)) {
-						multi = 1;
-					}
-
-					Integer num = stockMadedate.getNum();
-					int thisBatchStockoutNum = num * multi;
-					decreasingGoodsStockNum -= thisBatchStockoutNum;
-					// 1.减少对应批次库存
-					int leftStock = batchGoodsStock.getNum() - thisBatchStockoutNum; // 库存都是以主单位进行保存的
-					batchGoodsStock.setNum(leftStock);
-
-					// 2.更新批次库存
-					batchGoodsStock.updateById();
-					// 商品出库量+(以最小单位进行处理的，所以要要处理multi)
-					goodsStockoutNum += thisBatchStockoutNum;
-					/*******************************处理出库记录*******************************/
-					stockoutDetail.setStockNo(stockNo);
-					stockoutDetail.setStockTime(stockTime);
-					stockoutDetail.setNum(stockMadedate.getNum()); // 出库数量
-					stockoutDetail.setHistory(thisBatchStockoutNum); // 设置本次出库历史数量 = history * multi
-					stockoutDetail.setStock(decreasingGoodsStockNum); // 同步批次出库后的商品库存
-					stockoutDetail.setMadeDate(stockMadedate.getMadeDate()); // 设置出库批次
-					stockoutDetail.setStockPrice(stockMadedate.getStockPrice());
-					stockoutDetail.insert(); // 保存出库记录
-					/*******************************保存库存详情*******************************/
-					StockDetailsUtil.saveStockDetails(stockoutDetail);
-				}
-				/*******************************************不按照批次出库*******************************************/
-			} else {
-				// 获取商品库存:筛选库存 >0的库存->如果不能在查询时通过是否大于0进行比较可以使用筛选，因为如果在数据库中存的是字符串->这样可以处理斤两为单位的商品
-				List<GoodsStock> dbGoodsStocks = new GoodsStock().selectList(
-						new LambdaQueryWrapper<GoodsStock>()
-								.eq(GoodsStock::getGoodsId, goodsId)
-								.orderByAsc(GoodsStock::getMadeDate) // 按照生产日期先后进行排序
-				).stream().filter(goodsStock -> goodsStock.getNum() > 0).collect(Collectors.toList());
-				// 获取出库数量
-				// 确保乘积因子
+			// 批次纬度
+			for (StockMadedate stockMadedate : stockMadeDates) {
 				Integer multi = stockoutDetail.getMulti();
 				if (Objects.isNull(multi)) {
 					multi = 1;
 				}
-
-				Integer num = stockoutDetail.getNum();
-
-				// 出库数量
-				int stockoutNum = num * multi;
-
-				// 库存存量 ->商品的总库存dbStock和出库量进行比较
-				/**************************************确保库存存量 > 待出库库存**************************************/
-				if (stockoutNum - dbStock > 0) {
-					return ResponseModel.getInstance().succ(false).msg("库存存量 ".concat(String.valueOf(dbStock)).concat(" 小于出库量，不能出库"));
-				}
-
-				// 商品出库量直接是不按批次出库的出库数量
-				goodsStockoutNum = stockoutNum;
-
-				/**
-				 * 出库数量示例
-				 * 出库数量
-				 * sglNum = 10
-				 * 批次库存量
-				 * 5,3,3
-				 */
-				int decreasingGoodsStockoutNum = dbStock;
-				//关键点是stockoutNum减少到最后一个库存时的处理
-				for (GoodsStock dbGoodsStock : dbGoodsStocks) {
-					// 当前批次库存
-					int thisStock = dbGoodsStock.getNum();
-					stockoutDetail.setMadeDate(dbGoodsStock.getMadeDate()); // 设置出库批次
-					// stockoutNum-thisStock <= 0 表示已经出库完了
-					stockoutNum -= thisStock;
-					if (stockoutNum <= 0) { // 如上的库存数量组合，总出库10个，最后一次last的值为 10-5-3-3 = -1 ,最后一次的出库量就是thisStock + stockoutNum(-1)
-						GoodsStock updatingGoodsStock = new GoodsStock(dbGoodsStock.getId(), -stockoutNum);// -stockoutNum == 1 最后一个库存就是减少两个，剩下1个
-						updatingGoodsStock.updateById(); // 更新商品库存批次
-						decreasingGoodsStockoutNum -= (thisStock + stockoutNum);
-						stockoutDetail.setStock(decreasingGoodsStockoutNum); // 同步批次出库后的商品库存 ->goodsStockoutNum随着出库的处理一直在增加
-						stockoutDetail.setHistory(thisStock + stockoutNum); // 设置本次出库历史数量
-						stockoutDetail.setNum(thisStock + stockoutNum);  // 此时的num 和history相同，乘积因子设置为1
-						stockoutDetail.setMulti(1); //不按照批次出库都是处理成主单位进行出库->因为会出现非整除的清空
-						stockoutDetail.insert(); // 保存出库记录
-						break; // 出库完成，跳出循环 ->持久化需要在break之前,因为break会直接跳出循环，不会继续执行循环体里面的代码
-					} else {
-						// 添加需要更新数量的入库记录
-						GoodsStock updatingGoodsStock = new GoodsStock(dbGoodsStock.getId(), 0);
-						updatingGoodsStock.updateById(); // 更新商品库存批次
-						decreasingGoodsStockoutNum -= dbGoodsStock.getNum();
-						stockoutDetail.setStock(decreasingGoodsStockoutNum); // 同步批次出库后的商品库存 ->goodsStockoutNum随着出库的处理一直在增加
-						stockoutDetail.setHistory(dbGoodsStock.getNum()); // 设置本次出库历史数量
-						stockoutDetail.setNum(dbGoodsStock.getNum()); // 此处num和history相同
-						stockoutDetail.setMulti(1); //不按照批次出库都是处理成主单位进行出库->因为会出现非整除的清空
-						stockoutDetail.insert(); // 保存出库记录
-					}
-				}
+				Integer num = stockMadedate.getNum();
+				// 商品出库量+(以最小单位进行处理的，所以要要处理multi)
+				totalStockoutNumForOneGood += num * multi;
+				/*******************************处理出库记录*******************************/
+				stockoutDetail.setStockNo(stockNo);
+				stockoutDetail.setStockTime(stockTime);
+				stockoutDetail.setNum(stockMadedate.getNum()); // 出库数量
+				stockoutDetail.setHistory(num * multi); // 设置本次出库历史数量 = history * multi
+				stockoutDetail.setStock(dbGoods.getStock() - num * multi); // 同步批次出库后的商品库存
+				stockoutDetail.setMadeDate(stockMadedate.getMadeDate()); // 设置出库批次
+				stockoutDetail.setStockPrice(stockMadedate.getStockPrice());
+				stockoutDetail.insert(); // 保存出库记录
+				/*******************************保存库存详情*******************************/
+				StockDetailsUtil.saveStockDetails(stockoutDetail);
 			}
 			/************************************* 更新商品库存信息 *************************************/
-			int newGoodsStock = dbGoods.getStock() - goodsStockoutNum;
-			new Goods(goodsId, dbGoods.getBrandName(), newGoodsStock).updateById();
+			new Goods(goodsId, dbGoods.getStock() - totalStockoutNumForOneGood).updateById();
 		}
 		return ResponseModel.getInstance().succ(true).msg(Constant.STOCKOUT_SUCC);
 	}

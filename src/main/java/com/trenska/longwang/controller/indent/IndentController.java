@@ -235,15 +235,8 @@ public class IndentController {
 		}
 
 		if(!NumberUtil.isIntegerUsable(indent.getCustId())){
-			return ResponseModel.getInstance().succ(false).msg("出库失败:请输入有效的客户信息");
+			return ResponseModel.getInstance().succ(false).msg("出库失败:请输入有效的客户信息！");
 		}
-		/**
-		 * 增加客户额度判断，超过额度将不能出库
-		 */
-//		ResponseModel responseModel = CustomerUtil.checkDebtLimit(indent.getCustId());
-//		if(responseModel.getSucc() == false){
-//			return responseModel;
-//		}
 
 		return indentService.stockoutIndent(indent,request);
 	}

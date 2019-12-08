@@ -1,6 +1,10 @@
 package com.trenska.longwang.controller.goods;
 
 
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelReader;
+import com.alibaba.excel.read.builder.ExcelReaderBuilder;
+import com.alibaba.excel.read.metadata.ReadSheet;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.annotation.DuplicateSubmitToken;
@@ -8,6 +12,7 @@ import com.trenska.longwang.constant.Constant;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.goods.Goods;
 import com.trenska.longwang.entity.goods.GoodsSpec;
+import com.trenska.longwang.excel_import.GoodsImportListener;
 import com.trenska.longwang.model.goods.GoodsExportModel;
 import com.trenska.longwang.model.goods.GoodsQueryModel;
 import com.trenska.longwang.model.sys.ExistModel;
@@ -29,11 +34,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -54,7 +61,7 @@ public class GoodsController {
 	@Autowired
 	private IGoodsSpecService goodsSpecService;
 
-//	@ApiImplicitParams({
+	//	@ApiImplicitParams({
 //			@ApiImplicitParam(name = "goodsName", value = "商品名称", paramType = "body", required = true, dataType = "string"),
 //			@ApiImplicitParam(name = "goodsNo", value = "商品编号", paramType = "body", dataType = "string"),
 //			@ApiImplicitParam(name = "barcode", value = "商品条码", paramType = "body", required = true, dataType = "string"),
@@ -80,10 +87,10 @@ public class GoodsController {
 	@PostMapping("/add")
 	@DuplicateSubmitToken
 	public ResponseModel addGoods(@RequestBody @Valid @ApiParam Goods goods, HttpServletRequest request) {
-		if(goods == null) {
+		if (goods == null) {
 			ResponseModel.getInstance().succ(false).msg("无效商品，请完善商品信息");
 		}
-		return goodsService.saveGoods(goods,request);
+		return goodsService.saveGoods(goods, request);
 	}
 
 	@DuplicateSubmitToken
@@ -91,7 +98,7 @@ public class GoodsController {
 	@DeleteMapping("/delete/{goodsId}")
 	public ResponseModel deleteGoods(@ApiParam(name = "goodsId", required = true) @PathVariable("goodsId") Integer goodsId) {
 
-		if(!NumberUtil.isIntegerUsable(goodsId)){
+		if (!NumberUtil.isIntegerUsable(goodsId)) {
 			return ResponseModel.getInstance().succ(false).msg("商品删除失败:无此商品");
 		}
 
@@ -130,7 +137,7 @@ public class GoodsController {
 //	})
 	@ApiOperation("修改商品")
 	public ResponseModel updateGoods(@RequestBody Goods goods) {
-		if(goods == null){
+		if (goods == null) {
 			return ResponseModel.getInstance().succ(false).msg("商品不能为空");
 		}
 		/**
@@ -229,16 +236,16 @@ public class GoodsController {
 			@RequestParam(required = false, name = "frtCatName") String frtCatName,
 			@RequestParam(required = false, name = "scdCatName") String scdCatName
 	) {
-		Map<String,Object> params = new HashMap<>();
-		params.put("stat",stat);
-		params.put("combine",combine);
-		params.put("propName",propName);
-		params.put("brandName",brandName);
-		params.put("minOdrQtt",minOdrQtt);
-		params.put("frtCatName",frtCatName);
-		params.put("scdCatName",scdCatName);
+		Map<String, Object> params = new HashMap<>();
+		params.put("stat", stat);
+		params.put("combine", combine);
+		params.put("propName", propName);
+		params.put("brandName", brandName);
+		params.put("minOdrQtt", minOdrQtt);
+		params.put("frtCatName", frtCatName);
+		params.put("scdCatName", scdCatName);
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
-		Page<Goods> pageInfo = goodsService.getGoodsPageSelective(page,params);
+		Page<Goods> pageInfo = goodsService.getGoodsPageSelective(page, params);
 
 //		GoodsQueryModel goodsQueryModel = new GoodsQueryModel(combine, brandName, frtCatName, scdCatName, stat, propName, minOdrQtt);
 //		if (PropertiesUtil.allPropertiesNull(goodsQueryModel)) {
@@ -277,18 +284,18 @@ public class GoodsController {
 			@RequestParam(required = false, name = "frtCatName") String frtCatName,
 			@RequestParam(required = false, name = "scdCatName") String scdCatName,
 			@PathVariable("current") Integer current, @PathVariable("size") Integer size
-	) throws Exception{
-		Map<String,Object> params = new HashMap<>();
-		params.put("stat",stat);
-		params.put("combine",combine);
-		params.put("propName",propName);
-		params.put("minOdrQtt",minOdrQtt);
-		params.put("brandName",brandName);
-		params.put("scdCatName",scdCatName);
-		params.put("frtCatName",frtCatName);
+	) throws Exception {
+		Map<String, Object> params = new HashMap<>();
+		params.put("stat", stat);
+		params.put("combine", combine);
+		params.put("propName", propName);
+		params.put("minOdrQtt", minOdrQtt);
+		params.put("brandName", brandName);
+		params.put("scdCatName", scdCatName);
+		params.put("frtCatName", frtCatName);
 
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
-		Page<GoodsExportModel> pageInfo = goodsService.getGoodsExcelPageSelective(page,params);
+		Page<GoodsExportModel> pageInfo = goodsService.getGoodsExcelPageSelective(page, params);
 
 		Map<String, Object> query = new LinkedHashMap<>();
 
@@ -296,7 +303,7 @@ public class GoodsController {
 			query.put("商品名称/编号/条码", combine);
 		}
 		if (StringUtils.isNotEmpty(frtCatName)) {
-			query.put("一级分类",frtCatName);
+			query.put("一级分类", frtCatName);
 		}
 		if (StringUtils.isNotEmpty(scdCatName)) {
 			query.put("二级分类", scdCatName);
@@ -307,15 +314,15 @@ public class GoodsController {
 		if (StringUtils.isNotEmpty(propName)) {
 			query.put("规格", propName);
 		}
-		if(ObjectUtils.isNotEmpty(stat)){
-			if (stat){
-				query.put("状态",Constant.ON_SALE);
-			}else {
-				query.put("状态",Constant.OFF_SALE);
+		if (ObjectUtils.isNotEmpty(stat)) {
+			if (stat) {
+				query.put("状态", Constant.ON_SALE);
+			} else {
+				query.put("状态", Constant.OFF_SALE);
 			}
 		}
-		if(NumberUtil.isIntegerUsable(minOdrQtt)){
-			query.put("最小起订量",minOdrQtt);
+		if (NumberUtil.isIntegerUsable(minOdrQtt)) {
+			query.put("最小起订量", minOdrQtt);
 		}
 
 		Map<String, String> title = new LinkedHashMap<>();
@@ -405,13 +412,14 @@ public class GoodsController {
 	@ApiOperation("获取商品的规格值")
 	public ResponseModel getGoodSpecs(@PathVariable("goodsId") Integer goodsId) {
 
-		if(null == goodsId || goodsId <= 0){
+		if (null == goodsId || goodsId <= 0) {
 			return ResponseModel.getInstance().succ(false).msg("无效的商品信息");
 		}
 		return ResponseModel.getInstance().succ(true).msg(goodsService.getGoodsPropsByGoodsId(goodsId));
 
 	}
-	@GetMapping("/get/names")
+
+	@GetMapping("/get/names/{current}/{size}")
 	@ApiOperation("获取所有商品的名称")
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "current", value = "当前页", required = true, paramType = "path", dataType = "int"),
@@ -421,10 +429,21 @@ public class GoodsController {
 			@PathVariable("current") Integer current,
 			@PathVariable("size") Integer size
 	) {
-		Page page  = PageUtils.getPageParam(new PageHelper(current,size));
+		Page page = PageUtils.getPageParam(new PageHelper(current, size));
 		Page<String> pageInfo = goodsService.getGoodsNamesPage(page);
 
 		return PageHelper.getInstance().pageData(pageInfo);
 
+	}
+
+	@PostMapping(value = "/excel/batch/import")
+	public ResponseModel readExcel(MultipartFile excel) throws IOException {
+		ExcelReaderBuilder readerBuilder = EasyExcel.read(excel.getInputStream(),new GoodsImportListener(goodsService));
+		ExcelReader excelReader = readerBuilder.build();
+		ReadSheet readSheet =
+				EasyExcel.readSheet(0).headRowNumber(1).build();
+		excelReader.read(readSheet);
+		excelReader.finish();
+		return ResponseModel.getInstance().succ(true).msg("导入成功！");
 	}
 }

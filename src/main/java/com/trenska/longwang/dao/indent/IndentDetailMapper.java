@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.plugins.pagination.Pagination;
 import com.trenska.longwang.entity.indent.IndentDetail;
 import com.trenska.longwang.model.report.SingleGoodsSalesIndentDetailModel;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.ResultMap;
+import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
@@ -28,10 +30,14 @@ public interface IndentDetailMapper extends BaseMapper<IndentDetail> {
 	boolean actualDeleteIndentDetail(String indentNo);
 
 	List<SingleGoodsSalesIndentDetailModel> selectSingleGoodsIndentDetail(Pagination page, Map<String ,Object> params);
+
 	int selectSingleGoodsIndentDetailCount(Map<String,Object> params);
 
 	@Update("update t_indent_detail set stockout = stockout + #{stockoutNum} where detail_id = #{detailId}")
 	boolean updateStockoutNum(@Param("detailId") Long detailId, @Param("stockoutNum") int stockoutNum);
 
 	List<IndentDetail> selectUndeletable(Integer goodsId);
+
+	@Select("select * from t_indent_detail where detail_id = #{detailId} for update")
+	IndentDetail selectByDetailId(Long detailId);
 }

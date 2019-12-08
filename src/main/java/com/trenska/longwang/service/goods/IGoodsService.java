@@ -9,6 +9,7 @@ import com.trenska.longwang.model.sys.ResponseModel;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -48,5 +49,7 @@ public interface IGoodsService extends IService<Goods> {
 	Page<Goods> getGoodsPageSelective(Page page, Map<String, Object> params);
 
 	Page<GoodsExportModel> getGoodsExcelPageSelective(Page page, Map<String, Object> params);
+
+	ResponseModel batchImportGoods(List<Goods> goods);
 }
 

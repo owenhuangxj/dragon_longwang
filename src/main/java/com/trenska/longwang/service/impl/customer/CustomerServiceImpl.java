@@ -25,7 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -64,7 +63,7 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
 
 		if(CollectionUtils.isEmpty(custIds)){
 			try {
-				ResponseUtil.accessDenied(Constant.ACCESS_TIMEOUT,Constant.ACCESS_TIMEOUT_MSG);
+				ResponseUtil.accessDenied(Constant.ACCESS_TIMEOUT,Constant.ACCESS_TIMEOUT_MSG,"");
 				page.setTotal(0);
 				page.setRecords(new ArrayList(0));
 				return page;
@@ -130,7 +129,7 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
 		}
 
 		if(StringUtils.isEmpty(customer.getDebtLimit())){
-			customer.setDebtLimit(Constant.NO_DEBT_LIMIT_LABLE);
+			customer.setDebtLimit(Constant.NO_DEBT_LIMIT_LABEL);
 		}
 		customer.setCreatedTime(TimeUtil.getCurrentTime(Constant.TIME_FORMAT));
 		String initDebt = customer.getInitDebt();

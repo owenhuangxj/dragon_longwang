@@ -1,6 +1,5 @@
 package com.trenska.longwang.util;
 
-import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.trenska.longwang.constant.Constant;
 import com.trenska.longwang.dao.customer.AreaGrpMapper;
@@ -8,15 +7,12 @@ import com.trenska.longwang.entity.customer.Customer;
 import com.trenska.longwang.entity.sys.EmpAreaGrp;
 import com.trenska.longwang.model.sys.ResponseModel;
 import com.trenska.longwang.service.customer.IAreaGrpService;
-import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -204,7 +200,7 @@ public class CustomerUtil {
 		}
 
 		/**如果创建客户时没有设置debtLimit，客户就没有欠款额度的限制*/
-		if(Constant.NO_DEBT_LIMIT_LABLE.equals(customer.getDebtLimit())){
+		if(Constant.NO_DEBT_LIMIT_LABEL.equals(customer.getDebtLimit())){
 			return ResponseModel.getInstance().succ(true);
 		}
 		if (new BigDecimal(customer.getDebt()).compareTo(new BigDecimal(customer.getDebtLimit())) >= 0) {

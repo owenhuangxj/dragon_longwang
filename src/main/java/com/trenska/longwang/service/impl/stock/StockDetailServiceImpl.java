@@ -35,7 +35,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * 库存明细表 服务实现类
@@ -75,7 +74,7 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 			return ResponseModel.getInstance().succ(false).msg(Constant.ACCESS_TIMEOUT_MSG).code(Constant.ACCESS_TIMEOUT);
 		}
 		stock.setEmpId(empIdInRedis);
-		return StockUtil.stockin(stock,stockMapper);
+		return StockUtil.stockin(stock,stockMapper, goodsMapper);
 	}
 
 	@Override
@@ -104,7 +103,7 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 		});
 		// 将封装好的出库记录设置到stockouts属性
 		stock.setStockouts(stockouts);
-		return StockUtil.stockout(stock);
+		return StockUtil.stockout(stock, goodsMapper);
 	}
 
 	@Override
@@ -170,7 +169,6 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 	 */
 	@Override
 	public Page<StockDetail> getGoodsMadeDateStockInfo(Map<String, Object> params, Page page) {
-
 		page.setRecords(super.baseMapper.selectGoodsMadeDateStockInfo(params, page));
 		page.setTotal(super.baseMapper.selectGoodsMadeDateStockCount(params));
 		return page;
