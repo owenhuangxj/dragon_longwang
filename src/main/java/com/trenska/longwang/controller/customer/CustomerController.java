@@ -2,7 +2,7 @@ package com.trenska.longwang.controller.customer;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.plugins.Page;
-import com.trenska.longwang.annotation.DuplicateSubmitToken;
+import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.constant.Constant;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.customer.Customer;
@@ -14,14 +14,13 @@ import com.trenska.longwang.service.customer.ICustomerService;
 import com.trenska.longwang.util.ExcelUtil;
 import com.trenska.longwang.util.NumberUtil;
 import com.trenska.longwang.util.PageUtils;
+import com.trenska.longwang.util.StringUtil;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
-import org.apache.shiro.web.servlet.ShiroHttpSession;
-import org.apache.shiro.web.session.HttpServletSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -30,7 +29,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -50,41 +48,54 @@ public class CustomerController {
 	private ICustomerService customerService;
 
 	@PostMapping("/add")
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@ApiOperation(value = "添加客户信息")
 	public ResponseModel addCustomer(@Valid @RequestBody @ApiParam Customer customer) {
 		if (null == customer) {
 			return ResponseModel.getInstance().succ(false).msg("客户信息不能为空");
 		}
+
+		boolean isValidDebtLimit = StringUtil.isNumeric(customer.getDebtLimit(), true);
+		if (!isValidDebtLimit) {
+			return ResponseModel.getInstance().succ(false).msg("无效的欠款额度.");
+		}
+
+		boolean isValidInitDebt = StringUtil.isNumeric(customer.getInitDebt(), true);
+		if (!isValidInitDebt){
+			return ResponseModel.getInstance().succ(false).msg("无效的期初欠款.");
+		}
+
 		return customerService.addCustomer(customer);
 	}
 
 	/**
 	 * 需要删除客户特价
+	 *
 	 * @param custId
 	 * @return
 	 */
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/{custId}")
 	@ApiOperation(value = "根据客户id号即custId删除客户信息")
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "custId", value = "客户id", paramType = "path", required = true, dataType = "int")
 	})
 	public ResponseModel deletePriceGrp(@PathVariable Integer custId) {
-		if(!NumberUtil.isIntegerUsable(custId)){
+		if (!NumberUtil.isIntegerUsable(custId)) {
 			return ResponseModel.getInstance().succ(false).msg("无此客户");
 		}
 		return customerService.deleteCustomerById(custId);
 
 	}
-	@DuplicateSubmitToken
+
+	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/batch")
 	@ApiOperation(value = "批量删除客户")
 	@ApiImplicitParams({
-			@ApiImplicitParam(name = "custIds", value = "需要批量删除的客户id集合/数组", paramType = "query", required = true, dataType = "int")
+			@ApiImplicitParam(name = Constant.CUST_IDS_LABEL, value = "需要批量删除的客户id集合/数组", paramType = "query", required = true, dataType = "int")
 	})
-	public ResponseModel batchDeletePriceGrp(@RequestParam(value = "custIds") Collection<Integer> custIds) {
-		if(null == custIds || (null != custIds && custIds.size() ==0)){
+	public ResponseModel batchDeletePriceGrp(@RequestParam(value = Constant.CUST_IDS_LABEL) Collection<Integer> custIds) {
+		if (null == custIds || (null != custIds && custIds.size() == 0)) {
 			return ResponseModel.getInstance().succ(false).msg("无效的客户信息");
 
 		}
@@ -92,7 +103,7 @@ public class CustomerController {
 	}
 
 	@PutMapping("/update")
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@ApiOperation(value = "修改客户信息")
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "custId", value = "客户id", paramType = "body", required = true, dataType = "int"),
@@ -109,8 +120,8 @@ public class CustomerController {
 	})
 	public ResponseModel updateCustomer(@RequestBody Customer customer) {
 		Subject subject = SecurityUtils.getSubject();
-		SysEmp sysEmp = (SysEmp) subject.getSession().getAttribute("sysEmp");
-		log.debug("sysEmp : {}" , sysEmp);
+		SysEmp sysEmp = (SysEmp) subject.getPrincipal();
+		log.debug("sysEmp : {}", sysEmp);
 		boolean succ = customerService.updateById(customer);
 		return ResponseModel.getInstance().succ(succ).msg("客户信息更新成功");
 	}
@@ -125,7 +136,7 @@ public class CustomerController {
 		PageHelper page = PageHelper.getInstance();
 		page.setCurrent(current);
 		page.setSize(size);
-		Page<Customer> pageInfo = customerService.getCustomerPage(PageUtils.getPageParam(page),request);
+		Page<Customer> pageInfo = customerService.getCustomerPage(PageUtils.getPageParam(page), request);
 		return PageHelper.getInstance().pageData(pageInfo);
 	}
 
@@ -162,18 +173,18 @@ public class CustomerController {
 			@RequestParam(value = "areaGrpId", required = false) Integer areaGrpId,
 			@RequestParam(value = "custTypeId", required = false) Integer custTypeId,
 			@RequestParam(value = "priceGrpId", required = false) Integer priceGrpId,
-			@PathVariable("current") Integer current,@PathVariable("size") Integer size
+			@PathVariable("current") Integer current, @PathVariable("size") Integer size
 	) {
 		PageHelper pageHelper = PageHelper.getInstance();
 		pageHelper.setSize(size);
 		pageHelper.setCurrent(current);
-		Map<String , Object> params = new HashMap<>();
-		params.put("empId",empId);
-		params.put("custName",custName);
-		params.put("areaGrpId",areaGrpId);
-		params.put("custTypeId",custTypeId);
-		params.put("priceGrpId",priceGrpId);
-		Page<Customer> pageInfo = customerService.getCustomerPageSelective(params, PageUtils.getPageParam(pageHelper),request);
+		Map<String, Object> params = new HashMap<>();
+		params.put("empId", empId);
+		params.put("custName", custName);
+		params.put("areaGrpId", areaGrpId);
+		params.put("custTypeId", custTypeId);
+		params.put("priceGrpId", priceGrpId);
+		Page<Customer> pageInfo = customerService.getCustomerPageSelective(params, PageUtils.getPageParam(pageHelper), request);
 		return PageHelper.getInstance().pageData(pageInfo);
 	}
 
@@ -251,7 +262,6 @@ public class CustomerController {
 	}
 
 	/**
-	 *
 	 * 切记不可在excel导出时设置 MAPPER XML 文件中映射的 fetchType="lazy"
 	 */
 	@GetMapping("/export/info")
@@ -260,7 +270,7 @@ public class CustomerController {
 			@ApiImplicitParam(name = "empId", value = "业务员id", paramType = "query", dataType = "int"),
 			@ApiImplicitParam(name = "empName", value = "业务员名称", paramType = "query", dataType = "string"),
 			@ApiImplicitParam(name = "areaGrpId", value = "区域分组id", paramType = "query", dataType = "int"),
-			@ApiImplicitParam(name = "areaGrpName", value = "区域分组", paramType = "query", dataType="string"),
+			@ApiImplicitParam(name = "areaGrpName", value = "区域分组", paramType = "query", dataType = "string"),
 			@ApiImplicitParam(name = "custTypeId", value = "客户类型id", paramType = "query", dataType = "int"),
 			@ApiImplicitParam(name = "custTypeName", value = "客户类型", paramType = "query", dataType = "int"),
 			@ApiImplicitParam(name = "priceGrpId", value = "价格分组id", paramType = "query", dataType = "int"),
@@ -277,12 +287,12 @@ public class CustomerController {
 			@RequestParam(value = "priceGrpId", required = false) Integer priceGrpId,
 			@RequestParam(value = "priceGrpName", required = false) String priceGrpName
 	) throws IOException, NoSuchFieldException, IllegalAccessException {
-		Map<String , Object> params = new HashMap<>();
-		params.put("empId",empId);
-		params.put("areaGrpId",areaGrpId);
-		params.put("priceGrpId",priceGrpId);
-		params.put("custTypeId",custTypeId);
-		List<CustomerInfoModel> records = customerService.getCustomerInfoSelective(params,request);
+		Map<String, Object> params = new HashMap<>();
+		params.put("empId", empId);
+		params.put("areaGrpId", areaGrpId);
+		params.put("priceGrpId", priceGrpId);
+		params.put("custTypeId", custTypeId);
+		List<CustomerInfoModel> records = customerService.getCustomerInfoSelective(params, request);
 		////////////////////////////////////////////// 处理列标题 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 		Map<String, String> title = new LinkedHashMap<>();
 		title.put("custNo", "客户编号");
@@ -298,26 +308,26 @@ public class CustomerController {
 
 		////////////////////////////////////////////// 处理查询条件 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 		Map<String, Object> query = new LinkedHashMap<>();
-		if(NumberUtil.isIntegerUsable(empId) && !records.isEmpty()) {
-			query.put("所属员工",empName);
+		if (NumberUtil.isIntegerUsable(empId) && !records.isEmpty()) {
+			query.put("所属员工", empName);
 		}
-		if(NumberUtil.isIntegerUsable(areaGrpId) && StringUtils.isNotEmpty(areaGrpName)) {
+		if (NumberUtil.isIntegerUsable(areaGrpId) && StringUtils.isNotEmpty(areaGrpName)) {
 			query.put("归属区域", areaGrpName);
 		}
-		if(NumberUtil.isIntegerUsable(priceGrpId) && StringUtils.isNotEmpty(priceGrpName)){
-			query.put("价格分组",priceGrpName);
+		if (NumberUtil.isIntegerUsable(priceGrpId) && StringUtils.isNotEmpty(priceGrpName)) {
+			query.put("价格分组", priceGrpName);
 		}
 
-		if(NumberUtil.isIntegerUsable(custTypeId) && StringUtils.isNotEmpty(custTypeName)){
+		if (NumberUtil.isIntegerUsable(custTypeId) && StringUtils.isNotEmpty(custTypeName)) {
 			query.put("客户类型", custTypeName);
 		}
 
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		HSSFWorkbook wb = ExcelUtil.getHSSFWorkbook("客户信息",false,null, query, title, records,null);
+		HSSFWorkbook wb = ExcelUtil.getHSSFWorkbook("客户信息", false, null, query, title, records, null);
 		wb.write(baos);
 		HttpHeaders headers = new HttpHeaders();
-		headers.setContentDispositionFormData("attachment",new String("客户信息.xls".getBytes(Constant.srcEncoding),Constant.destEncoding));
+		headers.setContentDispositionFormData("attachment", new String("客户信息.xls".getBytes(Constant.srcEncoding), Constant.destEncoding));
 		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-		return new ResponseEntity<byte[]>(baos.toByteArray(),headers, HttpStatus.CREATED);
+		return new ResponseEntity<byte[]>(baos.toByteArray(), headers, HttpStatus.CREATED);
 	}
 }

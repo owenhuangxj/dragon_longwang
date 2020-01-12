@@ -1,8 +1,10 @@
 package com.trenska.longwang.controller.report;
 
 import com.baomidou.mybatisplus.plugins.Page;
+import com.trenska.longwang.controller.sys.SysUserController;
 import com.trenska.longwang.dao.customer.AreaGrpMapper;
 import com.trenska.longwang.entity.PageHelper;
+import com.trenska.longwang.entity.sys.SysEmp;
 import com.trenska.longwang.model.finaning.AccountCheckingModel;
 import com.trenska.longwang.model.report.*;
 import com.trenska.longwang.service.customer.ICustomerService;
@@ -19,6 +21,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.shiro.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.web.bind.annotation.*;
@@ -145,6 +148,9 @@ public class ReportsController {
 		params.put("scdCatName", scdCatName);
 		params.put("goodsScope", goodsScope);
 		params.put("salesmanId", salesmanId);
+		SysEmp sysEmp = (SysEmp) SecurityUtils.getSubject().getPrincipal();
+
+		System.out.println("sysEmp : " + sysEmp);
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
 		Page<CustSalesSummarizingModel> pageInfo = indentService.getCustSalesSummarizing(params, page, request);
 		CustSalesSummationModel summarizing = indentService.getCustSalesSummation(params);
@@ -592,7 +598,6 @@ public class ReportsController {
 		GoodsStockSummationModel summarizing = stockService.getGoodsStockSummartion(params);
 		return PageHelper.getInstance().pageData(pageInfo).summarizing(summarizing);
 	}
-
 
 	@GetMapping("/goods-stockin/{current}/{size}")
 	@ApiImplicitParams({

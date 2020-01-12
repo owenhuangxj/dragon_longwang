@@ -1,7 +1,7 @@
 package com.trenska.longwang.controller.customer;
 
 import com.baomidou.mybatisplus.plugins.Page;
-import com.trenska.longwang.annotation.DuplicateSubmitToken;
+import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.customer.AreaGrp;
 import com.trenska.longwang.model.customer.AreaGrpModel;
@@ -9,8 +9,6 @@ import com.trenska.longwang.model.sys.ResponseModel;
 import com.trenska.longwang.service.customer.IAreaGrpService;
 import com.trenska.longwang.util.PageUtils;
 import io.swagger.annotations.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,7 +31,7 @@ public class AreaGrpController {
 	private IAreaGrpService areaGrpService;
 
 	@PostMapping("/add")
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "pid", value = "父节点areaGrpId,如果是一级区域时设置areaGrpId为 0", paramType = "body", defaultValue = "0", required = true, dataType = "int"),
 			@ApiImplicitParam(name = "areaGrpName", value = "区域分组名", paramType = "body", required = true, dataType = "string"),
@@ -54,7 +52,7 @@ public class AreaGrpController {
 	 * @param areaGrpDeep
 	 * @return
 	 */
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/{areaGrpDeep}/{areaGrpId}")
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "custId", required = true, paramType = "path", dataType = "int"),
@@ -66,7 +64,7 @@ public class AreaGrpController {
 			@ApiParam(name = "areaGrpDeep", value = "区域分组深度", required = true) @PathVariable("areaGrpDeep") Integer areaGrpDeep) {
 		return areaGrpService.removeAreaGrp(areaGrpId, areaGrpDeep);
 	}
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@PutMapping("/update")
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "custId", paramType = "body", required = true, dataType = "int"),

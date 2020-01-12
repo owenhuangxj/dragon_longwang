@@ -1,16 +1,19 @@
 package com.trenska.longwang.filter;
 
 import java.io.IOException;
+import java.util.Optional;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+
+import com.trenska.longwang.util.SysUtil;
 import org.apache.commons.lang3.StringUtils;
 import com.trenska.longwang.constant.Constant;
 import com.trenska.longwang.util.ResponseUtil;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.shiro.web.filter.AccessControlFilter;
-import org.springframework.data.redis.core.RedisTemplate;
-import com.trenska.longwang.context.ApplicationContextHolder;
 
 /**
  * 2019/4/3
@@ -44,26 +47,24 @@ public class AccessControlTokenFilter extends AccessControlFilter {
 		// 出鬼了，获取不到Principal了...
 //		SysEmp sysEmp = (SysEmp) getSubject(request, response).getPrincipal();
 
-		RedisTemplate<String, String> redisTemplate = ApplicationContextHolder.getBean("redisTemplate");
 		HttpServletRequest req = (HttpServletRequest) request;
-		String token = req.getHeader("token");
+		String tokenInHeader = req.getHeader(Constant.TOKEN_NAME);
 		// 如果无令牌
-		if(StringUtils.isEmpty(token)){
+		if (StringUtils.isEmpty(tokenInHeader)) {
 			HttpServletResponse response = (HttpServletResponse) resp;
-			ResponseUtil.accessDenied(response,Constant.TOKEN_MISSING,Constant.TOKEN_MISSING_MSG);
+			ResponseUtil.accessDenied(response, Constant.TOKEN_MISSING, Constant.TOKEN_MISSING_MSG);
 		}
-		String tokenInRedis = redisTemplate.opsForValue().get(Constant.ACCESS_TOKEN_IDENTIFIER + token);
+		String tokenInRedis = SysUtil.getTokenInRedis(Optional.of(tokenInHeader));
 		// 如果令牌超时
-		if (StringUtils.isEmpty(tokenInRedis)){
+		if (StringUtils.isEmpty(tokenInRedis)) {
 			HttpServletResponse response = (HttpServletResponse) resp;
-			ResponseUtil.accessDenied(response,Constant.ACCESS_TIMEOUT,Constant.ACCESS_TIMEOUT_MSG);
+			ResponseUtil.accessDenied(response, Constant.ACCESS_TIMEOUT, Constant.ACCESS_TIMEOUT_MSG);
 		}
 		/**
-		 * 如果Header里面的token和Redis里面的token都不为null并且匹配成功则允许访问资源
+		 * 如果Header里面的token和Redis里面的token都不为null则允许访问资源
 		 */
-		return token.equals(tokenInRedis);
+		return true;
 	}
-
 
 	/**
 	 * 处理跨域

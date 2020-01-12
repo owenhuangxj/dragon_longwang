@@ -2,6 +2,7 @@ package com.trenska.longwang.entity.stock;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
+import com.trenska.longwang.constant.Constant;
 import com.trenska.longwang.entity.goods.Goods;
 import com.trenska.longwang.entity.indent.StockMadedate;
 import io.swagger.annotations.ApiModel;
@@ -98,17 +99,21 @@ public class StockDetail extends Model<StockDetail> {
 	@ApiModelProperty("库存操作备注")
 	private String detailRemarks;
 
-	@ApiModelProperty("逻辑删除位")
-//	@TableLogic
-	private Boolean deleted;
-
 	@ApiModelProperty("出库单状态 true 完成 false 作废")
 	private Boolean stat;
 
-	public StockDetail(Long detailId, Boolean stat,String stockType) {
+	public StockDetail(Long detailId, Boolean stat, String stockType) {
 		this.stockType = stockType;
 		this.detailId = detailId;
 		this.stat = stat;
+	}
+
+	public String getGroupingbyKey() {
+		return goodsId + Constant.SPLITTER + madeDate;
+	}
+
+	public int getStockNumber() {
+		return multi * num;
 	}
 
 	@Override

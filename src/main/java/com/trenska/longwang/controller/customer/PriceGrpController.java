@@ -2,7 +2,7 @@ package com.trenska.longwang.controller.customer;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.plugins.Page;
-import com.trenska.longwang.annotation.DuplicateSubmitToken;
+import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.customer.PriceGrp;
 import com.trenska.longwang.model.sys.ResponseModel;
@@ -32,7 +32,7 @@ public class PriceGrpController {
 	private IPriceGrpService priceGrpService;
 
 	@PostMapping("/add")
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@ApiOperation(value = "添加客户价格分组", notes = "返回的数据中data属性是添加成功的客户价格分组id，即priceGrpId")
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "priceGrpName", value = "价格分组名称", paramType = "body", required = true, dataType = "String"),
@@ -45,7 +45,7 @@ public class PriceGrpController {
 		return priceGrpService.savePriceGrp(priceGrp);
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/{PriceGrpId}")
 	@ApiOperation(value = "删除客户价格分组")
 	@ApiImplicitParams({
@@ -55,7 +55,7 @@ public class PriceGrpController {
 		return ResponseModel.getInstance().succ(priceGrpService.removeById(PriceGrpId)).msg("客户价格分组删除成功");
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/batch")
 	@ApiOperation(value = "批量删除客户价格分组")
 	@ApiImplicitParams({
@@ -66,7 +66,7 @@ public class PriceGrpController {
 	}
 
 	@PutMapping("/update")
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@ApiOperation(value = "修改客户价格分组")
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "priceGrpId", value = "客户价格分组id", paramType = "body", required = true, dataType = "int"),

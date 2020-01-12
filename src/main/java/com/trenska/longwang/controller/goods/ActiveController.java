@@ -2,7 +2,7 @@ package com.trenska.longwang.controller.goods;
 
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.plugins.Page;
-import com.trenska.longwang.annotation.DuplicateSubmitToken;
+import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.goods.Active;
 import com.trenska.longwang.model.sys.ResponseModel;
@@ -32,7 +32,7 @@ public class ActiveController {
 	private IActiveService activeService;
 
 	@PostMapping("/add")
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@ApiOperation("添加商品活动")
 	public ResponseModel addActive(@Valid @RequestBody @ApiParam Active active) {
 		if(null == active){
@@ -42,7 +42,7 @@ public class ActiveController {
 	}
 
 	@DeleteMapping("/delete/{activeId}")
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@ApiOperation("删除商品活动")
 	public ResponseModel deleteActive(@ApiParam(name = "activeId", required = true) @PathVariable("activeId") Integer activeId) {
 		if(!NumberUtil.isIntegerUsable(activeId)){
@@ -61,7 +61,7 @@ public class ActiveController {
 
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/batch")
 	@ApiOperation("批量删除商品活动")
 	public ResponseModel batchDeleteActive(@ApiParam(name = "activeIds", value = "需要批量删除的商品活动id集合/数组", required = true) @RequestParam(value = "activeIds") Collection<Integer> activeIds) {
@@ -72,7 +72,7 @@ public class ActiveController {
 		return activeService.removeActiveByIds(activeIds);
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@PutMapping("/close/{activeId}")
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "activeId", value = "商品活动id", paramType = "body", dataType = "int")
@@ -86,7 +86,7 @@ public class ActiveController {
 		return ResponseModel.getInstance().succ(successful).msg(successful ? "关闭商品活动成功" : "关闭商品活动失败");
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@PutMapping("/close/batch")
 	@ApiOperation("批量关闭商品活动")
 	public ResponseModel batchDownActive(@Valid @RequestParam Collection<Integer> activeIds) {

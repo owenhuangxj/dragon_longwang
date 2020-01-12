@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 
 /**
  * 库存明细 服务实现类
+ *
  * @author Owen
  * @since 2019-04-17
  */
@@ -64,21 +65,22 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, Stock> implements
 
 	@Override
 	public Page<StockDetails> getStockDetaislPage(Map<String, Object> params, Page page) {
-		page.setRecords(super.baseMapper.selectStockDetailPageSelective(params,page));
+		page.setRecords(super.baseMapper.selectStockDetailPageSelective(params, page));
 		page.setTotal(super.baseMapper.selectStockDetailCountSelective(params));
 		return page;
 	}
 
 	/**
-	 * 如果不选择库存时间，实际上就是商品的普通分页 + 可用库存处理
-	 * @param page
+	 * 如果不选择库存时间，实际
+	 *
+	 * @param page上就是商品的普通分页 + 可用库存处理
 	 * @return
 	 */
 	@Override
-	public Page<Goods> getStockStatusPageSelective(Map<String,Object> params, Page page) {
+	public Page<Goods> getStockStatusPageSelective(Map<String, Object> params, Page page) {
 		List<Goods> goodsStockPage = super.baseMapper.selectStockStatusPage(params, page);
 		// 处理可用库存
-		goodsStockPage.forEach(goodsStock->{
+		goodsStockPage.forEach(goodsStock -> {
 			goodsStock.setAvbStock(goodsStock.getStock() - goodsStock.getStockout());
 		});
 		page.setRecords(goodsStockPage);
@@ -102,19 +104,18 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, Stock> implements
 	@Override
 	public Map<String, Object> prinAndPdf(Long stockId) {
 
-		Stock stock =  this.getById(stockId);
+		Stock stock = this.getById(stockId);
 
 		Map<String, Object> params = new HashMap<>();
-		params.put("stockNo",stock.getStockNo() );
-		params.put("type",stock.getOperType());
-		params.put("outTime",stock.getStockTime());
-		params.put("ddremark",stock.getStockRemarks());//订单备注
+		params.put("stockNo", stock.getStockNo());
+		params.put("type", stock.getOperType());
+		params.put("outTime", stock.getStockTime());
+		params.put("ddremark", stock.getStockRemarks());//订单备注
 
 		SysEmp emp = empService.getOne(new QueryWrapper<SysEmp>().eq("emp_id", stock.getEmpId()));
-		if (null != emp)
-		{
-			params.put("person",emp.getEmpName());
-			params.put("empName",emp.getEmpName());
+		if (null != emp) {
+			params.put("person", emp.getEmpName());
+			params.put("empName", emp.getEmpName());
 		}
 
 
@@ -122,31 +123,30 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, Stock> implements
 
 		Double totalPrice = 0.0;
 		int totalNum = 0;
-		for (Map<String, Object> detail : recordsList)
-		{
-			Goods goods = goodsService.getById(Long.valueOf((Integer)detail.get("goods_id")));
+		for (Map<String, Object> detail : recordsList) {
+			Goods goods = goodsService.getById(Long.valueOf((Integer) detail.get("goods_id")));
 
-			Unit unit =  unitService.getById(Long.valueOf((Integer)detail.get("unit_id")));
-			detail.put("gcode",goods.getGoodsNo());// 编号
-			detail.put("gname",goods.getGoodsName());//名称
-			detail.put("guige",goodsService.getGoodsPropsByGoodsId((Integer)detail.get("goods_id")));//规格
-			detail.put("unit",unit.getUnitName());//单位
+			Unit unit = unitService.getById(Long.valueOf((Integer) detail.get("unit_id")));
+			detail.put("gcode", goods.getGoodsNo());// 编号
+			detail.put("gname", goods.getGoodsName());//名称
+			detail.put("guige", goodsService.getGoodsPropsByGoodsId((Integer) detail.get("goods_id")));//规格
+			detail.put("unit", unit.getUnitName());//单位
 
-			int num = (int)detail.get("history");
-			Double  price = Double.valueOf((String)detail.get("stock_price"));
-			detail.put("amount",num * price); //金额
+			int num = (int) detail.get("history");
+			Double price = Double.valueOf((String) detail.get("stock_price"));
+			detail.put("amount", num * price); //金额
 			totalNum += num;
 
-			totalPrice +=  num * price; //总价格
+			totalPrice += num * price; //总价格
 
 		}
 
-		params.put("flow_list",recordsList); //详细数据
+		params.put("flow_list", recordsList); //详细数据
 
-		params.put("totalPrice",totalPrice); //总金额
-		params.put("totalNum",totalNum);//总数量
+		params.put("totalPrice", totalPrice); //总金额
+		params.put("totalNum", totalNum);//总数量
 
-		params.put("lowAmount",totalPrice);
+		params.put("lowAmount", totalPrice);
 		params.put("capAmount", RMBUtil.toUpper(totalPrice.toString()));//金额大写
 
 
@@ -154,60 +154,39 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, Stock> implements
 	}
 
 	@Override
-	public Page<GoodsStockSummarizingModel>  getGoodsStockSummarizing(Map<String, Object> params, Page page, HttpServletRequest request) {
+	public Page<GoodsStockSummarizingModel> getGoodsStockSummarizing(Map<String, Object> params, Page page, HttpServletRequest request) {
 
-		List<GoodsStockSummarizingModel> records = super.baseMapper.selectGoodsStockSummarizing(params,page);
+		List<GoodsStockSummarizingModel> records = super.baseMapper.selectGoodsStockSummarizing(params, page);
 
-		for(GoodsStockSummarizingModel record : records){
+		for (GoodsStockSummarizingModel record : records) {
 
 			// 判断期初库存是否为空(数据库默认值为0)，如果为空，表示时间段之前没有库存操作，需要获取时间段内最小时间的库存
 			String initStock = record.getInitStock();
-			if(StringUtils.isEmpty(initStock)){
+			if (StringUtils.isEmpty(initStock)) {
 				Integer goodsId = record.getGoodsId();
-				params.put("goodsId",goodsId);
-//				initStock = super.baseMapper.selectGoodsBeginningStockBetween(params);
+				params.put("goodsId", goodsId);
 				initStock = super.baseMapper.selectGoodsBeginningStockOfInitialization(params);
-				if (StringUtils.isEmpty(initStock)){
+				if (StringUtils.isEmpty(initStock)) {
 					initStock = "0";
 				}
 				record.setInitStock(initStock);
 			}
 
-			// 判断期末库存，如果为空(数据库默认值为0) 表示时间段内没有库存操作，需要将期末库存设置为和期初库存一样
-//			String overStock = record.getOverStock();
-//			if(StringUtils.isEmpty(overStock)){
-//				record.setOverStock(initStock);
-//			}
 			// 期末库存由期初和所有库存类型的库存计算得到
 			String overStock =
 					new BigDecimal(record.getInitStock())
-					.add(new BigDecimal(record.getMakeIn()))
-					.add(new BigDecimal(record.getOtherIn()))
-					.add(new BigDecimal(record.getReturnsIn()))
-					.add(new BigDecimal(record.getOverflow()))
-					.subtract(new BigDecimal(record.getSalesOut()))
-					.subtract(new BigDecimal(record.getOtherOut()))
-					.subtract(new BigDecimal(record.getBreakage()))
-					.toString();
+							.add(new BigDecimal(record.getMakeIn()))
+							.add(new BigDecimal(record.getOtherIn()))
+							.add(new BigDecimal(record.getReturnsIn()))
+							.add(new BigDecimal(record.getOverflow()))
+							.subtract(new BigDecimal(record.getSalesOut()))
+							.subtract(new BigDecimal(record.getOtherOut()))
+							.subtract(new BigDecimal(record.getBreakage()))
+							.toString();
 			record.setOverStock(overStock);
 		}
 
-		int total = super.baseMapper.selectGoodsStockSummarizingCount(params).size();
-
-		records = records.stream().filter(
-				record->
-					new BigDecimal(record.getInitStock()).compareTo(BigDecimal.ZERO) > 0
-					|| new BigDecimal(record.getMakeIn()).compareTo(BigDecimal.ZERO) > 0
-					|| new BigDecimal(record.getOtherIn()).compareTo(BigDecimal.ZERO) > 0
-					|| new BigDecimal(record.getOverflow()).compareTo(BigDecimal.ZERO) > 0
-					|| new BigDecimal(record.getSalesOut()).compareTo(BigDecimal.ZERO) > 0
-					|| new BigDecimal(record.getOtherOut()).compareTo(BigDecimal.ZERO) > 0
-					|| new BigDecimal(record.getBreakage()).compareTo(BigDecimal.ZERO) > 0
-					|| new BigDecimal(record.getReturnsIn()).compareTo(BigDecimal.ZERO) > 0
-					|| new BigDecimal(record.getOverStock()).compareTo(BigDecimal.ZERO) > 0
-
-		).collect(Collectors.toList());
-
+		int total = super.baseMapper.selectGoodsStockSummarizingCount(params);
 		page.setRecords(records);
 		page.setTotal(total);
 		return page;
@@ -215,37 +194,26 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, Stock> implements
 
 	@Override
 	public GoodsStockSummationModel getGoodsStockSummartion(Map<String, Object> params) {
-//		List<Map<String, String>> maps = super.baseMapper.selectGoodsStockSummationOld(params);
-//		BigDecimal overStockSum = new BigDecimal(0);
-//		BigDecimal initStockSum = new BigDecimal(0);
-//		for(Map<String,String> map : maps){
-//			String initStock = String.valueOf(map.get("initStock"));
-//			String overStock = String.valueOf(map.get("overStock"));
-//			initStockSum = initStockSum.add(new BigDecimal(initStock));
-//			overStockSum = overStockSum.add(new BigDecimal(overStock));
-//		}
-//		return new GoodsStockSummationModel(initStockSum.toString(),overStockSum.toString());
 		List<GoodsStockSummarizingModel> records = super.baseMapper.selectGoodsStockSummarizing(params);
 		GoodsStockSummationModel goodsStockSummation = new GoodsStockSummationModel();
-
-		BigDecimal initStockSum = new BigDecimal(0);
-		BigDecimal makeInSum = new BigDecimal(0);
-		BigDecimal purchaseInSum = new BigDecimal(0);
-		BigDecimal returnsOutSum = new BigDecimal(0);
-		BigDecimal returnsInSum = new BigDecimal(0);
-		BigDecimal salesOutSum = new BigDecimal(0);
-		BigDecimal otherInSum = new BigDecimal(0);
-		BigDecimal otherOutSum = new BigDecimal(0);
-		BigDecimal overflowSum = new BigDecimal(0);
-		BigDecimal breakageSum = new BigDecimal(0);
-		BigDecimal overStockSum = new BigDecimal(0);
-		for(GoodsStockSummarizingModel record : records){
+		BigDecimal initStockSum = BigDecimal.ZERO;
+		BigDecimal makeInSum = BigDecimal.ZERO;
+		BigDecimal purchaseInSum = BigDecimal.ZERO;
+		BigDecimal returnsOutSum = BigDecimal.ZERO;
+		BigDecimal returnsInSum = BigDecimal.ZERO;
+		BigDecimal salesOutSum = BigDecimal.ZERO;
+		BigDecimal otherInSum = BigDecimal.ZERO;
+		BigDecimal otherOutSum = BigDecimal.ZERO;
+		BigDecimal overflowSum = BigDecimal.ZERO;
+		BigDecimal breakageSum = BigDecimal.ZERO;
+		BigDecimal overStockSum = BigDecimal.ZERO;
+		for (GoodsStockSummarizingModel record : records) {
 			String initStock = record.getInitStock();
-			if(StringUtils.isEmpty(initStock)){
+			if (StringUtils.isEmpty(initStock)) {
 				Integer goodsId = record.getGoodsId();
-				params.put("goodsId",goodsId);
+				params.put("goodsId", goodsId);
 				initStock = super.baseMapper.selectGoodsBeginningStockOfInitialization(params);
-				if (StringUtils.isEmpty(initStock)){
+				if (StringUtils.isEmpty(initStock)) {
 					initStock = "0";
 				}
 				record.setInitStock(initStock);
@@ -292,7 +260,7 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, Stock> implements
 	public Page<GoodsStockinStatisticsModel> getGoodsStockinStatistics(Map<String, Object> params, Page page) {
 
 
-		List<GoodsStockinStatisticsModel> records = super.baseMapper.selectGoodsStockinStatistic(params,page);
+		List<GoodsStockinStatisticsModel> records = super.baseMapper.selectGoodsStockinStatistic(params, page);
 //		int retain = SysUtil.getSysConfigRetain();
 //		records.forEach(record->{
 //			String avgPrice = new BigDecimal(record.getAvgPrice()).setScale(retain, RoundingMode.HALF_UP).toString();
@@ -310,7 +278,7 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, Stock> implements
 	}
 
 
-	public int getGoodsBeginningStock(Map<String,Object> params){
+	public int getGoodsBeginningStock(Map<String, Object> params) {
 
 		return -1;
 

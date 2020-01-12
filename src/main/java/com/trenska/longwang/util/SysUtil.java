@@ -4,7 +4,6 @@ import com.trenska.longwang.constant.Constant;
 import com.trenska.longwang.context.ApplicationContextHolder;
 import com.trenska.longwang.dao.customer.AreaGrpMapper;
 import com.trenska.longwang.entity.sys.SysConfig;
-import com.trenska.longwang.model.sys.ResponseModel;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -12,10 +11,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * 2019/6/14
@@ -23,85 +19,77 @@ import java.util.Set;
  */
 public class SysUtil {
 
-	public static int getEmpIdInRedis(){
-		RedisTemplate<String,String> redisTemplate = ApplicationContextHolder.getBean(Constant.REDIS_TEMPLATE_NAME);
+	public static int getEmpId(){
 		HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
 		String token = request.getHeader(Constant.TOKEN_NAME);
-		String empIdInRedis = redisTemplate.opsForValue().get(token + Constant.EMP_ID_IDENTIFIER);
-		if(StringUtil.isNumeric(empIdInRedis)){
-			return NumberUtils.toInt(empIdInRedis);
+		if (StringUtils.isEmpty(token)){
+			return -1;
 		}
-		return -1 ;
+		String[] strs = StringUtils.split(token, Constant.SPLITTER);
+		if (strs == null || strs.length <= 1){
+			return -1;
+		}
+		String empIdStr = strs[1];
+		return NumberUtils.toInt(empIdStr);
 	}
 
-	/**
-	 * 获取存入redis中的登陆账号id
-	 * @param request
-	 * @return
-	 */
-	public static Integer getEmpIdInRedis( HttpServletRequest request){
-		RedisTemplate<String,String> redisTemplate = ApplicationContextHolder.getBean(Constant.REDIS_TEMPLATE_NAME);
-		Integer empId = null;
+
+	public static String getTokenInRedis(Optional<String> token) {
+		String[] strs = StringUtils.split(token.get(), Constant.SPLITTER);
+		if (strs == null || strs.length <= 1){
+			return null;
+		}
+		String empIdStr = strs[1];
+
+		if (!StringUtil.isNumeric(empIdStr,false)){
+			return null;
+		}
+
+		RedisTemplate<String,String> redisTemplate =
+				ApplicationContextHolder.getBean(Constant.REDIS_TEMPLATE_NAME);
+
+		String tokenInRedis = redisTemplate.opsForValue().get(Constant.EMP_ID_IDENTIFIER.concat(empIdStr));
+
+		return tokenInRedis;
+	}
+
+	public static int getSysConfigRetain(){
+		HttpServletRequest request =
+				((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+
+		// 获取 token ，格式为 uuid + :: + empId
 		String token = request.getHeader(Constant.TOKEN_NAME);
-		if(StringUtils.isNotEmpty(token)){
-			String empIdInRedis = redisTemplate.opsForValue().get(token.concat(Constant.EMP_ID_IDENTIFIER));
-			if (StringUtil.isNumeric(empIdInRedis)){
-				empId = NumberUtils.toInt(empIdInRedis);
-			}
 
+		//从token中获取empId
+		String empIdInToken = getTokenInRedis(Optional.of(token));
+
+		// 如果是一个无效的empId，则设置为系统默认配置对应的empId->10000
+		if (!StringUtil.isNumeric(empIdInToken,false)){
+			empIdInToken = String.valueOf(Constant.DEFAULT_CONFIG_NUMBER);
 		}
-		return empId;
+
+		// 从redis中获取SysConfig
+		RedisTemplate<String,Object> jsonRedisTemplate =
+				ApplicationContextHolder.getBean(Constant.REDIS_JSON_TEMPLATE_NAME);
+
+		SysConfig sysConfig =
+				(SysConfig) jsonRedisTemplate.opsForValue().get(Constant.SYS_CONFIG_IDENTIFIER.concat(empIdInToken));
+		// 如果redis 出故障了则获取容器中的默认系统配置
+		if (sysConfig == null){
+			sysConfig = ApplicationContextHolder.getBean(SysConfig.class);
+		}
+		Integer retain = sysConfig.getRetain();
+		return retain;
+
 	}
 
-	public static ResponseModel getEmpId(HttpServletRequest request){
-		RedisTemplate<String,String> redisTemplate = ApplicationContextHolder.getBean(Constant.REDIS_TEMPLATE_NAME);
-		Integer empId = null;
-		String token = request.getHeader(Constant.TOKEN_NAME);
-		if(StringUtils.isNotEmpty(token)){
-			String empIdInRedis = redisTemplate.opsForValue().get(token.concat(Constant.EMP_ID_IDENTIFIER));
-			if (StringUtils.isNotEmpty(empIdInRedis)){
-				empId = NumberUtils.toInt(empIdInRedis);
-				Map<String,Integer> redisEmpId = new HashMap();
-				redisEmpId.put("empId",empId);
-				return ResponseModel.getInstance().succ(true).data(redisEmpId);
-			}else{
-				return ResponseModel.getInstance().succ(false).msg("登陆超时，请重新登陆");
-			}
-		}else{
-			return ResponseModel.getInstance().succ(false).msg("登陆超时，请重新登陆");
-		}
+	public static String assembleLastLoginIp(){
+		HttpServletRequest request =
+				((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+		String lastLoginIp =
+				request.getRemoteHost().concat(" ").concat(request.getRemoteAddr()).concat(String.valueOf(request.getRemotePort()));
+		return lastLoginIp;
 	}
-
-	/**
-	 * 重新包装查询参数，处理区域分组
-	 * @param areaGrpMapper
-	 * @return
-	 */
-	public static Set<Integer> dealAreaGrp( AreaGrpMapper areaGrpMapper ,int areaGrpId){
-		Set<Integer> areaGrpIds = new HashSet<>();
-		if (NumberUtil.isIntegerUsable(areaGrpId)) {
-			return areaGrpMapper.selectSubAreaGrpIds(areaGrpId);
-		}
-		return new HashSet<>();
-	}
-
-
-	/**
-	 * 重新包装查询参数，处理区域分组
-	 * @param srcParams
-	 * @param areaGrpMapper
-	 * @return
-	 */
-	public static Map<String,Object> dealAreaGrp(Map<String,Object> srcParams, AreaGrpMapper areaGrpMapper){
-		Integer areaGrpId = (Integer) srcParams.get("areaGrpId");
-		Set<Integer> areaGrpIds = new HashSet<>();
-		if (NumberUtil.isIntegerUsable(areaGrpId)) {
-			areaGrpIds.addAll(areaGrpMapper.selectSubAreaGrpIds(areaGrpId));
-			srcParams.put("areaGrpIds", areaGrpIds);
-		}
-		return srcParams;
-	}
-
 
 	/**
 	 * 重新包装查询参数，处理数据权限和区域分组
@@ -114,7 +102,7 @@ public class SysUtil {
 
 		///////////////////////////////////// 处理数据权限 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 		Set<Integer> custIds = CustomerUtil.getCurrentUserDataAuth(request, areaGrpMapper);
-		srcParams.put("custIds", custIds);
+		srcParams.put(Constant.CUST_IDS_LABEL, custIds);
 
 		///////////////////////////////////// 处理区域分组 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 		Integer areaGrpId = (Integer) srcParams.get("areaGrpId");
@@ -125,41 +113,4 @@ public class SysUtil {
 		}
 		return srcParams;
 	}
-
-	public static int getSysConfigRetain(){
-
-		RedisTemplate<String,String> redisTemplate = ApplicationContextHolder.getBean(Constant.REDIS_TEMPLATE_NAME);
-
-		RedisTemplate<String,Object> jsonRedisTemplate = ApplicationContextHolder.getBean(Constant.REDIS_JSON_TEMPLATE_NAME);
-
-		HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-
-		String token = request.getHeader(Constant.TOKEN_NAME);
-
-		String empIdInRedis = redisTemplate.opsForValue().get(token + Constant.EMP_ID_IDENTIFIER);
-
-		SysConfig sysConfig = (SysConfig) jsonRedisTemplate.opsForValue().get(Constant.SYS_CONFIG_IDENTIFIER + empIdInRedis);
-
-		Integer retain = sysConfig.getRetain();
-
-		return retain;
-
-	}
-
-	public static int getSysConfigRetain(RedisTemplate<String,String> redisTemplate,RedisTemplate<String,Object> jsonRedisTemplate){
-
-		HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-
-		String token = request.getHeader(Constant.TOKEN_NAME);
-
-		String empIdInRedis = redisTemplate.opsForValue().get(token + Constant.EMP_ID_IDENTIFIER);
-
-		SysConfig sysConfig = (SysConfig) jsonRedisTemplate.opsForValue().get(Constant.SYS_CONFIG_IDENTIFIER + empIdInRedis);
-
-		Integer retain = sysConfig.getRetain();
-
-		return retain;
-
-	}
-
 }

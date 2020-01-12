@@ -8,7 +8,7 @@ import java.lang.annotation.*;
 @Documented
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface DuplicateSubmitToken {
+public @interface CheckDuplicateSubmit {
 	/**
 	 * 一次请求完成之前防止重复提交
 	 */

@@ -88,5 +88,4 @@ public class Receipt extends Model<Receipt> {
         this.receiptId = receiptId;
         this.stat = stat;
     }
-
 }

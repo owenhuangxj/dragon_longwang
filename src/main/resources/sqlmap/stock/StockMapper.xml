@@ -16,7 +16,6 @@
         <result column="emp_id" property="empId"/>
         <result column="shipman_id" property="shipmanId"/>
         <result column="stock_remarks" property="stockRemarks"/>
-        <result column="deleted" property="deleted"/>
         <association column="emp_id" property="empName"
                      select="com.trenska.longwang.dao.sys.SysEmpMapper.selectNameById"/>
         <association column="shipman_id" property="shipman"
@@ -28,30 +27,9 @@
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         ts.stock_id,ts.stock_no,ts.cust_id,ts.oper_type,ts.busi_no,ts.stock_type,
-        ts.stock_time,ts.stat,ts.audit_stat,ts.emp_id,ts.shipman_id,ts.stock_remarks,ts.deleted
+        ts.stock_time,ts.stat,ts.audit_stat,ts.emp_id,ts.shipman_id,ts.stock_remarks
     </sql>
 
-    <!--<select id="selectStockDetailCountSelective" resultType="java.lang.Integer">
-        select count(1)
-        from t_stock_detail tsd
-        <trim prefix="where" prefixOverrides="and">
-            <if test="beginTime != null and endTime != null ">
-                tsd.stock_time between #{beginTime} and #{endTime}
-            </if>
-            <if test="stockType != null and stockType != ''">
-                and tsd.stock_type like concat('%',#{stockType},'%')
-            </if>
-            <if test="operType != null and operType != ''">
-                and tsd.oper_type like concat('%',#{operType},'%')
-            </if>
-            <if test="busiNo != null and busiNo != ''">
-                and tsd.busi_no like concat('%',#{busiNo},'%')
-            </if>
-            <if test="goodsId != null">
-                and tsd.goods_id = #{goodsId}
-            </if>
-        </trim>
-    </select>-->
     <select id="selectStockDetailCountSelective" resultType="java.lang.Integer">
         select count(1)
         from t_stock_details tsds
@@ -74,32 +52,10 @@
         </trim>
     </select>
 
-    <!--<select id="selectStockDetailPageSelective" resultMap="com.trenska.longwang.dao.stock.StockDetailMapper.BaseResultMap">
-        select
-        <include refid="com.trenska.longwang.dao.stock.StockDetailMapper.Base_Column_List"/>
-        from t_stock_detail tsd
-        <trim prefix="where" prefixOverrides="and">
-            <if test="beginTime != null and endTime != null ">
-                tsd.stock_time between #{beginTime} and #{endTime}
-            </if>
-            <if test="stockType != null and stockType != ''">
-                and tsd.stock_type like concat('%',#{stockType},'%')
-            </if>
-            <if test="operType != null and operType != ''">
-                and tsd.oper_type like concat('%',#{operType},'%')
-            </if>
-            <if test="busiNo != null and busiNo != ''">
-                and tsd.busi_no like concat('%',#{busiNo},'%')
-            </if>
-            <if test="goodsId != null">
-                and tsd.goods_id = #{goodsId}
-            </if>
-        </trim>
-        order by tsd.stock_time desc,tsd.stock asc
-    </select>-->
     <select id="selectStockDetailPageSelective" resultType="com.trenska.longwang.entity.stock.StockDetails">
         select
         <include refid="com.trenska.longwang.dao.stock.StockDetailsMapper.Base_Column_List"/>
+        ,case when tsds.history >0 then tsds.history else tsds.history*-1 end as history
         from t_stock_details tsds
         <trim prefix="where" prefixOverrides="and">
             <if test="beginTime != null and endTime != null ">
@@ -118,7 +74,7 @@
                 and tsds.goods_id = #{goodsId}
             </if>
         </trim>
-        order by tsds.stock_time desc,tsds.stock asc
+        order by tsds.timestamp desc
     </select>
     <!--stockout用于计算可用库存-->
     <select id="selectStockStatusPage" resultMap="com.trenska.longwang.dao.goods.GoodsMapper.simpleInfoResultMap">
@@ -320,90 +276,10 @@
         where ts.stock_id = (select max(stock_id) from t_stock where stock_type = #{stockType})
     </select>
 
-    <!-- 进出库数量汇总合计部分 -->
-    <!--<select id="selectGoodsStockSummationOld" resultType="java.util.Map">
-        select
-            ifnull((
-            select tsdin.stock
-            from t_stock_detail as tsdin
-            where tsdin.detail_id = (
-                select max(tsd2.detail_id)
-                from t_stock_detail tsd2
-                where tsd2.stock_time <![CDATA[<]]> #{beginTime}
-                and tsd2.goods_id = tg.goods_id
-            )
-            union
-            select tsdin3.stock
-            from t_stock_detail tsdin3
-            where tsdin3.oper_type = '期初入库'
-            and tsdin3.detail_id = tsd.detail_id
-            and tsdin3.stock_time between #{beginTime} and #{endTime}
-            ),0)  as initStock,
-            ifnull((
-            select tsdin.stock
-            from t_stock_detail as tsdin
-            where tsdin.detail_id = (
-                SELECT MAX(tsdin2.detail_id)
-                FROM t_stock_detail tsdin2
-                WHERE tsdin2.stock_time BETWEEN #{beginTime} AND #{endTime}
-                AND tsdin2.goods_id = tg.goods_id
-            ) ),0) as overStock
-            from (
-            select * from t_goods
-              <trim prefix="where" prefixOverrides="and">
-                  <if test="brandName != null and brandName != ''">
-                      and brand_name = #{brandName}
-                  </if>
-                  <if test="combine != null and combine != ''">
-                      and instr(combine,#{combine})
-                  </if>
-                  <if test="frtCatName != null and frtCatName != ''">
-                      and frt_cat_name = #{frtCatName}
-                  </if>
-                  <if test="scdCatName != null and scdCatName != ''">
-                      and scd_cat_name = #{scdCatName}
-                  </if>
-              </trim>
-            ) as tg
-            left join (
-            select * from t_stock_detail
-              <trim prefix="where" prefixOverrides="and">
-                  <if test="beginTime != null and endTime != null ">
-                      and stock_time between #{beginTime} and #{endTime}
-                  </if>
-                  <if test="operType != null and operType != ''">
-                      and oper_type = #{operType}
-                  </if>
-              </trim>
-            ) as tsd on tg.goods_id = tsd.goods_id
-            <if test="specPropId != null">
-                left join (
-                select * from t_goods_spec
-                <if test="specPropId != null">
-                    where spec_prop_id = #{specPropId}
-                </if>
-                ) as tgs on tgs.goods_id = tg.goods_id
-            </if>
-            left join t_unit as tu on tg.main_unit_id = tu.unit_id
-            group by tg.goods_id
-    </select>-->
-    <!--union并只能保证结果是唯一的，不能保证结果只有一个-->
-    <!--<select id="selectGoodsInitStock" resultType="java.lang.String">
-        select tsd1.stock
-        from t_stock_detail tsd1
-        where tsd1.detail_id = (
-            select max(tsd2.detail_id)
-            from t_stock_detail tsd2
-            where tsd2.stock_time <![CDATA[<=]]> #{beginTime}
-              and tsd2.goods_id = #{goodsId}
-        )
-        union
-        select ifnull(tsd.stock,0) from t_stock_detail tsd where tsd.oper_type = '期初入库' and tsd.goods_id = #{goodsId}
-    </select>-->
-
     <!-- 进出库数量汇总  -->
     <select id="selectGoodsStockSummarizing" resultMap="GoodsStockSummarizingResultMap">
-        select tg.goods_id as goodsId,ifnull(tg.goods_no,"") as goodsNo,tg.goods_name as goodsName,ifnull(tg.brand_name,"") as brandName,tu.unit_name as unitName,
+        select tg.goods_id as goodsId,ifnull(tg.goods_no,"") as goodsNo,tg.goods_name as
+        goodsName,ifnull(tg.brand_name,"") as brandName,tsd.unit_name as unitName,
         #{beginTime} as beginTime,#{endTime} as endTime,
         abs(sum(if(tsd.oper_type = '生产入库' and tsd.stock_type = '入库单',tsd.history,0))) as makeIn,
         abs(sum(if(tsd.oper_type = '采购入库' and tsd.stock_type = '入库单',tsd.history,0))) as purchaseIn,
@@ -415,12 +291,12 @@
         abs(sum(if(tsd.oper_type = '其他入库' and tsd.stock_type = '入库单',tsd.history,0))) as otherIn,
         abs(sum(if(tsd.oper_type = '其他出库' and tsd.stock_type = '出库单',tsd.history,0))) as otherOut
         from (
-            select tg.* from t_goods tg
+            select tg.goods_id as goods_id,tg.goods_no as goods_no,tg.goods_name as goods_name,
+                   tg.brand_name as brand_name from t_goods tg
             <if test="specPropId != null">
                 ,t_goods_spec  as tgs
             </if>
-
-          <trim prefix="where" prefixOverrides="and">
+            <trim prefix="where" prefixOverrides="and">
               <if test="brandName != null and brandName != ''">
                   and tg.brand_name = #{brandName}
               </if>
@@ -437,11 +313,11 @@
                   and tgs.goods_id = tg.goods_id
                   and tgs.spec_prop_id = #{specPropId}
               </if>
-          </trim>
-        ) as tg
-        left join (
-          select * from t_stock_detail
-            where stat = 1
+            </trim>
+        ) as tg,(
+          select stock_type,oper_type,history,goods_id,unit_name from t_stock_detail tsd,t_unit tu
+            where tsd.stat = 1
+            and tsd.unit_id = tu.unit_id
             <trim prefix="and" prefixOverrides="and">
                 <if test="beginTime != null and endTime != null ">
                     and stock_time between #{beginTime} and #{endTime}
@@ -450,60 +326,12 @@
                     and oper_type = #{operType}
                 </if>
             </trim>
-          ) as tsd on tg.goods_id = tsd.goods_id
-        left join t_unit tu on tu.unit_id = tsd.unit_id
+        ) as tsd
+        where tg.goods_id = tsd.goods_id
         group by tg.goods_id
         order by tg.goods_no
     </select>
-    <!--<select id="selectGoodsStockSummarizing" resultMap="GoodsStockSummarizingResultMap">
-        select tg.goods_id as goodsId,ifnull(tg.goods_no,"") as goodsNo,tg.goods_name as goodsName,ifnull(tg.brand_name,"") as brandName,tsds.unit_name as unitName,
-        #{beginTime} as beginTime,#{endTime} as endTime,
-        abs(sum(if(tsds.oper_type = '生产入库' and substring(tsds.stock_type,1,3) = '入库单',tsds.history,0))) as makeIn,
-        abs(sum(if(tsds.oper_type = '采购入库' and substring(tsds.stock_type,1,3) = '入库单',tsds.history,0))) as purchaseIn,
-        abs(sum(if(tsds.oper_type = '退货出库' and substring(tsds.stock_type,1,3) = '出库单',tsds.history,0))) as returnsOut,
-        abs(sum(if(tsds.oper_type = '退货入库' and substring(tsds.stock_type,1,3) = '入库单',tsds.history,0))) as returnsIn,
-        abs(sum(if(tsds.oper_type = '销售出库' and substring(tsds.stock_type,1,3) = '出库单',tsds.history,0))) as salesOut,
-        abs(sum(if(tsds.oper_type = '报溢入库' and substring(tsds.stock_type,1,3) = '入库单',tsds.history,0))) as overflow,
-        abs(sum(if(tsds.oper_type = '报损出库' and substring(tsds.stock_type,1,3) = '出库单',tsds.history,0))) as breakage,
-        abs(sum(if(tsds.oper_type = '其他入库' and substring(tsds.stock_type,1,3) = '入库单',tsds.history,0))) as otherIn,
-        abs(sum(if(tsds.oper_type = '其他出库' and substring(tsds.stock_type,1,3) = '出库单',tsds.history,0))) as otherOut
-        from (
-            select tg.* from t_goods tg
-            <if test="specPropId != null">
-                ,t_goods_spec  as tgs
-            </if>
-          <trim prefix="where" prefixOverrides="and">
-              <if test="brandName != null and brandName != ''">
-                  and tg.brand_name = #{brandName}
-              </if>
-              <if test="combine != null and combine != ''">
-                  and instr(tg.combine,#{combine})
-              </if>
-              <if test="frtCatName != null and frtCatName != ''">
-                  and tg.frt_cat_name = #{frtCatName}
-              </if>
-              <if test="scdCatName != null and scdCatName != ''">
-                  and tg.scd_cat_name = #{scdCatName}
-              </if>
-              <if test="specPropId != null">
-                  and tgs.goods_id = tg.goods_id
-                  and tgs.spec_prop_id = #{specPropId}
-              </if>
-          </trim>
-        ) as tg
-        left join (
-          select * from t_stock_details
-            <trim prefix="where" prefixOverrides="and">
-                <if test="beginTime != null and endTime != null ">
-                    and stock_time between #{beginTime} and #{endTime}
-                </if>
-                <if test="operType != null and operType != ''">
-                    and oper_type = #{operType}
-                </if>
-            </trim>
-          ) as tsds on tg.goods_id = tsds.goods_id
-        group by tg.goods_id
-    </select>-->
+
     <resultMap id="GoodsStockSummarizingResultMap" type="com.trenska.longwang.model.report.GoodsStockSummarizingModel" autoMapping="true">
         <result column="goodsId" property="goodsId"/>
         <result column="goodsNo" property="goodsNo"/>
@@ -519,13 +347,14 @@
         <result column="otherIn" property="otherIn"/>
         <result column="otherOut" property="otherOut"/>
         <association column="{goodsId=goodsId,beginTime=beginTime}" property="initStock"  select="selectGoodsBeginningStockBefore" />
-        <!--<association column="{goodsId=goodsId,beginTime=beginTime,endTime=endTime}" property="overStock" select="selectGoodsOverStock" />-->
         <collection column="goodsId" property="propNames" select="com.trenska.longwang.dao.goods.GoodsSpecMapper.getPropNamesByGoodsId"/>
     </resultMap>
-    <select id="selectGoodsStockSummarizingCount" resultType="java.lang.Integer">
-        select count(1)
+    <select id="selectGoodsStockSummarizingCount" resultType="int">
+        select count(goodsId) from (
+        select tg.goods_id as  goodsId
         from (
-        select tg.* from t_goods tg
+        select tg.goods_id as goods_id,tg.goods_no as goods_no,tg.goods_name as goods_name,
+               tg.brand_name as brand_name from t_goods tg
         <if test="specPropId != null">
             ,t_goods_spec  as tgs
         </if>
@@ -547,49 +376,11 @@
                 and tgs.spec_prop_id = #{specPropId}
             </if>
         </trim>
-        ) as tg
-        left join (
-        select * from t_stock_detail
-          <trim prefix="where" prefixOverrides="and">
-              <if test="beginTime != null and endTime != null ">
-                  and stock_time between #{beginTime} and #{endTime}
-              </if>
-              <if test="operType != null and operType != ''">
-                  and oper_type = #{operType}
-              </if>
-          </trim>
-        ) as tsd on tg.goods_id = tsd.goods_id
-        group by tg.goods_id
-    </select>
-    <!--<select id="selectGoodsStockSummarizingCount" resultType="java.lang.Integer">
-        select count(1)
-        from (
-        select tg.* from t_goods tg
-        <if test="specPropId != null">
-            ,t_goods_spec  as tgs
-        </if>
-        <trim prefix="where" prefixOverrides="and">
-            <if test="brandName != null and brandName != ''">
-                and tg.brand_name = #{brandName}
-            </if>
-            <if test="combine != null and combine != ''">
-                and instr(tg.combine,#{combine})
-            </if>
-            <if test="frtCatName != null and frtCatName != ''">
-                and tg.frt_cat_name = #{frtCatName}
-            </if>
-            <if test="scdCatName != null and scdCatName != ''">
-                and tg.scd_cat_name = #{scdCatName}
-            </if>
-            <if test="specPropId != null">
-                and tgs.goods_id = tg.goods_id
-                and tgs.spec_prop_id = #{specPropId}
-            </if>
-        </trim>
-        ) as tg
-        left join (
-        select * from t_stock_details
-        <trim prefix="where" prefixOverrides="and">
+        ) as tg,(
+        select stock_type,oper_type,history,goods_id,unit_name from t_stock_detail tsd,t_unit tu
+        where tsd.stat = 1
+        and tsd.unit_id = tu.unit_id
+        <trim prefix="and" prefixOverrides="and">
             <if test="beginTime != null and endTime != null ">
                 and stock_time between #{beginTime} and #{endTime}
             </if>
@@ -597,12 +388,17 @@
                 and oper_type = #{operType}
             </if>
         </trim>
-        ) as tsds on tg.goods_id = tsds.goods_id
+        ) as tsd
+        where tg.goods_id = tsd.goods_id
         group by tg.goods_id
-    </select>-->
+        order by tg.goods_no
+        ) as tmp
+    </select>
+
     <!--商品入库报表合计-->
     <select id="selectGoodsStockinSummation" resultType="com.trenska.longwang.model.report.GoodsStockinSummationModel">
-        select sum(tsd.history) as stockinNumSum ,cast(sum(tsd.history*tsd.stock_price/tsd.multi ) as decimal(9,2)) as stockinAmntSum
+        select sum(tsd.history) as stockinNumSum ,cast(sum(tsd.history*tsd.stock_price/tsd.multi ) as
+        decimal(15,2)) as stockinAmntSum
         from t_stock_detail tsd , t_goods tg
         where tsd.goods_id = tg.goods_id
         and tsd.stock_type = '入库单'
@@ -630,8 +426,8 @@
     <!--商品入库报表-->
     <select id="selectGoodsStockinStatistic" resultMap="GoodsStockinStatisticsResultMap">
         select tg.goods_id as goodsId , tg.goods_name as goodsName , ifnull(tg.goods_no,"") as goodsNo , tu.unit_name as unitName,
-        sum(tsd.history) as stockinNum , cast( sum(tsd.history*tsd.stock_price/tsd.multi)/sum(tsd.history) as decimal(9,2)) as avgPrice ,
-        cast(sum(tsd.history*tsd.stock_price/tsd.multi ) as decimal(9,2)) as stockinAmnt
+        sum(tsd.history) as stockinNum , cast( sum(tsd.history*tsd.stock_price/tsd.multi)/sum(tsd.history) as decimal(15,2)) as avgPrice ,
+        cast(sum(tsd.history*tsd.stock_price/tsd.multi ) as decimal(15,2)) as stockinAmnt
         from t_stock_detail tsd , t_goods tg , t_unit tu
         where tsd.goods_id = tg.goods_id
         and tsd.unit_id = tu.unit_id
@@ -746,5 +542,11 @@
             and stat = 1
         )
         and tsd1.goods_id = #{goodsId}
+    </select>
+    <select id="selectByStockNo" resultType="com.trenska.longwang.entity.stock.Stock">
+        select <include refid="Base_Column_List"/>
+        from t_stock ts
+        where stock_no = #{stockNo}
+        for update
     </select>
 </mapper>

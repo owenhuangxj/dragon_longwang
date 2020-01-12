@@ -18,11 +18,9 @@ import java.util.logging.Logger;
 @EnableScheduling
 public class GoodsCopyTask {
 
-	@Scheduled(cron = "0/10 * * * * ?")
+//	@Scheduled(cron = "0/10 * * * * ?")
 	public void scheduledTaskByCron(){
 		System.out.println("scheduled task : " + new Date());
 
 	}
-
-
 }

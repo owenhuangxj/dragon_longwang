@@ -2,7 +2,7 @@ package com.trenska.longwang.controller.sys;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.plugins.Page;
-import com.trenska.longwang.annotation.DuplicateSubmitToken;
+import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.constant.Constant;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.sys.*;
@@ -46,7 +46,7 @@ public class SysRoleController {
 	private ISysEmpRoleService empRoleService;
 
 	@PostMapping("/add")
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@ApiOperation(value = "添加角色")
 	public ResponseModel add(@RequestBody @Valid @ApiParam(name = "role", value = "角色") SysRole role) {
 		if (null == role) {
@@ -63,7 +63,7 @@ public class SysRoleController {
 		return ResponseModel.getInstance().succ(true).msg("角色添加成功.");
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/batch")
 	@ApiOperation(value = "批量删除角色")
 	@ApiImplicitParams({
@@ -91,7 +91,7 @@ public class SysRoleController {
 	}
 
 	@PutMapping("/update")
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@ApiOperation(value = "更新角色,rid为必传参数")
 	public ResponseModel update(@RequestBody SysRole role) {
 
@@ -108,7 +108,7 @@ public class SysRoleController {
 		return ResponseModel.getInstance().succ(true).msg("更新角色成功.");
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@GetMapping("/list/all")
 	@ApiOperation(value = "获取所有角色值")
 	public List<SysRole> listAll() {

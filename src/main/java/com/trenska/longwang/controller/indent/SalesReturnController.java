@@ -1,6 +1,6 @@
 package com.trenska.longwang.controller.indent;
 
-import com.trenska.longwang.annotation.DuplicateSubmitToken;
+import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.constant.Constant;
 import com.trenska.longwang.entity.indent.Indent;
 import com.trenska.longwang.enums.IndentStat;
@@ -37,7 +37,7 @@ public class SalesReturnController {
 			@ApiImplicitParam(name = "indentDetails",value = "退货单详情",paramType = "body",dataType = "list")
 	})
 	@PostMapping("/add")
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@ApiOperation("添加退货单")
 	public ResponseModel addSalesReturn(@RequestBody Indent indent, HttpServletRequest request){
 		if(null == indent){
@@ -51,7 +51,7 @@ public class SalesReturnController {
 	 * @param indentId 退货单ID
 	 * @return
 	 */
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@PostMapping("/invalid/{indentId}")
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "indentId", value = "退货单id", paramType = "body", dataType = "string")
@@ -67,16 +67,7 @@ public class SalesReturnController {
 		return indentService.invalidSalseReturn(indent,request);
 	}
 
-//	@GetMapping("/info/{indentId}")
-//	@ApiOperation("获取退货单信息")
-//	@ApiImplicitParams({
-//			@ApiImplicitParam(name = "indentId", value = "退货单id", paramType = "path", dataType = "int")
-//	})
-//	public Indent getIndentInfo(@PathVariable("indentId") Integer indentId){
-//		return indentService.getIndentInfo(indentId);
-//	}
-
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/{indentId}")
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "indentId", value = "退货单id", paramType = "path", dataType = "int")
@@ -89,7 +80,7 @@ public class SalesReturnController {
 		return indentService.removeIndentById(indentId,Constant.THD_CHINESE);
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/batch")
 	@ApiOperation("批量删除退货单")
 	public ResponseModel batchDeleteReturnSales(@ApiParam(name = "indentIds", value = "需要批量删除的退货单编号集合/数组", required = true) @RequestParam(value = "indentIds") Collection<Long> indentIds) {
@@ -98,5 +89,4 @@ public class SalesReturnController {
 		}
 		return indentService.removeIndentByIds(indentIds, Constant.THD_CHINESE);
 	}
-
 }

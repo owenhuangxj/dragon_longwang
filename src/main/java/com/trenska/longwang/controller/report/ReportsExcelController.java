@@ -693,7 +693,7 @@ public class ReportsExcelController {
 				query.put("不包含赠品", "是");
 			}
 		}
-		if (StringUtil.isNumeric(discount)) {
+		if (StringUtil.isNumeric(discount, true)) {
 			query.put("扣点", discount);
 		}
 		/////////////////////////////////////////// 处理查询条件部分结束 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -1476,13 +1476,13 @@ public class ReportsExcelController {
 		List<DealDetail> records = pageInfo.getRecords();
 
 		records.forEach(dealDetail -> {
-			if (dealDetail.getAmount().startsWith("+")) {
+			if (dealDetail.getAmount().startsWith(Constant.PLUS)) {
 				contents.add(
 						new DealDetailModel(dealDetail.getTime().substring(0, 11), dealDetail.getAmount().substring(1), " ",
 								dealDetail.getNewDebt(), dealDetail.getOper(), dealDetail.getNameNo(),dealDetail.getPayway(),dealDetail.getRemarks(),dealDetail.getAuditRemarks())
 				);
 
-			} else if (dealDetail.getAmount().startsWith("-")) {
+			} else if (dealDetail.getAmount().startsWith(Constant.MINUS)) {
 				contents.add(
 						new DealDetailModel(dealDetail.getTime().substring(0, 11), " ", dealDetail.getAmount().substring(1),
 								dealDetail.getNewDebt(), dealDetail.getOper(), dealDetail.getNameNo(),dealDetail.getPayway(), dealDetail.getRemarks(),dealDetail.getAuditRemarks())

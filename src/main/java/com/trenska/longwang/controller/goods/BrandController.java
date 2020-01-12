@@ -2,9 +2,8 @@ package com.trenska.longwang.controller.goods;
 
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.plugins.Page;
-import com.trenska.longwang.annotation.DuplicateSubmitToken;
+import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.goods.Brand;
 import com.trenska.longwang.model.sys.ExistModel;
@@ -37,7 +36,7 @@ public class BrandController {
 	@Autowired
 	private IBrandService brandService;
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@PostMapping("/add")
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "brandName", value = "商品品牌名称", paramType = "body", required = true, dataType = "string")
@@ -49,7 +48,7 @@ public class BrandController {
 		return ResponseModel.getInstance().succ(successful).msg(successful ? "品牌添加成功" : "品牌添加失败");
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/{brandId}")
 	@ApiOperation("删除商品品牌")
 	public ResponseModel deleteBrand(@ApiParam(name = "brandId", required = true) @PathVariable("brandId") Integer brandId) {
@@ -59,7 +58,7 @@ public class BrandController {
 
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/batch")
 	@ApiOperation("批量删除商品品牌")
 	public ResponseModel batchDeleteBrand(
@@ -71,7 +70,7 @@ public class BrandController {
 
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@PutMapping("/update")
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "brandId", paramType = "body", required = true, dataType = "int"),

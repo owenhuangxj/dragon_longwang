@@ -27,6 +27,7 @@ import com.trenska.longwang.service.financing.IReceiptService;
 import com.trenska.longwang.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -82,12 +83,12 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 		page.setTotal(baseMapper.selectReceiptCountSelective(params));
 		List<Receipt> receipts = baseMapper.selectReceiptPageSelective(params, page);
 
-		SysConfig sysConfig = (SysConfig) jsonRedisTemplate.opsForValue().get(Constant.SYS_CONFIG_IDENTIFIER + SysUtil.getEmpIdInRedis());
+		SysConfig sysConfig = (SysConfig) jsonRedisTemplate.opsForValue().get(Constant.SYS_CONFIG_IDENTIFIER + SysUtil.getEmpId());
 		Integer retain = sysConfig.getRetain();
 
 		for (Receipt receipt : receipts) {
 			BigDecimal receiptAmount = new BigDecimal(receipt.getReceiptAmount());
-			receiptAmount = receiptAmount.setScale(retain,RoundingMode.HALF_UP);
+			receiptAmount = receiptAmount.setScale(retain, RoundingMode.HALF_UP);
 			receipt.setReceiptAmount(receiptAmount.toString());
 		}
 
@@ -124,8 +125,7 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 		receipts.add(receipt);
 		int custId = receipt.getCustId();
 		Customer dbCustomer = customerMapper.selectById(custId);
-		String nameNo = StringUtil.makeNameNo(Constant.SKD_CHINESE, receipt.getReceiptNo());
-		ReceiptUtil.cancelReceipts(receipts, dbCustomer, nameNo);
+		ReceiptUtil.cancelReceipts(receipts, dbCustomer);
 		return ResponseModel.getInstance().succ(true).msg("作废收款单成功");
 	}
 
@@ -134,7 +134,7 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 		int retain = SysUtil.getSysConfigRetain();
 		Receipt receipt = super.baseMapper.selectReceiptById(receiptId);
 		BigDecimal receiptAmount = new BigDecimal(receipt.getReceiptAmount());
-		receiptAmount = receiptAmount.setScale(retain,RoundingMode.HALF_UP);
+		receiptAmount = receiptAmount.setScale(retain, RoundingMode.HALF_UP);
 		receipt.setReceiptAmount(receiptAmount.toString());
 		return receipt;
 	}
@@ -149,15 +149,9 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 	@Override
 	@Transactional
 	public ResponseModel savePayReceipt(Receipt pay, HttpServletRequest request) {
-
 		String createTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
 		pay.setCreateTime(createTime);
-
-		if (Objects.isNull(pay)) {
-			return ResponseModel.getInstance().succ(false).msg("付款单不能为null");
-		}
-		return ReceiptUtil.saveReceipt(pay, request, receiptMapper, Constant.DHD_CHINESE, Constant.FK_CHINESE);
-
+		return ReceiptUtil.saveReceipt(pay, request, receiptMapper, Constant.FKD_CHINESE, Constant.FK_CHINESE);
 	}
 
 	/**
@@ -178,7 +172,9 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 		if (dbPayReceipt.getStat() == false) {
 			return ResponseModel.getInstance().succ(false).msg("付款单已作废,请勿重新操作.");
 		}
-
+		if (StringUtils.isNotEmpty(dbPayReceipt.getBusiNo())){
+			return ResponseModel.getInstance().succ(false).msg("关联订货单的付款单请到订货单处作废.");
+		}
 		// 付款单金额
 		String receiptAmount = dbPayReceipt.getReceiptAmount();
 
@@ -195,12 +191,16 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 
 		String currentTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
 
-		String amount = "+".concat(receiptAmount);
+		if (receiptAmount.startsWith(Constant.PLUS) || receiptAmount.startsWith(Constant.MINUS)) {
+			receiptAmount = receiptAmount.substring(1);
+		}
+		String amount = Constant.PLUS.concat(receiptAmount);
 
-		String oper = dbPayReceipt.getAccountType();
+		String oper = dbPayReceipt.getAccountType().concat(Constant.ZF);
 
 		String remarks = dbPayReceipt.getReceiptRemarks();
 
+		// 业务类型+(作废)
 		String payway = dbPayReceipt.getPayway();
 
 		// 客户欠款增加 ，加前缀 +
@@ -225,13 +225,13 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 		if (NumberUtil.isIntegerUsable(salesmanId)) {
 			Set<Integer> intersectionCustIds = null;
 			Set<Integer> custIdsOfSalesman = customerMapper.selectCustIdsOfSalesman(salesmanId);
-			Set<Integer> custIdsOfDataAuthority = (Set<Integer>) params.get("custIds");
+			Set<Integer> custIdsOfDataAuthority = (Set<Integer>) params.get(Constant.CUST_IDS_LABEL);
 			intersectionCustIds = custIdsOfSalesman.stream().filter(custId -> custIdsOfDataAuthority.contains(custId)).collect(Collectors.toSet());
 			List<Integer> lastSurplusCustIds = dealDetailMapper.selectLastSurplusCustIds(params);
 			if (CollectionUtils.isNotEmpty(lastSurplusCustIds) && CollectionUtils.isNotEmpty(intersectionCustIds)) {
 				intersectionCustIds = intersectionCustIds.stream().filter(custId -> lastSurplusCustIds.contains(custId)).collect(Collectors.toSet());
 			}
-			params.put("custIds", intersectionCustIds);
+			params.put(Constant.CUST_IDS_LABEL, intersectionCustIds);
 			if (CollectionUtils.isEmpty(intersectionCustIds)) {
 				return new Page<>(0, 0);
 
@@ -259,15 +259,6 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 				record.setInitDebt(lastSurplusDebt);
 				//////////////////// 处理上期结欠结束 \\\\\\\\\\\\\\\\\\\
 
-				//////////////////// 处理销售应收欠款(销售应收+调帐单增加部分) 和 已付(已付 + 调帐单减少部分)开始\\\\\\\\\\\\\\\\\\\
-//				BigDecimal lend = new BigDecimal(record.getLend()); // 借出，欠款增加
-//				BigDecimal borrow = new BigDecimal(record.getBorrow()); // 借入，欠款减少
-//				BigDecimal salesAmount = new BigDecimal(record.getSalesAmount()).add(lend);
-//				BigDecimal payedAmount = new BigDecimal(record.getPayedAmount()).add(borrow);
-//				record.setSalesAmount(salesAmount.toString());
-//				record.setPayedAmount(payedAmount.toString());
-				//////////////////// 处理销售应收欠款结束 \\\\\\\\\\\\\\\\\\\
-
 				//////////////////// 处理待收欠款开始 \\\\\\\\\\\\\\\\\\\
 				BigDecimal debtAmount = new BigDecimal(lastSurplusDebt)
 						.add(new BigDecimal(record.getSalesAmount()))
@@ -276,15 +267,6 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 				record.setDebtAmount(debtAmount.toString());
 				//////////////////// 处理待收欠款结束 \\\\\\\\\\\\\\\\\\\
 			}
-			//////////////////////// 去除全部是 0 的记录 \\\\\\\\\\\\\\\\\\\\\\
-			records = records.stream().filter(
-					record ->
-							new BigDecimal(record.getInitDebt()).compareTo(BigDecimal.ZERO) > 0
-						|| 	new BigDecimal(record.getDebtAmount()).compareTo(BigDecimal.ZERO) > 0
-						|| 	new BigDecimal(record.getSalesAmount()).compareTo(BigDecimal.ZERO) > 0
-						|| 	new BigDecimal(record.getPayedAmount()).compareTo(BigDecimal.ZERO) > 0
-						|| 	new BigDecimal(record.getReceivedAmount()).compareTo(BigDecimal.ZERO) > 0
-			).collect(Collectors.toList());
 		}
 
 		int total = super.baseMapper.selectAccountCheckingCount(params).size();
@@ -293,72 +275,10 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 		return page;
 	}
 
-	/*@Override
-	public AccountCheckingSummationModel getAccountCheckingSummation(Map<String, Object> params, HttpServletRequest request) {
-
-		AccountCheckingSummationModel summarizing = null;
-
-		AccountCheckingSummationModel dbAccountCheckingSummationReceiptPart = super.baseMapper.selectAccountCheckingSummationReceiptPart(params);
-		AccountCheckingSummationModel dbAccountCheckingSummationIndentPart = indentMapper.selectAccountCheckingSummationIndentPart(params);
-
-		String salesAmountTotal = dbAccountCheckingSummationIndentPart.getSalesAmountTotal();
-
-		dbAccountCheckingSummationReceiptPart.setSalesAmountTotal(dbAccountCheckingSummationIndentPart.getSalesAmountTotal());
-
-		// 确保 统计的每一个参数在数据库没有数据的时候都有值(默认为0)
-		summarizing = dbAccountCheckingSummationReceiptPart != null ? dbAccountCheckingSummationReceiptPart : new AccountCheckingSummationModel();
-
-//		List<Integer> lastSurplusDebtSummation = dealDetailMapper.selectLastSurplusDebtSummation(params);
-//		Integer initDebtTotal = lastSurplusDebtSummation.stream().mapToInt(Integer::intValue).sum();
-//		summarizing.setInitDebtTotal(String.valueOf(initDebtTotal));
-
-		List<Integer> custIds = dealDetailMapper.selectLastSurplusCustIds(params);
-		BigDecimal initDebtTotal = new BigDecimal(0);
-		for (Integer custId : custIds) {
-			params.put("custId",custId);
-			String lastSurplusDebt = this.getLastSurplusDebt(params);
-			initDebtTotal = initDebtTotal.add(new BigDecimal(lastSurplusDebt));
-		}
-		summarizing.setInitDebtTotal(initDebtTotal.toString());
-
-		Set<Integer> intersectionCustIds = (Set<Integer>) params.get("custIds");
-
-		if (CollectionUtils.isEmpty(intersectionCustIds)){
-			return summarizing;
-		}
-
-		////////////////////////////////////////////// 处理待收金额合计开始 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-		// 待收金额合计 = 期初欠款合计+销售应收合计-已收合计-已付合计
-		BigDecimal debtAmountTotal = initDebtTotal
-				.add(new BigDecimal(summarizing.getSalesAmountTotal()))
-				.subtract(new BigDecimal(summarizing.getReceivedAmountTotal()))
-				.subtract(new BigDecimal(summarizing.getPayedAmountTotal()));
-		summarizing.setDebtAmountTotal(debtAmountTotal.toString());
-		////////////////////////////////////////////// 处理待收金额合计结束 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-		return summarizing;
-	}*/
-
 	@Override
 	public AccountCheckingSummationModel getAccountCheckingSummation(Map<String, Object> params, HttpServletRequest request) {
 
-		// 处理业务员: 查询业务员就是查询该业务员所有的客户 ; 将业务员的客户和处数据权限的客户区交集 ==> 由于#getAccountChecking()方法已经处理了，所以这里不需要再处理业务员和数据权限
-//		Integer salesmanId = (Integer) params.get("salesmanId");
-//		if (NumberUtil.isIntegerUsable(salesmanId)) {
-//			Set<Integer> intersectionCustIds = null;
-//			Set<Integer> custIdsOfSalesman = customerMapper.selectCustIdsOfSalesman(salesmanId);
-//			Set<Integer> custIdsOfDataAuthority = (Set<Integer>) params.get("custIds");
-//			intersectionCustIds = custIdsOfSalesman.stream().filter(custId -> custIdsOfDataAuthority.contains(custId)).collect(Collectors.toSet());
-//			List<Integer> lastSurplusCustIds = dealDetailMapper.selectLastSurplusCustIds(params);
-//			if(CollectionUtils.isNotEmpty(lastSurplusCustIds) && CollectionUtils.isNotEmpty(intersectionCustIds)){
-//				intersectionCustIds = intersectionCustIds.stream().filter(custId -> lastSurplusCustIds.contains(custId)).collect(Collectors.toSet());
-//			}
-//			if (CollectionUtils.isEmpty(intersectionCustIds)) {
-//				return new AccountCheckingSummationModel();
-//
-//			}
-//			params.put("custIds",intersectionCustIds);
-//		}
-		Set<Integer> custIds = (Set<Integer>) params.get("custIds");
+		Set<Integer> custIds = (Set<Integer>) params.get(Constant.CUST_IDS_LABEL);
 		// 没有满足条件的记录(没有客户信息)就不去做统计了
 		AccountCheckingSummationModel accountCheckingSummation = new AccountCheckingSummationModel();
 		if (CollectionUtils.isNotEmpty(custIds)) {
@@ -404,7 +324,7 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 			BigDecimal amount = new BigDecimal(record.getAmount());
 			amount = amount.setScale(retain, RoundingMode.HALF_UP);
 			if (amount.doubleValue() > 0) {
-				record.setAmount("+" + amount.toPlainString());
+				record.setAmount(Constant.PLUS + amount.toPlainString());
 			} else {
 				record.setAmount(amount.toPlainString());
 			}
@@ -450,7 +370,7 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 
 		DealDetail dealDetail = null;
 		/*如果有多条记录，取id最小的*/
-		if (CollectionUtils.isNotEmpty(dealDetails) && dealDetails.size() >= 1) {
+		if (CollectionUtils.isNotEmpty(dealDetails)) {
 			dealDetails.sort(Comparator.comparing(DealDetail::getId));
 			dealDetail = dealDetails.get(0);
 		}
@@ -534,7 +454,7 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 	@Override
 	public CommonReceiptSummation getReceiptSelectiveSummation(Map<String, Object> params) {
 
-		SysConfig sysConfig = (SysConfig) jsonRedisTemplate.opsForValue().get(Constant.SYS_CONFIG_IDENTIFIER + SysUtil.getEmpIdInRedis());
+		SysConfig sysConfig = (SysConfig) jsonRedisTemplate.opsForValue().get(Constant.SYS_CONFIG_IDENTIFIER + SysUtil.getEmpId());
 
 		Integer retain = sysConfig.getRetain();
 

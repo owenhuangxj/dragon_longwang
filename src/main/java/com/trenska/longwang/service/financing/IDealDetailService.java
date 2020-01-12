@@ -1,6 +1,7 @@
 package com.trenska.longwang.service.financing;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.entity.financing.DealDetail;
 import com.trenska.longwang.entity.financing.DealDetailSummarizing;
 
@@ -17,4 +18,8 @@ import java.util.Map;
 public interface IDealDetailService extends IService<DealDetail> {
 
 	DealDetailSummarizing getDealDetailSummarizing(Map<String, Object> params);
+
+	boolean addDebt(DealDetail dealDetail);
+
+	Page<DealDetail> page(Page page, Map<String, Object> params);
 }

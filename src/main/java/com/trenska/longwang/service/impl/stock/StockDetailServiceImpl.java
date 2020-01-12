@@ -30,11 +30,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 库存明细表 服务实现类
@@ -68,21 +67,21 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 	 */
 	@Override
 	@Transactional
-	public ResponseModel stockin(Stock stock,HttpServletRequest request) {
-		Integer empIdInRedis = SysUtil.getEmpIdInRedis(request);
-		if(Objects.isNull(empIdInRedis)){
+	public ResponseModel stockin(Stock stock, HttpServletRequest request) {
+		Integer empIdInToken = SysUtil.getEmpId();
+		if (Objects.isNull(empIdInToken)) {
 			return ResponseModel.getInstance().succ(false).msg(Constant.ACCESS_TIMEOUT_MSG).code(Constant.ACCESS_TIMEOUT);
 		}
-		stock.setEmpId(empIdInRedis);
-		return StockUtil.stockin(stock,stockMapper, goodsMapper);
+		stock.setEmpId(empIdInToken);
+		return StockUtil.stockin(stock, stockMapper, goodsMapper);
 	}
 
 	@Override
 	@Transactional
 	public ResponseModel stockout(Stock stock, HttpServletRequest request) {
 
-		Integer empIdInRedis = SysUtil.getEmpIdInRedis(request);
-		if (NumberUtil.isIntegerNotUsable(empIdInRedis)){
+		Integer empIdInToken = SysUtil.getEmpId();
+		if (NumberUtil.isIntegerNotUsable(empIdInToken)) {
 			return ResponseModel.getInstance().succ(false).msg(Constant.ACCESS_TIMEOUT_MSG).code(Constant.ACCESS_TIMEOUT);
 		}
 
@@ -90,13 +89,13 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 		String stockNo = StockUtil.getStockNo(stock.getPrefix(), Constant.CKD_CHINESE, stockMapper);
 		// 获取出库详情
 		stock.setStockNo(stockNo);
-		stock.setEmpId(empIdInRedis);
+		stock.setEmpId(empIdInToken);
 		stock.setStockTime(stockTime);
 		List<StockDetail> stockouts = stock.getStockouts();
 		/************************************处理出库记录，主要是保存出库编号，时间，操作者************************************/
 		stockouts.forEach(stockoutDetail -> {
 			stockoutDetail.setStockNo(stockNo);
-			stockoutDetail.setEmpId(empIdInRedis);
+			stockoutDetail.setEmpId(empIdInToken);
 			stockoutDetail.setStockTime(stockTime);
 			stockoutDetail.setOperType(stock.getOperType());
 			stockoutDetail.setStockType(stock.getStockType());
@@ -150,7 +149,7 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 		List<StockMadedate> records = new ArrayList<>();
 		goodsStocks.forEach(goodsStock -> {
 			StockMadedate stockMadedate = new StockMadedate();
-			ObjectCopier.copyProperties(goodsStock,stockMadedate);
+			ObjectCopier.copyProperties(goodsStock, stockMadedate);
 			records.add(stockMadedate);
 		});
 
@@ -179,9 +178,9 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 
 		List<StockWarningModel> stockWarningModels = super.baseMapper.selectStockWarningPageSelective(params, page);
 		stockWarningModels.forEach(warning -> {
-			if(null == warning.getLeftDays()){
+			if (null == warning.getLeftDays()) {
 				warning.setWarningLevel(WarningLevel.INIT_STOCK);
-			}else {
+			} else {
 				int passedMonths = warning.getPassedMonths();
 				String warningLevel = StockDetailsUtil.getWarningLevel(passedMonths);
 				warning.setWarningLevel(warningLevel);
@@ -201,10 +200,10 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 	 */
 	@Override
 	@Transactional
-	public ResponseModel cancelStockin(String stockNo,HttpServletRequest request) {
+	public ResponseModel cancelStockin(String stockNo, HttpServletRequest request) {
 
-		Integer empIdInRedis = SysUtil.getEmpIdInRedis(request);
-		if(Objects.isNull(empIdInRedis)){
+		Integer empIdInToken = SysUtil.getEmpId();
+		if (Objects.isNull(empIdInToken)) {
 			return ResponseModel.getInstance().succ(false).msg(Constant.ACCESS_TIMEOUT_MSG).code(Constant.ACCESS_TIMEOUT);
 		}
 		String msg = "作废入库单成功";
@@ -213,56 +212,38 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 		Stock dbStock = stockMapper.selectOne(
 				new LambdaQueryWrapper<Stock>()
 						.eq(Stock::getStockNo, stockNo)
-						.eq(Stock::getStockType,Constant.RKD_CHINESE)
+						.eq(Stock::getStockType, Constant.RKD_CHINESE)
 		);
-		if(Objects.isNull(dbStock)){
+		if (Objects.isNull(dbStock)) {
 			return ResponseModel.getInstance().succ(false).msg("无效的入库单");
 		}
-		if(BooleanUtils.isFalse(dbStock.getStat())){
+		if (BooleanUtils.isFalse(dbStock.getStat())) {
 			return ResponseModel.getInstance().succ(false).msg("作废的入库单无需再作废");
 		}
 		// 1.作废入库单；2.保存入库单作废详情(作废入库单后，在库存明细中增加一条记录(变更类型:入库单(作废)，操作类型：与原类型一致))
-		stockMapper.updateById(new Stock(dbStock.getStockId(),false));// 作废入库单
+		stockMapper.updateById(new Stock(dbStock.getStockId(), false));// 作废入库单
 		String stockTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
 		// 获取商品入库详情
 		List<StockDetail> dbStockinDetails = stockDetailMapper.selectList(
 				new LambdaQueryWrapper<StockDetail>()
-						.eq(StockDetail::getStat,true)
+						.eq(StockDetail::getStat, true)
 						.eq(StockDetail::getStockNo, stockNo)
-						.eq(StockDetail::getStockType,Constant.RKD_CHINESE)
+						.eq(StockDetail::getStockType, Constant.RKD_CHINESE)
 		);
 		// 1.减少商品库存;2.作废入库详情3.保存一条入库单作废记录
-		for(StockDetail stockinDetail : dbStockinDetails) {
-			Goods dbGoods = goodsMapper.selectById(stockinDetail.getGoodsId());// 获取商品信息，主要是为了获取商品总库存
+		for (StockDetail stockinDetail : dbStockinDetails) {
+			Goods dbGoods = goodsMapper.selectGoodsByGoodsId(stockinDetail.getGoodsId());// 获取商品信息，主要是为了获取商品总库存
 			int history = stockinDetail.getHistory();// 商品历史入库数量
 			int stock = dbGoods.getStock() - history;
-			goodsMapper.updateById(new Goods(stockinDetail.getGoodsId(),dbGoods.getBrandName(), stock)); // 减少商品库存
-			stockDetailMapper.updateById(new StockDetail(stockinDetail.getDetailId(), false,Constant.RKDZF_CHINESE)); // 作废入库详情
+			goodsMapper.updateById(new Goods(stockinDetail.getGoodsId(), dbGoods.getBrandName(), stock)); // 减少商品库存
+			stockDetailMapper.updateById(new StockDetail(stockinDetail.getDetailId(), false, Constant.RKDZF_CHINESE)); // 作废入库详情
 
 			/************************************ 保存库存明细************************************/
 			stockinDetail.setNum(stock);
 			stockinDetail.setStock(stock);
-			stockinDetail.setEmpId(empIdInRedis);
+			stockinDetail.setEmpId(empIdInToken);
 			stockinDetail.setStockType(Constant.RKDZF_CHINESE);
-			StockDetailsUtil.saveStockDetails(stockinDetail);
-
-			/************************************ 减少批次库存 ************************************/
-			// 获取批次库存
-			GoodsStock dbGoodsStock = goodsStockMapper.selectOne(
-					new LambdaQueryWrapper<GoodsStock>()
-							.eq(GoodsStock::getGoodsId, stockinDetail.getGoodsId())
-							.eq(GoodsStock::getMadeDate, stockinDetail.getMadeDate())
-							.eq(GoodsStock::getStockPrice,stockinDetail.getStockPrice())
-			);
-			if (Objects.isNull(dbGoodsStock)) {
-				successful = false;
-				msg = Constant.ILLEGAL_DELETE_MSG;
-			} else {
-				// 减少批次库存 -->此处会出现负库存的情况
-				GoodsStock updatingGoodsStock = new GoodsStock(dbGoodsStock.getId(), dbGoodsStock.getNum() - history);
-				/************************************ 减少批次库存 ************************************/
-				goodsStockMapper.updateById(updatingGoodsStock);
-			}
+			StockDetailsUtil.dbLogStockDetail(stockinDetail);
 		}
 		return ResponseModel.getInstance().succ(successful).msg(msg);
 
@@ -270,6 +251,7 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 
 	/**
 	 * 作废出库单
+	 *
 	 * @param stockNo
 	 * @param request
 	 * @return
@@ -282,10 +264,10 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 				new LambdaQueryWrapper<Stock>()
 						.eq(Stock::getStockNo, stockNo)
 		);
-		if(Objects.isNull(dbStockout)){
+		if (Objects.isNull(dbStockout)) {
 			return ResponseModel.getInstance().succ(false).msg("无效的出库单");
 		}
-		if(BooleanUtils.isFalse(dbStockout.getStat())){
+		if (BooleanUtils.isFalse(dbStockout.getStat())) {
 			return ResponseModel.getInstance().succ(false).msg("作废的出库单无需再作废");
 		}
 
@@ -303,4 +285,68 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 		return StockUtil.invalidStockout(stockouts);
 	}
 
+	@Override
+	@Transactional
+	public ResponseModel changeStockin(Stock stock, HttpServletRequest request) throws IOException {
+		String stockNo = stock.getStockNo();
+
+		Stock dbStockin = stockMapper.selectByStockNo(stockNo);
+		if (Objects.isNull(dbStockin)) {
+			return ResponseModel.getInstance().succ(false).msg("无效的入库单");
+		}
+		if (!dbStockin.getStat()) {
+			return ResponseModel.getInstance().succ(false).msg("不能修改作废的入库单");
+		}
+
+		Map<String, Object> params = new HashMap<>();
+		params.put("stockNo", stockNo);
+		params.put("stat", Constant.VALID);
+		params.put("stockType", Constant.RKD_CHINESE);
+		List<StockDetail> dbStockDetailList = stockDetailMapper.selectByParams(params);
+		dbStockDetailList.forEach(stockDetail -> {
+			stockDetail.deleteById();
+			/* 标记为作废->StockDetailsUtil#dbLogStockDetail()方法根据stockType来判断库存是增还是减 */
+			stockDetail.setStockType(Constant.RKDZF_CHINESE);
+			stockDetail.setStock(stockDetail.getStock() - stockDetail.getHistory());
+			StockDetailsUtil.dbLogStockDetail(stockDetail);
+			GoodsUtil.changeGoodsStock(stockDetail.getGoodsId(), -stockDetail.getHistory());
+		});
+
+		stock.setEmpId(SysUtil.getEmpId());
+
+		List<StockDetail> stockDetailList = getDistinctStockDetails(stock.getStockins());
+		stock.setStockId(dbStockin.getStockId());
+		StockUtil.changeStockin(stock, stockDetailList, goodsMapper);
+		return ResponseModel.getInstance().succ(true).msg("更改入库单成功.");
+	}
+
+	/**
+	 * 将商品去重，并且转换为小单位，相同goodsId，生成批次的商品最终返回一条multi为1的记录
+	 *
+	 * @param newStockDetailList 入库单的新的商品详情
+	 * @return 去重后的商品
+	 */
+	private List<StockDetail> getDistinctStockDetails(List<StockDetail> newStockDetailList) {
+		Map<String, Long> map =
+			newStockDetailList.stream().collect(
+				Collectors.groupingBy(StockDetail::getGroupingbyKey, Collectors.summingLong(StockDetail::getStockNumber))
+			);
+		List<StockDetail> distinctGoodsIdAndMadedateList = map.keySet().stream().map(goodsIdAndMadedateKey -> {
+			String[] arr = goodsIdAndMadedateKey.split(Constant.SPLITTER);
+			int goodsId = Integer.valueOf(arr[0]);
+			String madedate = arr[1];
+			StockDetail stockDetail = new StockDetail();
+			StockDetail source =
+				newStockDetailList.stream().filter(stkDetail -> stkDetail.getGroupingbyKey().equals(goodsIdAndMadedateKey)).findFirst().get();
+			ObjectCopier.copyProperties(source,stockDetail);
+			int num = map.get(goodsIdAndMadedateKey).intValue();
+			stockDetail.setHistory(num);
+			stockDetail.setNum(num);
+			stockDetail.setMulti(Constant.DEFAULT_MULTI);
+			return stockDetail;
+		}).collect(Collectors.toList());
+
+
+		return distinctGoodsIdAndMadedateList;
+	}
 }

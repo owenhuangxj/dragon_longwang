@@ -32,4 +32,8 @@ public interface DealDetailMapper extends BaseMapper<DealDetail> {
 	List<Integer> selectLastSurplusCustIds(Map<String, Object> params);
 
 	DealDetailSummarizing selectDealDetailSummarizing(Map<String, Object> params);
+
+	int selectDebtCount(Map<String, Object> params);
+
+	List<DealDetail> selectDebtPage(Map<String, Object> params);
 }

@@ -3,7 +3,7 @@ import org.springframework.web.filter.CorsFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.context.annotation.Configuration;
-import com.trenska.longwang.interceptor.LoginTimeoutInterceptor;
+import com.trenska.longwang.interceptor.LoginControlInterceptor;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -49,6 +49,6 @@ public class WebConfig implements WebMvcConfigurer {
 
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
-		registry.addInterceptor(new LoginTimeoutInterceptor()).addPathPatterns("/**");
+		registry.addInterceptor(new LoginControlInterceptor()).addPathPatterns("/**");
 	}
 }

@@ -1,19 +1,15 @@
 package com.trenska.longwang.controller.goods;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.plugins.Page;
-import com.trenska.longwang.annotation.DuplicateSubmitToken;
+import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.goods.Unit;
-import com.trenska.longwang.model.sys.ExistModel;
 import com.trenska.longwang.model.sys.ResponseModel;
 import com.trenska.longwang.service.goods.IUnitService;
 import com.trenska.longwang.util.PageUtils;
 import io.swagger.annotations.*;
 import org.apache.commons.lang3.ObjectUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -38,7 +34,7 @@ public class UnitController {
 	private IUnitService unitService;
 
 	@PostMapping("/add")
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "unitName", value = "单位名", paramType = "body", required = true, dataType = "string")
 	})
@@ -61,7 +57,7 @@ public class UnitController {
 		return ResponseModel.getInstance().succ(true).msg("单位添加成功");
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/{unitId}")
 	@ApiOperation("删除商品单位")
 	public ResponseModel deleteUnit(@ApiParam(name = "unitId", required = true) @PathVariable("unitId") Integer unitId) {
@@ -69,14 +65,14 @@ public class UnitController {
 		return ResponseModel.getInstance().succ(true).msg("单位删除成功");
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/batch")
 	@ApiOperation("批量删除商品单位")
 	public ResponseModel batchDeleteUnit(@ApiParam(name = "unitIds", value = "需要批量删除的商品单位id集合/数组", required = true) @RequestParam(value = "unitIds") Collection<Integer> unitIds) {
 		return unitService.removeUnitByIds(unitIds);
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@PutMapping("/update")
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "unitId", paramType = "body", required = true, dataType = "int"),

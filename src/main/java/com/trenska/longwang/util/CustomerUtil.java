@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.trenska.longwang.constant.Constant;
 import com.trenska.longwang.dao.customer.AreaGrpMapper;
 import com.trenska.longwang.entity.customer.Customer;
+import com.trenska.longwang.entity.indent.Indent;
 import com.trenska.longwang.entity.sys.EmpAreaGrp;
 import com.trenska.longwang.model.sys.ResponseModel;
 import com.trenska.longwang.service.customer.IAreaGrpService;
@@ -161,8 +162,8 @@ public class CustomerUtil {
 	 * @return
 	 */
 	public static Set<Integer> getCurrentUserDataAuth(HttpServletRequest request , IAreaGrpService areaGrpService){
-		Integer empIdInRedis = SysUtil.getEmpIdInRedis(request);
-		return CustomerUtil.getCustIdsByEmpId(empIdInRedis, areaGrpService);
+		Integer empIdInToken = SysUtil.getEmpId();
+		return CustomerUtil.getCustIdsByEmpId(empIdInToken, areaGrpService);
 	}
 
 	/**
@@ -173,9 +174,9 @@ public class CustomerUtil {
 	 */
 	public static Set<Integer> getCurrentUserDataAuth(HttpServletRequest request , AreaGrpMapper areaGrpMapper){
 
-		Integer empIdInRedis = SysUtil.getEmpIdInRedis(request);
+		Integer empIdInToken = SysUtil.getEmpId();
 
-		if(NumberUtil.isIntegerNotUsable(empIdInRedis)) {
+		if(NumberUtil.isIntegerNotUsable(empIdInToken)) {
 			ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
 			HttpServletResponse response = requestAttributes.getResponse();
 			try {
@@ -185,29 +186,35 @@ public class CustomerUtil {
 				e.printStackTrace();
 			}
 		}
-		return getCustIdsByEmpId(empIdInRedis, areaGrpMapper);
+		return getCustIdsByEmpId(empIdInToken, areaGrpMapper);
 	}
 
 	/**
-	 * 判断客户欠款额度,超过额度将不能出库
+	 * 判断客户欠款额度,没有设置额度或者超过额度都不能审核
 	 */
-	public static ResponseModel checkDebtLimit(int custId){
-
+	public static ResponseModel checkDebtLimit(String indentNo, int custId){
 		Customer customer = new Customer(custId).selectById();
-
 		if (Objects.isNull(customer)) {
 			return ResponseModel.getInstance().succ(false).msg(Constant.CUSTOMER_NOT_EXISTS_MSG);
 		}
 
 		/**如果创建客户时没有设置debtLimit，客户就没有欠款额度的限制*/
-		if(Constant.NO_DEBT_LIMIT_LABEL.equals(customer.getDebtLimit())){
-			return ResponseModel.getInstance().succ(true);
+		boolean hasNotSetLimit = Constant.NO_DEBT_LIMIT_LABEL.equals(customer.getDebtLimit());
+		if(hasNotSetLimit){
+			return ResponseModel.getInstance().succ(true).msg("没有设置客户欠款额度,无限额度");
 		}
-		if (new BigDecimal(customer.getDebt()).compareTo(new BigDecimal(customer.getDebtLimit())) >= 0) {
+		Indent dbIndent = new Indent().selectOne(
+				new LambdaQueryWrapper<Indent>()
+						.eq(Indent::getIndentNo, indentNo)
+		);
+
+		boolean isOutOfLimit =
+				new BigDecimal(customer.getDebt()).add(new BigDecimal(dbIndent.getIndentTotal()))
+						.compareTo(new BigDecimal(customer.getDebtLimit())) >= 0;
+
+		if (isOutOfLimit) {
 			return ResponseModel.getInstance().succ(false).msg(Constant.CUSTOMER_OUT_OF_DEBT_MSG);
 		}
-
 		return ResponseModel.getInstance().succ(true);
-
 	}
 }

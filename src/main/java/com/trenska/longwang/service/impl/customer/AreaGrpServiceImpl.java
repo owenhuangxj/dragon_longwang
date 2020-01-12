@@ -219,9 +219,7 @@ public class AreaGrpServiceImpl extends ServiceImpl<AreaGrpMapper, AreaGrp> impl
 	 */
 	@Override
 	public Set<AreaGrpModel> getAllAreaGrp(HttpServletRequest request) {
-
-
-		Integer empIdInRedis = SysUtil.getEmpIdInRedis(request);
+		Integer empIdInToken = SysUtil.getEmpId();
 
 		List<AreaGrp> areaGrpList = this.list();
 

@@ -1,9 +1,7 @@
 package com.trenska.longwang.dao.sys;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.trenska.longwang.config.RedisCacheMybatis;
 import com.trenska.longwang.entity.sys.SysRolePerm;
-import org.apache.ibatis.annotations.CacheNamespace;
 
 /**
  * @author Owen

@@ -12,10 +12,8 @@ import com.trenska.longwang.enums.IndentStat;
 import com.trenska.longwang.enums.PaymentStat;
 import com.trenska.longwang.model.sys.ResponseModel;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
-import java.sql.Time;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -36,7 +34,7 @@ public class IndentUtil {
 			indentNo = BillsUtil.makeBillNo(prefix,1);
 		}else{
 			indentNo = indent.getIndentNo();
-			Integer num = BillsUtil.getSerialNumber(indentNo) ;
+			Integer num = BillsUtil.getSerialNumber(Optional.of(indentNo)) ;
 			indentNo = BillsUtil.makeBillNo(prefix,num + 1);
 		}
 		return indentNo;
@@ -122,9 +120,6 @@ public class IndentUtil {
 		if(finished){
 			return ResponseModel.getInstance().succ(false).msg(Constant.INDENT_FORBIDDEN);
 		}
-
-		boolean stockouted = IndentStat.STOCKOUTED.getName().equals(stat);
-		boolean received = PaymentStat.RECEIPRED.getName().equals(receiptStat);
 
 		BigDecimal indentTotal = new BigDecimal(indent.getIndentTotal());
 
@@ -369,7 +364,7 @@ public class IndentUtil {
 				String stockType = stockDetail.getStockType();
 				stockType = stockType.concat(Constant.ZF);
 				stockDetail.setStockType(stockType);
-				StockDetailsUtil.saveStockDetails(stockDetail);
+				StockDetailsUtil.dbLogStockDetail(stockDetail);
 			});
 
 			// 删除已经被移除的商品的出库记录 -> 只能以此方式进行删除，因为是多批次出库，而这里的出库记录是统计后的数据所以必须是以商品id和订单no进行匹配
@@ -475,7 +470,7 @@ public class IndentUtil {
 				String newDebt = new BigDecimal(oldDebt).subtract(amount).toString();
 				CustomerUtil.subtractCustomerDebt(custId,oldDebt,amount);
 				// 增加交易明细-->客户欠款减少
-				DealDetailUtil.saveDealDetail(custId,nameNo,currentTime,"-".concat(amount.toString()),newDebt,Constant.DHD_ZF_CHINESE_CHANGE,"","");
+				DealDetailUtil.saveDealDetail(custId,nameNo,currentTime,Constant.MINUS.concat(amount.toString()),newDebt,Constant.DHD_ZF_CHINESE_CHANGE,"","");
 			}
 			indent.setStat(IndentStat.WAIT_STOCKOUT.getName());
 			indent.setSalesTime(null); // 销售时间置空

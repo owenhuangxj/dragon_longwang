@@ -73,10 +73,6 @@ public class Stock extends Model<Stock> {
     @ApiModelProperty("库存操作备注")
     private String stockRemarks;
 
-//    @TableLogic
-    @ApiModelProperty("记录逻辑删除位，前端不处理")
-    private Boolean deleted;
-
     @ApiModelProperty("总额合计,前端不传递")
     @TableField(exist = false)
     private String total;

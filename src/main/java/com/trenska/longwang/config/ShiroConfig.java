@@ -1,5 +1,6 @@
 package com.trenska.longwang.config;
 
+import com.trenska.longwang.session.LongWangShiroSessionManager;
 import org.apache.shiro.realm.Realm;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.mgt.DefaultSecurityManager;
@@ -9,8 +10,10 @@ import org.apache.shiro.spring.LifecycleBeanPostProcessor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import com.trenska.longwang.filter.AccessControlTokenFilter;
 import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
-import org.apache.shiro.web.session.mgt.ServletContainerSessionManager;
+import org.crazycake.shiro.RedisManager;
+import org.crazycake.shiro.RedisSessionDAO;
 import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -21,6 +24,15 @@ import java.util.LinkedHashMap;
 
 @Configuration
 public class ShiroConfig {
+
+	@Value("${spring.redis.host}")
+	private String host;
+
+	@Value("${spring.redis.port}")
+	private int port;
+
+	@Value("${spring.redis.password}")
+	private String password;
 
 	@Bean
 	public static LifecycleBeanPostProcessor getLifecycleBeanPostProcessor() {
@@ -52,10 +64,10 @@ public class ShiroConfig {
 		return new SysUserRealm();
 	}
 
-	@Bean
-	public SessionManager sessionManager(){
-		return new ServletContainerSessionManager();
-	}
+//	@Bean
+//	public SessionManager sessionManager(){
+//		return new ServletContainerSessionManager();
+//	}
 
 	@Bean("securityManager")
 	public SecurityManager securityManager() {
@@ -63,6 +75,31 @@ public class ShiroConfig {
 		securityManager.setSessionManager(sessionManager());
 		securityManager.setRealm(realm());
 		return securityManager;
+	}
+
+	@Bean
+	public SessionManager sessionManager() {
+		LongWangShiroSessionManager longWangShiroSessionManager = new LongWangShiroSessionManager();
+		longWangShiroSessionManager.setSessionDAO(redisSessionDAO());
+		return longWangShiroSessionManager;
+	}
+
+	//	@ConfigurationProperties(prefix = "spring.redis")
+	public RedisManager redisManager(){
+		RedisManager redisManager = new RedisManager();
+		redisManager.setHost(host);
+		redisManager.setPort(port);
+		redisManager.setPassword(password);
+		redisManager.setDatabase(3); // 选择Redis缓存shiro的数据库(0-15)，默认是0
+		return redisManager;
+	}
+
+
+	@Bean("redisSessionDAO")
+	public RedisSessionDAO redisSessionDAO(){
+		RedisSessionDAO redisSessionDAO = new RedisSessionDAO();
+		redisSessionDAO.setRedisManager(redisManager());
+		return redisSessionDAO;
 	}
 
 	@Bean

@@ -172,12 +172,12 @@ public class StockController {
 	) {
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
 		Map<String, Object> params = new HashMap<>();
-		params.put("endTime", endTime);
-		params.put("beginTime", beginTime);
-		params.put("operType", operType);
-		params.put("stockType", stockType);
-		params.put("stockNo", stockNo);
 		params.put("stat", stat);
+		params.put("stockNo", stockNo);
+		params.put("endTime", endTime);
+		params.put("operType", operType);
+		params.put("beginTime", beginTime);
+		params.put("stockType", stockType);
 		Page<Stock> pageInfo = stockService.getStockPageSelective(params, page);
 		return PageHelper.getInstance().pageData(pageInfo);
 	}
@@ -263,5 +263,4 @@ public class StockController {
 		Page<StockDetail> pageInfo = stockDetailService.getGoodsMadeDateStockInfo(params, page);
 		return PageHelper.getInstance().pageData(pageInfo);
 	}
-
 }

@@ -83,7 +83,6 @@
         <result column="sales_price" property="salesPrice"/>
         <result column="detail_remarks" property="detailRemarks"/>
         <result column="stat" property="stat"/>
-        <result column="deleted" property="deleted"/>
         <association property="unitName" column="unit_id"
                      select="com.trenska.longwang.dao.goods.UnitMapper.selectUnitNameById" autoMapping="true"
                      fetchType="eager"/>
@@ -94,7 +93,7 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        tsd.detail_id,tsd.stock_no,tsd.goods_id,tsd.busi_no,tsd.emp_id,tsd.stock_type,tsd.oper_type,tsd.stock_time,tsd.num,tsd.multi,tsd.history,tsd.stock,tsd.unit_id,tsd.made_date,tsd.stock_price,tsd.sales_price,tsd.stat,tsd.detail_remarks,tsd.deleted
+        tsd.detail_id,tsd.stock_no,tsd.goods_id,tsd.busi_no,tsd.emp_id,tsd.stock_type,tsd.oper_type,tsd.stock_time,tsd.num,tsd.multi,tsd.history,tsd.stock,tsd.unit_id,tsd.made_date,tsd.stock_price,tsd.sales_price,tsd.stat,tsd.detail_remarks
     </sql>
 
     <select id="selectStockOverBrkSelective" resultType="map">
@@ -382,13 +381,31 @@
         and tsd.busi_no = #{busiNo}
     </select>
 
-    <select id="selectByStockNo" resultMap="BaseResultMap">
+    <select id="selectByStockNo"  resultMap="BaseResultMap">
         select <include refid="Base_Column_List"/>
         from t_stock_detail tsd
-        where stat = 1
-        and tsd.stock_type = '出库单'
-        and tsd.oper_type = '销售出库'
+        where tsd.stat = 1
         and tsd.stock_no = #{stockNo}
+    </select>
+
+
+    <select id="selectByParams"  resultMap="BaseResultMap">
+        select <include refid="Base_Column_List"/>
+        from t_stock_detail tsd
+        <where>
+            <if test="stat == 1 or stat == 0">
+                and stat = #{stat}
+            </if>
+            <if test="stockType != null and stockType != ''">
+                and tsd.stock_type = #{stockType}
+            </if>
+            <if test="operType != null and operType != ''">
+                and tsd.oper_type = #{operType}
+            </if>
+            <if test="stockNo != null and stockNo != ''">
+                and tsd.stock_no = #{stockNo}
+            </if>
+        </where>
     </select>
     <!-- 根据订单号获取商品的出库批次:按照批次进行分组 -->
     <select id="getUniqueMadeDatesByIndentNo" resultType="java.lang.String">
@@ -407,5 +424,6 @@
         and tsd.stat = 1
         and tsd.stock_type='出库单'
     </select>
+
 
 </mapper>

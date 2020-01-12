@@ -97,4 +97,9 @@ public class StockDetails extends Model<StockDetails> {
      */
     private boolean stat = true;
 
+    /**
+     * 时间戳，用于排序
+     */
+    private long timestamp;
+
 }

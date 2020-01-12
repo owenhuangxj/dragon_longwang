@@ -36,7 +36,7 @@ public interface IIndentService extends IService<Indent> {
 
 	Page<Indent> getIndentPageSelective(Map<String, Object> params, Page page, HttpServletRequest request);
 
-	ResponseModel confirmIndent(String indentNo, Integer custId);
+	ResponseModel confirmIndent(String indentNo);
 
 	ResponseModel cancelIndentByNo(String indentNo);
 
@@ -47,10 +47,6 @@ public interface IIndentService extends IService<Indent> {
 	Indent getIndentInfo(String indentNo);
 
 	ResponseModel invalidIndent(Indent indent, HttpServletRequest request);
-
-	Page<Indent> getIndentPage(Page page);
-
-	Indent getIndentByNo(String indentNo);
 
 	List<IndentDetail> getIndentDetails(String indentNo);
 
@@ -67,8 +63,6 @@ public interface IIndentService extends IService<Indent> {
 	ResponseModel addOrUpdateIou(Long indentId, String iouAmnt, String iouTime, String iouRemarks);
 
 	ResponseModel indentPay(Long indentId, String iouAmnt, String oper, String payway, HttpServletRequest request);
-
-//	IndentInfoModel getIndentInfoModel(Map<String, Object> params);
 
 	Map<String, Object> pdfAndPrint(Long indentId);
 

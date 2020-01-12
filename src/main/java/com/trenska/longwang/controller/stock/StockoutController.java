@@ -1,7 +1,7 @@
 package com.trenska.longwang.controller.stock;
 
 import com.baomidou.mybatisplus.plugins.Page;
-import com.trenska.longwang.annotation.DuplicateSubmitToken;
+import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.indent.StockMadedate;
 import com.trenska.longwang.entity.stock.Stock;
@@ -59,7 +59,7 @@ public class  StockoutController {
 	private String templatePath;
 
 	@PostMapping("/add")
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@ApiOperation("商品出库")
 	public ResponseModel stockout(@RequestBody @ApiParam Stock stock , HttpServletRequest request) {
 
@@ -76,7 +76,7 @@ public class  StockoutController {
 		return stockoutService.stockout(stock,request);
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@PutMapping("/cancel/{stockNo}")
 	@ApiOperation("作废出库单")
 	public ResponseModel cancelStockout(@PathVariable("stockNo") String stockNo, HttpServletRequest request) {
@@ -104,8 +104,8 @@ public class  StockoutController {
 	) {
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
 		Map<String, Object> params = new HashMap<>();
-		params.put("goodsId", goodsId);
 		params.put("all", all);
+		params.put("goodsId", goodsId);
 		params.put("stockType", stockType);
 		Page<StockMadedate> pageInfo = stockoutService.getGoodsMadeDateDetail(params, page);
 		return PageHelper.getInstance().pageData(pageInfo);
@@ -212,7 +212,7 @@ public class  StockoutController {
 			htmlContent = PDFUtil.freemarkerRender(params, templatePath + File.separator + "bsdpdftpl/tpl.ftl");
 		}
 
-		WebPrintModel wm = PrintSingleton.INSTNACE.getInstance().retOk(htmlContent, "24.1", "14");
+		WebPrintModel wm = PrintSingleton.INSTNACE.getInstance().retOk(htmlContent, "24.1", "13");
 
 		return ResponseModel.getInstance().succ(true).data(wm);
 

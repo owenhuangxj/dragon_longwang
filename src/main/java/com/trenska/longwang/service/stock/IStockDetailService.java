@@ -9,6 +9,7 @@ import com.trenska.longwang.model.stock.StockWarningModel;
 import com.trenska.longwang.model.sys.ResponseModel;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -33,6 +34,8 @@ public interface IStockDetailService extends IService<StockDetail> {
 	ResponseModel cancelStockin(String stockNo,HttpServletRequest request);
 
 	ResponseModel cancelStockout(String stockNo, HttpServletRequest request);
+
+	ResponseModel changeStockin(Stock stock, HttpServletRequest request) throws IOException;
 
 	//	Page<List<OverBrkModel>> getOverBrkStockPage(Map<String, Object> params, Page page);
 }

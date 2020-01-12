@@ -4,6 +4,8 @@ import com.trenska.longwang.constant.Constant;
 import com.trenska.longwang.dao.financing.LoanMapper;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Optional;
+
 /**
  * 2019/7/30
  * 创建人:Owen
@@ -35,7 +37,7 @@ public class LoanUtil {
 		if (isLastLoanNoEmpty || !todayDate.equals(dateOfMaxLoanId) ){
 			loanNo = BillsUtil.makeBillNo(Constant.TZD_PREFIX,1);
 		}else {
-			int serialNumber = BillsUtil.getSerialNumber(loanNoOfMaxId) + 1;
+			int serialNumber = BillsUtil.getSerialNumber(Optional.of(loanNoOfMaxId)) + 1;
 			loanNo = BillsUtil.makeBillNo(Constant.TZD_PREFIX,serialNumber);
 		}
 

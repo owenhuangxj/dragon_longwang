@@ -21,6 +21,8 @@ import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.integration.redis.util.RedisLockRegistry;
 
+import java.io.File;
+import java.io.IOException;
 import java.time.Duration;
 @SuppressWarnings("all")
 @Slf4j
@@ -108,14 +110,13 @@ public class RedisConfig extends CachingConfigurerSupport {
 			String proxyName = clazz.getSuperclass().getName();
 			String className = method.getDeclaringClass().getName();
 			sb.append(className);
-			sb.append(Constant.COLLECTOR_LABEL);
+			sb.append(Constant.SPLITTER);
 			String methodName = method.getName();
 			sb.append(methodName);
 			for (Object param : params) {
 				// 由于参数可能不同, hashCode肯定不一样, 缓存的key也需要不一样
-				sb.append(Constant.COLLECTOR_LABEL);
+				sb.append(Constant.SPLITTER);
 				sb.append(param);
-//				sb.append(JSON.toJSONString(param));
 			}
 			String key = sb.toString();
 			return key;
@@ -132,4 +133,10 @@ public class RedisConfig extends CachingConfigurerSupport {
 		RedisLockRegistry redisLockRegistry = new RedisLockRegistry(redisConnectionFactory,REGISTRY_KEY);
 		return redisLockRegistry;
 	}
+
+//	@Bean("redissonClient")
+//	public RedissonClient redisson() throws IOException {
+//		Config config = new Config().fromYAML(RedisConfig.class.getClassLoader().getResource("application-redisson.yml"));
+//		return Redisson.create(config);
+//	}
 }

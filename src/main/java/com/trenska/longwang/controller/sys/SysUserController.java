@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.annotation.ActionLog;
-import com.trenska.longwang.annotation.DuplicateSubmitToken;
+import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.constant.Constant;
 import com.trenska.longwang.constant.LogType;
 import com.trenska.longwang.context.ApplicationContextHolder;
@@ -14,10 +14,10 @@ import com.trenska.longwang.entity.sys.SysEmp;
 import com.trenska.longwang.exception.AccountDuplicatedException;
 import com.trenska.longwang.model.sys.LoginResultModel;
 import com.trenska.longwang.model.sys.ResponseModel;
-import com.trenska.longwang.service.sys.ISysEmpRoleService;
 import com.trenska.longwang.service.sys.ISysEmpService;
 import com.trenska.longwang.util.ObjectCopier;
 import com.trenska.longwang.util.PageUtils;
+import com.trenska.longwang.util.SysUtil;
 import com.trenska.longwang.util.TimeUtil;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
@@ -53,7 +53,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @RequestMapping("/user")
 @Api(value = "UserController", description = "账号接口")
-public class SysUserController{
+public class SysUserController {
 
 	@Value("${spring.redis.token-timeout}")
 	private Integer tokenTimeout;
@@ -67,66 +67,55 @@ public class SysUserController{
 	@Autowired
 	private ISysEmpService userService;
 
-	@Autowired
-	private ISysEmpRoleService empRoleService;
-
 	////////////////////////////////////////////////////////////登陆/注销\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 	@PostMapping("/login")
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@ActionLog(type = LogType.RETRIEVE, content = "用戶登陸")
 	@ApiOperation(value = "用户登陆,根据用户名和用户密码查询用户信息")
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "empAcct", value = "用户账号", paramType = "body", required = true, dataType = "String"),
 			@ApiImplicitParam(name = "empPwd", value = "用户密码", paramType = "body", required = true, dataType = "String")
 	})
-	public LoginResultModel login(@ApiParam(name = "emp", value = "登录参数", required = true) @Valid @RequestBody SysEmp emp, HttpServletRequest request) {
+	public LoginResultModel login(@ApiParam(name = "emp", value = "登录参数", required = true) @Valid @RequestBody SysEmp emp) {
 
-		UsernamePasswordToken token = new UsernamePasswordToken(emp.getEmpAcct(), emp.getEmpPwd());
+		UsernamePasswordToken usernamePasswordToken = new UsernamePasswordToken(emp.getEmpAcct(), emp.getEmpPwd());
 		Subject subject = SecurityUtils.getSubject();
-		try{
-			subject.login(token); // 登陆后可以通过subject获取到Principal对象
-		}catch (IncorrectCredentialsException ex){
+		try {
+			subject.login(usernamePasswordToken); // 登陆后可以通过subject获取到Principal对象
+		} catch (IncorrectCredentialsException ex) {
 			LoginResultModel loginResultModel = new LoginResultModel();
 			loginResultModel.setSuccess(false);
 			loginResultModel.setMsg(Constant.LOGIN_FAILURE_MSG);
 			return loginResultModel;
-		}catch (UnknownAccountException ex){
+		} catch (UnknownAccountException ex) {
 			LoginResultModel loginResultModel = new LoginResultModel();
 			loginResultModel.setSuccess(false);
 			loginResultModel.setMsg(Constant.LOGIN_FAILURE_MSG);
 			return loginResultModel;
 		}
+		// 从 shiro 中获取 SysEmp
 		SysEmp dbSysEmp = (SysEmp) subject.getPrincipal();
 
-		if (null == dbSysEmp){
+		if (null == dbSysEmp) {
 			throw new AuthenticationException(Constant.LOGIN_FAILURE_MSG);
 		}
+		// 账号ID
+		int empId = dbSysEmp.getEmpId();
 
-
-		Integer empId = dbSysEmp.getEmpId();
-
-		String accessToken = UUID.randomUUID().toString();
-		// 将token存入redis中
-		redisTemplate.opsForValue().set(Constant.ACCESS_TOKEN_IDENTIFIER.concat(accessToken), accessToken, tokenTimeout, TimeUnit.MILLISECONDS);
-
-		jsonRedisTemplate.opsForValue().set(accessToken + Constant.EMP_ID_IDENTIFIER, empId, tokenTimeout, TimeUnit.MILLISECONDS);
-
-//		jsonRedisTemplate.opsForValue().set(accessToken.concat("::emp"),sysEmp,tokenTimeout,TimeUnit.MILLISECONDS);
-
-		LoginResultModel loginResultModel = new LoginResultModel();
-		ObjectCopier.copyProperties(dbSysEmp, loginResultModel);
+		// 组装token,格式-> uuid + :: + empId
+		String token = UUID.randomUUID().toString().concat(Constant.SPLITTER).concat(String.valueOf(empId));
+		// 以 emp-id:: + empId 的方式所组成的key,uuid + :: + empId 为value的键值对存入redis中
+		redisTemplate.opsForValue().set(Constant.EMP_ID_IDENTIFIER.concat(String.valueOf(empId)),
+				token, tokenTimeout, TimeUnit.MILLISECONDS);
 
 		// 获取登陆用户的系统配置,如果没有对应的记录则采用系统配置，系统配置的sysEmpId为10000
 		SysConfig sysConfig = new SysConfig().selectById(empId);
-
 		if (sysConfig == null) {
-			sysConfig = ApplicationContextHolder.getBean(SysConfig.class);
+			sysConfig = ApplicationContextHolder.getBean(SysConfig.class);// 获取Spring容器中的系统配置
 		}
-		loginResultModel.setSysConfig(sysConfig);
-
-		SecurityUtils.getSubject().getSession().setAttribute("sysConfig",sysConfig);
-
-		jsonRedisTemplate.opsForValue().set(Constant.SYS_CONFIG_IDENTIFIER + empId,sysConfig );
+		// 将配置存入redis中
+		jsonRedisTemplate.opsForValue().set(Constant.SYS_CONFIG_IDENTIFIER.concat(String.valueOf(empId)),
+				sysConfig);
 
 		/**
 		 * 更新客户的登陆ip,最后一次登陆时间，总登陆次数
@@ -137,27 +126,33 @@ public class SysUserController{
 		updatingSysEmp.setEmpId(dbSysEmp.getEmpId());
 		updatingSysEmp.setLastLoginTime(TimeUtil.getCurrentTime(Constant.TIME_FORMAT));
 		updatingSysEmp.setLoginCts(dbSysEmp.getLoginCts() + 1);
-		updatingSysEmp.setLastLoginIp(request.getRemoteHost().concat(" ").concat(request.getRemoteAddr()).concat(String.valueOf(request.getRemotePort())));
+		updatingSysEmp.setLastLoginIp(SysUtil.assembleLastLoginIp());
 		updatingSysEmp.updateById();
 
+		// 新建登陆响应模型
+		LoginResultModel loginResultModel = new LoginResultModel();
+		// 复制SysEmp给响应模型，包括角色和权限
+		ObjectCopier.copyProperties(dbSysEmp, loginResultModel);
 		loginResultModel.setSuccess(true);
-		loginResultModel.setToken(accessToken);
-		loginResultModel.setSessionId(UUID.randomUUID().toString());
+		loginResultModel.setToken(token);
+		// 将系统配置SysConfig 存入登陆响应模型中
+		loginResultModel.setSysConfig(sysConfig);
+		loginResultModel.setSessionId(token);
 		return loginResultModel;
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@ApiOperation("退出登录")
 	@PostMapping(value = "/logout")
 	public ResponseModel loginOut() {
-		log.debug("principal :    {}",SecurityUtils.getSubject().getPrincipal());
+		log.debug("principal :    {}", SecurityUtils.getSubject().getPrincipal());
 		SecurityUtils.getSubject().logout();
 		return ResponseModel.getInstance().succ(true).msg("退出登录成功");
 	}
 
 	////////////////////////////////////////////////////////////增删改查\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 	@PostMapping("/add")
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "empName", value = "员工姓名", paramType = "body", required = true, dataType = "String"),
 			@ApiImplicitParam(name = "empAcct", value = "员工账号", paramType = "body", required = true, dataType = "String"),
@@ -183,7 +178,7 @@ public class SysUserController{
 		}
 		SysEmp sysEmp = userService.getOne(
 				new LambdaQueryWrapper<SysEmp>()
-						.eq(SysEmp::getEmpAcct,emp.getEmpAcct().trim())
+						.eq(SysEmp::getEmpAcct, emp.getEmpAcct().trim())
 		);
 		if (!Objects.isNull(sysEmp)) {
 			return ResponseModel.getInstance().succ(false).msg("用户已注册");
@@ -200,7 +195,7 @@ public class SysUserController{
 		return userService.saveEmp(emp);
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/{empId}")
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "empId", value = "员工账号", paramType = "path", required = true, dataType = "int")
@@ -211,16 +206,16 @@ public class SysUserController{
 		return ResponseModel.getInstance().succ(success).msg(success ? "删除账号成功" : "删除账号失败");
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@PutMapping("/update/pwd/{empId}")
 	@ApiOperation("修改账号密码")
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "empId", value = "员工id", paramType = "path", required = true, dataType = "int"),
 			@ApiImplicitParam(name = "empPwd", value = "员工账号密码", paramType = "query", required = true, dataType = "String")
 	})
-	public ResponseModel update(@PathVariable("empId") Integer empId , @RequestParam String empPwd) {
+	public ResponseModel update(@PathVariable("empId") Integer empId, @RequestParam String empPwd) {
 
-		if(empId < 0 ){
+		if (empId < 0) {
 			return ResponseModel.getInstance().succ(false).msg("无效的用户id");
 		}
 
@@ -230,11 +225,11 @@ public class SysUserController{
 
 		SysEmp oldUser = userService.getById(empId);
 
-		if(null == oldUser) {
+		if (null == oldUser) {
 			return ResponseModel.getInstance().succ(false).msg("用户不存在");
 		}
 
-		if(empPwd.equals(oldUser.getEmpPwd())){
+		if (empPwd.equals(oldUser.getEmpPwd())) {
 			return ResponseModel.getInstance().succ(false).msg("新密码与旧密码相同，不需要更新");
 		}
 
@@ -249,7 +244,7 @@ public class SysUserController{
 		return ResponseModel.getInstance().succ(true).msg("密码更新成功");
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@PutMapping("/update/info/{empId}")
 	@ApiOperation("修改账号的名称、账号和密码")
 	@ApiImplicitParams({
@@ -259,27 +254,27 @@ public class SysUserController{
 			@ApiImplicitParam(name = "empId", value = "员工id", paramType = "path", required = true, dataType = "int")
 	})
 	@Transactional
-	public ResponseModel updateEmpAcctNamePwd(@PathVariable("empId") Integer empId ,@RequestBody SysEmp data) throws AccountDuplicatedException {
+	public ResponseModel updateEmpAcctNamePwd(@PathVariable("empId") Integer empId, @RequestBody SysEmp data) throws AccountDuplicatedException {
 		@NotNull String empAcct = data.getEmpAcct();
 		String empName = data.getEmpName();
 		@NotNull String empPwd = data.getEmpPwd();
 		SysEmp updatingSysEmp = new SysEmp();
 
-		if(empId < 0 ){
+		if (empId < 0) {
 			return ResponseModel.getInstance().succ(false).msg("无效的用户id");
 		}
-		if(Objects.isNull(empPwd)&&Objects.isNull(empAcct)&&Objects.isNull(empName)){
+		if (Objects.isNull(empPwd) && Objects.isNull(empAcct) && Objects.isNull(empName)) {
 			return ResponseModel.getInstance().succ(false).msg("无效的变更信息");
 		}
 		SysEmp dbUser = userService.getById(empId);
 
-		if(null == dbUser) {
+		if (null == dbUser) {
 			return ResponseModel.getInstance().succ(false).msg("用户不存在");
 		}
 
 		String hashedPwd = null;
 		String salt = null;
-		if(StringUtils.isNotEmpty(empPwd)) {
+		if (StringUtils.isNotEmpty(empPwd)) {
 			//密码加密
 			RandomNumberGenerator saltGenerator = new SecureRandomNumberGenerator();
 			salt = saltGenerator.nextBytes().toBase64();
@@ -287,28 +282,28 @@ public class SysUserController{
 			updatingSysEmp.setSalt(salt);
 		}
 
-		if(hashedPwd.equals(dbUser.getEmpPwd())){
+		if (hashedPwd.equals(dbUser.getEmpPwd())) {
 			return ResponseModel.getInstance().succ(false).msg("新密码与旧密码相同，不需要更新");
 		}
 
 		String currentTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
 		updatingSysEmp.setEmpId(empId);
-		if(!Objects.isNull(hashedPwd)){
+		if (!Objects.isNull(hashedPwd)) {
 			updatingSysEmp.setEmpPwd(hashedPwd);
 		}
-		if(!Objects.isNull(empName)){
+		if (!Objects.isNull(empName)) {
 			updatingSysEmp.setEmpName(empName);
 		}
-		if(!Objects.isNull(empAcct)){
+		if (!Objects.isNull(empAcct)) {
 			updatingSysEmp.setEmpAcct(empAcct);
 		}
 		updatingSysEmp.setUpdatedTime(currentTime);
 		// 通过设置数据库字段的唯一性+ControllerAdvice来处理重名
 		try {
 			userService.updateById(updatingSysEmp);
-		}catch (Exception ex){
+		} catch (Exception ex) {
 			String exceptionName = ex.getClass().getSimpleName();
-			if("DuplicateKeyException".equals(exceptionName)) {
+			if ("DuplicateKeyException".equals(exceptionName)) {
 				throw new AccountDuplicatedException("用户重名");
 			}
 		}
@@ -330,6 +325,7 @@ public class SysUserController{
 
 	/**
 	 * 分页获取账号信息，包括角色和区域分组
+	 *
 	 * @param current
 	 * @param size
 	 * @param empType
@@ -354,7 +350,6 @@ public class SysUserController{
 		Page<SysEmp> pageInfo = userService.getSysEmpPage(params, page);
 		return PageHelper.getInstance().pageData(pageInfo);
 	}
-
 
 
 //	@ApiOperation("注册账号")

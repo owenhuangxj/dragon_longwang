@@ -20,9 +20,10 @@
         <result column="stock" property="stock" />
         <result column="stat" property="stat"/>
         <result column="remarks" property="remarks" />
+        <result column="timestamp" property="timestamp"/>
     </resultMap>
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        tsds.id, tsds.stock_no, tsds.busi_no, tsds.emp_id, tsds.goods_id, tsds.stock_type,tsds.oper_type, tsds.made_date, tsds.stock_time, tsds.history, tsds.unit_name, tsds.stock_price, tsds.sales_price, tsds.stock, tsds.stat ,tsds.remarks
+        tsds.id, tsds.stock_no, tsds.busi_no, tsds.emp_id, tsds.goods_id, tsds.stock_type,tsds.oper_type, tsds.made_date, tsds.stock_time, tsds.history, tsds.unit_name, tsds.stock_price, tsds.sales_price, tsds.stock, tsds.stat ,tsds.remarks,tsds.timestamp
     </sql>
 </mapper>

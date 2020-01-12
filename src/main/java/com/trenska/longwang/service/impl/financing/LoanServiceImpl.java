@@ -5,7 +5,6 @@ import com.trenska.longwang.constant.Constant;
 import com.trenska.longwang.dao.customer.CustomerMapper;
 import com.trenska.longwang.dao.financing.LoanMapper;
 import com.trenska.longwang.entity.customer.Customer;
-import com.trenska.longwang.entity.financing.DealDetailSummarizing;
 import com.trenska.longwang.entity.financing.Loan;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.trenska.longwang.entity.sys.SysConfig;
@@ -56,7 +55,7 @@ public class LoanServiceImpl extends ServiceImpl<LoanMapper, Loan> implements IL
 	@Transactional
 	public ResponseModel addLoan(Loan loan, HttpServletRequest request) {
 
-		Integer empIdInRedis = SysUtil.getEmpIdInRedis(request);
+		Integer empIdInToken = SysUtil.getEmpId();
 
 		Integer borrowCustId = loan.getBorrowCustId();
 		Integer lendCustId = loan.getLendCustId();
@@ -73,7 +72,7 @@ public class LoanServiceImpl extends ServiceImpl<LoanMapper, Loan> implements IL
 
 		String currentTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
 		String loanNo = LoanUtil.getLoanNo(super.baseMapper);
-		String nameNo = Constant.TZD_CHINESE.concat("-").concat(loanNo);
+		String nameNo = Constant.TZD_CHINESE.concat(Constant.MINUS).concat(loanNo);
 
 		String remarks = loan.getRemarks();
 
@@ -82,17 +81,17 @@ public class LoanServiceImpl extends ServiceImpl<LoanMapper, Loan> implements IL
 		BigDecimal borrowCustomerNewDebt = new BigDecimal(borrowCustomer.getDebt()).subtract(amount);
 		// 借方减少欠款
 		CustomerUtil.subtractCustomerDebt(borrowCustId, borrowCustomer.getDebt(), amount);
-		DealDetailUtil.saveDealDetail(borrowCustId, nameNo, currentTime, "-".concat(amount.toString()), borrowCustomerNewDebt.toString(), Constant.TZ_SUBSTRACT_OPER, "", remarks);
+		DealDetailUtil.saveDealDetail(borrowCustId, nameNo, currentTime, Constant.MINUS.concat(amount.toString()), borrowCustomerNewDebt.toString(), Constant.TZ_SUBSTRACT_OPER, "", remarks);
 
 		// 贷方
 		Customer lendCustomer = customerMapper.selectById(lendCustId);
 		BigDecimal lendCustomerNewDebt = new BigDecimal(lendCustomer.getDebt()).add(amount);
 		// 贷方增加欠款
 		CustomerUtil.addCustomerDebt(lendCustId, amount);
-		DealDetailUtil.saveDealDetail(lendCustId, nameNo, currentTime, "+".concat(amount.toString()), lendCustomerNewDebt.toString(), Constant.TZ_ADD_OPER, "", remarks);
+		DealDetailUtil.saveDealDetail(lendCustId, nameNo, currentTime, Constant.PLUS.concat(amount.toString()), lendCustomerNewDebt.toString(), Constant.TZ_ADD_OPER, "", remarks);
 
 		loan.setLoanNo(loanNo);
-		loan.setEmpId(empIdInRedis);
+		loan.setEmpId(empIdInToken);
 		loan.setLoanTime(currentTime);
 		super.baseMapper.insert(loan);
 
@@ -102,7 +101,7 @@ public class LoanServiceImpl extends ServiceImpl<LoanMapper, Loan> implements IL
 	@Override
 	public Page<Loan> getLoanPageSelective(Page page, Map<String, Object> params) {
 
-		SysConfig sysConfig = (SysConfig) jsonRedisTemplate.opsForValue().get(Constant.SYS_CONFIG_IDENTIFIER + SysUtil.getEmpIdInRedis());
+		SysConfig sysConfig = (SysConfig) jsonRedisTemplate.opsForValue().get(Constant.SYS_CONFIG_IDENTIFIER + SysUtil.getEmpId());
 		Integer retain = sysConfig.getRetain();
 
 		List<Loan> records = super.baseMapper.selectLoanPageSelective(page, params);
@@ -136,7 +135,7 @@ public class LoanServiceImpl extends ServiceImpl<LoanMapper, Loan> implements IL
 		String amount = dbLoan.getAmount();
 		String loanNo = dbLoan.getLoanNo();
 
-		String nameNo = Constant.TZD_CHINESE.concat("-").concat(loanNo);
+		String nameNo = Constant.TZD_CHINESE.concat(Constant.MINUS).concat(loanNo);
 		String operAddInvalid = Constant.TZ_ADD_OPER.concat(Constant.ZF);
 		String operSubstractInvalid = Constant.TZ_SUBSTRACT_OPER.concat(Constant.ZF);
 		String currentTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
@@ -147,7 +146,7 @@ public class LoanServiceImpl extends ServiceImpl<LoanMapper, Loan> implements IL
 		String borrowCustomerDebt = borrowCustomer.getDebt();
 		BigDecimal newBorrowCustomerDebt = new BigDecimal(borrowCustomerDebt).add(new BigDecimal(amount));
 		CustomerUtil.addCustomerDebt(borrowCustId, new BigDecimal(amount));
-		DealDetailUtil.saveDealDetail(borrowCustId, nameNo, currentTime, "+".concat(amount), newBorrowCustomerDebt.toString(), operSubstractInvalid, "", "");
+		DealDetailUtil.saveDealDetail(borrowCustId, nameNo, currentTime, Constant.PLUS.concat(amount), newBorrowCustomerDebt.toString(), operSubstractInvalid, "", "");
 
 		// 减少贷方欠款(OPER为"调账增加(作废)")，记录交易明细
 		Integer lendCustId = dbLoan.getLendCustId();
@@ -155,7 +154,7 @@ public class LoanServiceImpl extends ServiceImpl<LoanMapper, Loan> implements IL
 		String lendCustomerDebt = lendCustomer.getDebt();
 		BigDecimal newLendCustomerDebt = new BigDecimal(lendCustomerDebt).subtract(new BigDecimal(amount));
 		CustomerUtil.subtractCustomerDebt(lendCustId, amount);
-		DealDetailUtil.saveDealDetail(lendCustId, nameNo, currentTime, "-".concat(amount), newLendCustomerDebt.toString(), operAddInvalid, "", "");
+		DealDetailUtil.saveDealDetail(lendCustId, nameNo, currentTime, Constant.MINUS.concat(amount), newLendCustomerDebt.toString(), operAddInvalid, "", "");
 
 		// 作废调帐单
 		dbLoan.setStat(false);

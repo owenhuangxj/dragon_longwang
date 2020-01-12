@@ -1,4 +1,5 @@
 package com.trenska.longwang.constant;
+
 /**
  * 2019/4/17
  * 创建人:Owen
@@ -7,15 +8,14 @@ public class Constant {
 	/**
 	 * 登陆超时错误码
 	 */
-	public final static Integer ACCESS_TIMEOUT = 10401;
 	public final static String ACCESS_TIMEOUT_MSG = "登陆超时";
 	public final static String RKD_CHINESE = "入库单";
 	public final static String RKDZF_CHINESE = "入库单(作废)";
 	public final static String CKD_CHINESE = "出库单";
 	public final static String XSCK_CHINESE = "销售出库";
 	public final static String THRK_CHINESE = "退货入库";
-	public final static  String DH_TITLE = "DH";
-	public final static  String TH_TITLE = "TH";
+	public final static String DH_TITLE = "DH";
+	public final static String TH_TITLE = "TH";
 	public final static String THD_CHINESE = "退货单";
 	public final static String RK_TITILE = "RK";
 	public final static String QCRK_CHINESE = "期初入库";
@@ -44,14 +44,14 @@ public class Constant {
 	/******************************************************************************************************************/
 	public final static String TOKEN_NAME = "token";
 	/******************************************************************************************************************/
-	public final static String EMP_ID_IDENTIFIER = "::empId";
+	public final static String EMP_ID_IDENTIFIER = "emp-id::";
 	/******************************************************************************************************************/
 	public final static String ACCESS_TOKEN_IDENTIFIER = "access-token::";
 	/******************************************************************************************************************/
 	public final static String CUSTOMER_NOT_EXISTS_MSG = "客户信息不存在";
 	public final static String CUSTOMER_OUT_OF_DEBT_MSG = "客户欠款已超过额度";
 	/******************************************************************************************************************/
-	public final static String SYS_CONFIG_IDENTIFIER = "sysConfig";
+	public final static String SYS_CONFIG_IDENTIFIER = "sys-config::";
 	public final static String XSSP = "销售商品";
 	public final static String XSSP_HG = "销售商品(核改) ";
 	public static final String ZF = "(作废)";
@@ -66,7 +66,7 @@ public class Constant {
 	public static final String THTK_ZF = "退货退款(作废)";
 	public static final String LOGIN_TIMEOUT = "登陆超时";
 	public static final String NO_DEBT_LIMIT_LABEL = "-0.0000000001";
-	public static final String COLLECTOR_LABEL = "::";
+	public static final String SPLITTER = "::";
 	public static final String DHD_ZF_CHINESE_CHANGE = "销售商品(核改)";
 	public static final String DATE_FORMAT = "yyyyMMdd";
 	public static final String TZD_PREFIX = "TZ";
@@ -76,8 +76,19 @@ public class Constant {
 	public static final String ON_SALE = "上架";
 	public static final String OFF_SALE = "下架";
 	public static final String NO_ACCESS_PERMISSION_MSG = "无访问权限";
-	public static final int ACCESS_FORBIDDEN = 10405;
+	public final static int ACCESS_TIMEOUT = 10401;
 	public static final int TOKEN_MISSING = 10402;
+	public static final int LOGGED_OTHER_PLACE = 10403;
+	public static final int ACCESS_FORBIDDEN = 10405;
 	public static final String TOKEN_MISSING_MSG = "无效的令牌";
 	public static final String CHANGE_SUCC = "修改成功";
+	public static final int INVALID = 0;
+	public static final int VALID = 1;
+	public static final String PLUS = "+";
+	public static final String MINUS = "-";
+	public static final int DEFAULT_MULTI = 1;
+	public static final String CUST_IDS_LABEL = "custIds";
+	public static final String LOGGED_OTHER_PLACE_MSG = "账号已经在其它地方登陆，您被迫下线！";
+
+	public static final int DEFAULT_CONFIG_NUMBER = 10000;
 }

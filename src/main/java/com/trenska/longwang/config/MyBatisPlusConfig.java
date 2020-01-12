@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.PerformanceInterceptor;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import java.util.Properties;
 
@@ -46,7 +47,7 @@ public class MyBatisPlusConfig {
      * properties.setProperty("format", "true"); 格式化sql语句
      */
 //    @Bean
-//    @Profile("dev")
+//    @Profile("ali")
 //    public PerformanceInterceptor performanceInterceptor() {
 //        PerformanceInterceptor performanceInterceptor = new PerformanceInterceptor();
 //        Properties properties = new Properties();
@@ -54,5 +55,4 @@ public class MyBatisPlusConfig {
 //        performanceInterceptor.setProperties(properties);
 //        return performanceInterceptor;
 //    }
-
 }

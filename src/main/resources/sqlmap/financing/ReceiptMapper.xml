@@ -136,7 +136,7 @@
                 )
             </if>
         </trim>
-        order by tr.create_time desc
+        order by tr.create_time desc,tr.receipt_id desc
     </select>
 
     <select id="selectReceiptById" resultMap="BaseResultMap">
@@ -202,33 +202,55 @@
         tc.cust_id AS custId,
         tc.cust_no AS custNo,
         tc.cust_name AS custName,
-        abs(ifnull(
+        abs(
+        ifnull(
         sum(
         if(
-        substring(tdd.name_no,1,3) = '订货单' or (substring(tdd.name_no,1,3) = '调账单'and substring(tdd.oper,1,4) = '调账增加'),
-        cast(tdd.amount as decimal(9,2))
-        ,0)
+        tdd.oper = '增加欠款'
+        or substring(tdd.name_no,1,3) = '订货单'
+        or
+        (substring(tdd.name_no,1,3) = '调账单'and tdd.oper = '调账增加'),
+        cast(tdd.amount as decimal(9,2)),
+        0
         )
-        ,0)) as salesAmount,
-        abs(ifnull( sum( if(substring(tdd.name_no,1,3) = '收款单' , cast(tdd.amount as decimal(9,2)),0) ) ,0)) as receivedAmount,
-        abs(ifnull(
+        )
+        ,0
+        )
+        ) as salesAmount,
+        abs(
+        ifnull(
+        sum(
+        if(
+        substring(tdd.name_no,1,3) = '收款单' ,
+        cast(tdd.amount as decimal(9,2)),
+        0
+        )
+        ) ,
+        0
+        )
+        ) as receivedAmount,
+
+        abs(
+        ifnull(
         sum(
         if(
         substring(tdd.name_no,1,3) = '付款单'
         or
         substring(tdd.name_no,1,3) = '退货单'
         or
-        (substring(tdd.name_no,1,3) = '调账单' and  substring(tdd.oper,1,4) = '调账减少'),
-        cast(tdd.amount as decimal(9,2))
-        ,0)
+        (substring(tdd.name_no,1,3) = '调账单' and substring(tdd.oper,1,4) = '调账减少'),
+        cast(tdd.amount as decimal(9,2)),
+        0
         )
-        ,0)) as payedAmount
-        FROM
-        (
-          select * from t_customer
-          <trim prefix="where" prefixOverrides="and">
+        ),
+        0
+        )
+        ) as payedAmount
+        FROM(
+        select * from t_customer
+        <trim prefix="where" prefixOverrides="and">
               <if test="custIds != null and custIds.size() > 0">
-                  <foreach collection="custIds" item="custId" open="and cust_id IN (" close=")" separator=",">
+                  <foreach collection="custIds" item="custId" open="and cust_id in (" close=")" separator=",">
                       #{custId}
                   </foreach>
               </if>
@@ -238,77 +260,22 @@
                   )
               </if>
               <if test="custName != null and custName != ''">
-                  and cust_name LIKE concat('%',#{custName},'%')
+                  and cust_name like concat('%',#{custName},'%')
               </if>
               <if test="priceGrpId != null and priceGrpId != 0">
                   and price_grp_id = #{priceGrpId}
               </if>
           </trim>
         ) as tc
-        LEFT JOIN
-        (
+        LEFT JOIN(
           select * from t_deal_detail where deal_time between #{beginTime} and #{endTime}
         ) as tdd
         on tdd.cust_id = tc.cust_id
         GROUP BY tc.cust_id
         ORDER BY tc.cust_no
     </select>
-    <!--<select id="selectAccountCheckingPageSelective" resultMap="AccountCheckingModelMap">
-        SELECT
-        tc.cust_id AS custId,
-        tc.cust_no AS custNo,
-        tc.cust_name AS custName,
-        ifnull(ti.salesAmount,0) AS salesAmount,
-        ifnull(tr.receivedAmount,0) AS receivedAmount,
-        ifnull(tr.payedAmount,0) AS payedAmount
-        FROM (
-            SELECT * FROM t_customer
-            <trim prefixOverrides="AND" prefix="WHERE">
-                <if test="custName != null and custName != ''">
-                    AND cust_name LIKE concat('%',#{custName},'%')
-                </if>
-                <if test="priceGrpId != null and priceGrpId != 0">
-                    AND price_grp_id = #{priceGrpId}
-                </if>
-                <if test="custIds != null and custIds.size() > 0">
-                    <foreach collection="custIds" item="custId" open="AND cust_id IN (" close=")" separator=",">
-                        #{custId}
-                    </foreach>
-                </if>
-                <if test="areaGrpIds != null and areaGrpIds.size() > 0">
-                    <foreach collection="areaGrpIds" item="areaGrpId" open="AND area_grp_id IN(" close=")" separator=",">
-                        #{areaGrpId}
-                    </foreach>
-                </if>
-            </trim>
-        ) as tc
-        LEFT JOIN (
-          select cust_id ,ifnull(sum(cast(indent_total as decimal(9,2))),0) AS salesAmount from t_indent
-          where stat in ('已完成','已出库')
-          and sales_time between #{beginTime} and #{endTime}
-          <trim prefixOverrides="and" prefix="and">
-              <if test="salesmanId != null">
-                  AND salesman_id = #{salesmanId}
-              </if>
-          </trim>
-          group by cust_id
-        ) AS ti
-        ON tc.cust_id = ti.cust_id
-        LEFT JOIN (
-          select cust_id,
-            IFNULL(sum(IF(type = '收款单' ,cast(receipt_amount as decimal(9,2)),0)),0)  AS receivedAmount,
-            IFNULL(sum(IF(type = '付款单' ,cast(receipt_amount as decimal(9,2)),0)),0)  AS payedAmount
-          from t_receipt
-          where create_time between #{beginTime} and #{endTime}
-          and stat = 1
-          group by cust_id
-        ) AS tr
-        ON tc.cust_id = tr.cust_id
-        GROUP BY tc.cust_id
-    </select>-->
 
     <resultMap id="AccountCheckingModelMap" type="com.trenska.longwang.model.finaning.AccountCheckingModel" autoMapping="true">
-
         <result column="custId" property="custId"/>
         <result column="custNo" property="custNo"/>
         <result column="custName" property="custName"/>
@@ -321,9 +288,7 @@
         <association property="lend" column="custId" select="com.trenska.longwang.dao.financing.LoanMapper.selectLendAmount"/>
     </resultMap>
     <select id="selectAccountCheckingCount" resultType="java.lang.Integer">
-        SELECT count(1)
-        FROM
-        (
+        SELECT count(1) FROM(
         select * from t_customer
         <trim prefix="where" prefixOverrides="and">
             <if test="custIds != null and custIds.size() > 0">
@@ -344,9 +309,8 @@
             </if>
         </trim>
         ) as tc
-        LEFT JOIN
-        (
-        select * from t_deal_detail where deal_time between #{beginTime} and #{endTime}
+        LEFT JOIN(
+          select * from t_deal_detail where deal_time between #{beginTime} and #{endTime}
         ) as tdd
         on tdd.cust_id = tc.cust_id
         GROUP BY tc.cust_id
@@ -454,11 +418,32 @@
     <select id="selectAccountCheckingSummation"
             resultType="com.trenska.longwang.model.report.AccountCheckingSummationModel">
         SELECT
-        abs(ifnull(sum(if(substring(tdd.name_no,1,3) = '订货单',cast(tdd.amount as decimal(9,2)),0)),0)) as salesAmountTotal,
+        abs(
+          ifnull(
+            sum(
+              if(
+                tdd.oper = '增加欠款'
+                or substring(tdd.name_no,1,3) = '订货单'
+                or (substring(tdd.name_no,1,3) = '调账单'and tdd.oper = '调账增加')
+                ,cast(tdd.amount as decimal(9,2))
+              ,0)
+            )
+          ,0)
+        ) as salesAmountTotal,
         abs(ifnull( sum( if(substring(tdd.name_no,1,3) = '收款单' , cast(tdd.amount as decimal(9,2)),0) ) ,0)) as receivedAmountTotal,
-        abs(ifnull( sum( if(substring(tdd.name_no,1,3) = '付款单' or substring(tdd.name_no,1,3) = '退货单', cast(tdd.amount as decimal(9,2)) ,0)) ,0)) as payedAmountTotal
-        from
-        (
+        abs(
+          ifnull(
+            sum(
+              if(
+                substring(tdd.name_no,1,3) = '付款单'
+                or substring(tdd.name_no,1,3) = '退货单'
+                or (substring(tdd.name_no,1,3) = '调账单' and substring(tdd.oper,1,4) = '调账减少'),
+                cast(tdd.amount as decimal(9,2))
+              ,0)
+            )
+          ,0)
+        ) as payedAmountTotal
+        from(
         select * from t_customer
         <trim prefix="where" prefixOverrides="and">
             <if test="custIds != null and custIds.size() > 0">
@@ -534,5 +519,4 @@
             </if>
         </trim>
     </select>
-
 </mapper>

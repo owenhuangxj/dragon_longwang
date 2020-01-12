@@ -1,28 +1,25 @@
 package com.trenska.longwang.controller.goods;
 
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.plugins.Page;
-import com.trenska.longwang.annotation.DuplicateSubmitToken;
+import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.goods.Category;
-import com.trenska.longwang.model.sys.ExistModel;
 import com.trenska.longwang.model.sys.ResponseModel;
 import com.trenska.longwang.service.goods.ICategoryService;
 import com.trenska.longwang.util.NumberUtil;
 import com.trenska.longwang.util.PageUtils;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
-import org.apache.shiro.SecurityUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * 商品分类表 前端控制器
@@ -37,36 +34,53 @@ import java.util.Collection;
 @Api(description = "商品-分类管理接口")
 public class CategoryController {
 
-
 	@Autowired
 	private ICategoryService categoryService;
-
 	@PostMapping("/add")
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "catName", value = "分类名", paramType = "body", required = true, dataType = "string"),
 			@ApiImplicitParam(name = "pid", value = "父级分类的id，如果为主分类此参数设置为 0", paramType = "body", required = true, dataType = "int"),
 	})
 	@ApiOperation("添加主分类/子分类，返回对象中data属性是添加成功的分类的id")
 	public ResponseModel addCategory(@Valid @RequestBody Category category) {
-		boolean successful = categoryService.save(category);
-		return ResponseModel.getInstance().succ(successful).msg(successful ? "分类添加成功" : "分类添加失败");
+		if (category == null){
+			return ResponseModel.getInstance().succ(false).msg("无效的分类.");
+		}
+		@NotNull String catName = category.getCatName();
+		if (catName == null){
+			return ResponseModel.getInstance().succ(false).msg("分类名称不能为空.");
+		}
+		Category dbCategory = categoryService.getOne(
+				new LambdaQueryWrapper<Category>()
+					.eq(Category::getCatName,catName)
+		);
+		if (dbCategory != null){
+			return ResponseModel.getInstance().succ(false).msg("分类已经存在.");
+		}
+		boolean isSuccess = categoryService.save(category);
+		return ResponseModel.getInstance().succ(isSuccess).msg(isSuccess ? "分类添加成功" : "分类添加失败");
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/{catId}")
 	@ApiImplicitParams({@ApiImplicitParam(name = "catId", required = true, paramType = "path", dataType = "int")})
 	@ApiOperation("删除商品分类,参数categoryId必须大于 0 ")
 	public ResponseModel deleteCategory(@ApiParam(name = "catId", value = "商品分类id", required = true) @PathVariable("catId") Integer catId) {
-		if (BooleanUtils.toBoolean(catId)) {
-			Boolean removed = categoryService.removeCategoryById(catId);
-			return ResponseModel.getInstance().succ(removed).msg(removed ? "商品分类删除成功" : "商品分类删除失败");
+		if (NumberUtil.isIntegerUsable(catId)) {
+			List<Category> subCategories = categoryService.list(
+				new LambdaQueryWrapper<Category>()
+					.eq(Category::getPid,catId)
+			);
+			subCategories.forEach(subCategory->subCategory.deleteById());
+			categoryService.removeById(catId);
 		} else {
-			return ResponseModel.getInstance().succ(false).msg("商品分类id不能小于 1");
+			return ResponseModel.getInstance().succ(false).msg("无效的商品分类id.");
 		}
+		return ResponseModel.getInstance().succ(true).msg("商品分类删除成功.");
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/batch")
 	@ApiOperation("批量删除商品分类,参数categoryIds必须大于 0 ")
 	public ResponseModel batchDeleteCategory(@ApiParam(name = "categoryIds", value = "商品分类id的集合/数组", required = true) @RequestParam("categoryIds") Collection<Integer> categoryIds) {
@@ -76,7 +90,7 @@ public class CategoryController {
 		return categoryService.removeCategoryByIds(categoryIds);
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@PutMapping("/update")
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "catId", paramType = "body", required = true, dataType = "int"),
@@ -134,53 +148,4 @@ public class CategoryController {
 		}
 		return PageHelper.getInstance().pageData(pageInfo);
 	}
-
-	@ApiOperation("查询分类是否存在")
-	@GetMapping("/exists/{catName}")
-	public ExistModel checkCategory(@PathVariable("catName") String catName) {
-		Category category = categoryService.getOne(new QueryWrapper<Category>().eq("cat_name", catName));
-		String msg = "";
-		if(category != null) {
-			if(!category.getStat()){
-				msg = "分类已经存在，为无效状态，可以重新设置为有效";
-			}else{
-				msg = "分类已经存在,不需要重新创建";
-			}
-		}
-		ExistModel existModel = new ExistModel();
-		existModel.setExists(category != null);
-		existModel.setMsg(msg);
-		return existModel;
-	}
-	
-//	@GetMapping("/list/page/name/{current}/{size}/{catName}")
-//	@ApiImplicitParams({
-//			@ApiImplicitParam(name = "current", value = "当前页", paramType = "path", required = true, dataType = "int"),
-//			@ApiImplicitParam(name = "size", value = "每页记录数", paramType = "path", required = true,dataType = "int"),
-//			@ApiImplicitParam(name = "catName", value = "分类名称", paramType = "path", required = true, dataType = "string")
-//	})
-//	@ApiOperation("根据分类名称查询商品分类")
-//	public PageHelper<Category> listCategoryByName(
-//			@PathVariable("current") Integer current,
-//			@PathVariable("size") Integer size,
-//			@PathVariable("catName") String catName) {
-//		Page<Category> pageData = categoryService.getCategoryPageByName(PageUtils.getPageParam(new PageHelper(current,size)),catName);
-//		return PageHelper.getInstance().pageData(pageData);
-//	}
-//
-//	@GetMapping("/list/page/stat/{current}/{size}/{stat}")
-//	@ApiImplicitParams({
-//			@ApiImplicitParam(name = "current", value = "当前页", paramType = "path", required = true, dataType = "int"),
-//			@ApiImplicitParam(name = "size", value = "每页记录数", paramType = "path", required = true,dataType = "int"),
-//			@ApiImplicitParam(name = "stat", value = "分类状态", paramType = "path", required = true, dataType = "boolean")
-//	})
-//	@ApiOperation("根据分类状态查询商品分类")
-//	public PageHelper<Category> listCategoryByStat(
-//			@PathVariable("current") Integer current,
-//			@PathVariable("size") Integer size,
-//			@PathVariable("stat") Boolean stat) {
-//		Page<Category> pageData = categoryService.getSubCategoryPageByStat(PageUtils.getPageParam(new PageHelper(current,size)),stat);
-//		return PageHelper.getInstance().pageData(pageData);
-//	}
 }
-

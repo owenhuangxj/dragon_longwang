@@ -2,9 +2,7 @@ package com.trenska.longwang.dao.goods;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.plugins.pagination.Pagination;
-import com.trenska.longwang.config.RedisCacheMybatis;
 import com.trenska.longwang.entity.goods.Category;
-import org.apache.ibatis.annotations.CacheNamespace;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;

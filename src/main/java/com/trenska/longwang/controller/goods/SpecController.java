@@ -2,18 +2,15 @@ package com.trenska.longwang.controller.goods;
 
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.plugins.Page;
-import com.trenska.longwang.annotation.DuplicateSubmitToken;
+import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.goods.Spec;
-import com.trenska.longwang.model.sys.ExistModel;
 import com.trenska.longwang.model.sys.ResponseModel;
 import com.trenska.longwang.service.goods.ISpecService;
 import com.trenska.longwang.util.NumberUtil;
 import com.trenska.longwang.util.PageUtils;
 import io.swagger.annotations.*;
-import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,7 +34,7 @@ public class SpecController {
 	private ISpecService specService;
 
 	@PostMapping("/add")
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "specName", value = "商品规格名", paramType = "body", required = true, dataType = "string"),
 			@ApiImplicitParam(name = "specId", value = "商品规格id,在已经存在的商品规格下添加商品规格属性时，此参数必须回传", paramType = "body", dataType = "int"),
@@ -60,7 +57,7 @@ public class SpecController {
 		return specService.saveSpec(spec);
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/{specId}")
 	@ApiImplicitParams({@ApiImplicitParam(name = "specId", required = true, paramType = "path", dataType = "int")})
 	@ApiOperation("删除规格 ")
@@ -71,7 +68,7 @@ public class SpecController {
 		return specService.removeSpecById(specId);
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/batch")
 	@ApiOperation("批量删除商品规格,参数specId必须大于 0 ")
 	public ResponseModel batchDeleteSpec(@ApiParam(name = "specIds", value = "商品规格id的集合/数组", required = true) @RequestParam("specIds") Collection<Integer> specIds) {
@@ -81,7 +78,7 @@ public class SpecController {
 		return  specService.removeSpecByIds(specIds);
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@PutMapping("/update")
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "specId", paramType = "body", required = true, dataType = "int"),

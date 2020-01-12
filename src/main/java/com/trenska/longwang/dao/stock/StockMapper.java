@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.plugins.pagination.Pagination;
 import com.trenska.longwang.entity.goods.Goods;
 import com.trenska.longwang.entity.stock.Stock;
 import com.trenska.longwang.entity.stock.StockDetail;
+import com.trenska.longwang.entity.stock.StockDetails;
 import com.trenska.longwang.model.report.GoodsStockSummarizingModel;
 import com.trenska.longwang.model.report.GoodsStockSummationModel;
 import com.trenska.longwang.model.report.GoodsStockinStatisticsModel;
@@ -28,7 +29,7 @@ public interface StockMapper extends BaseMapper<Stock> {
 	/**
 	 * 商品详情分页
 	 */
-	List<StockDetail> selectStockDetailPageSelective(Map<String, Object> params, Pagination page);
+	List<StockDetails> selectStockDetailPageSelective(Map<String, Object> params, Pagination page);
 	Integer selectStockDetailCountSelective(Map<String, Object> params);
 
 	/**
@@ -63,7 +64,7 @@ public interface StockMapper extends BaseMapper<Stock> {
 
 //	List<Map<String,String>> selectGoodsStockSummationOld(Map<String, Object> params);
 
-	List<Integer> selectGoodsStockSummarizingCount(Map<String, Object> params);
+	int selectGoodsStockSummarizingCount(Map<String, Object> params);
 
 	List<GoodsStockSummarizingModel> selectGoodsStockSummarizing(Map<String, Object> params);
 	List<GoodsStockSummarizingModel> selectGoodsStockSummarizing(Map<String, Object> params, Pagination page);
@@ -81,5 +82,6 @@ public interface StockMapper extends BaseMapper<Stock> {
 
 	String selectGoodsBeginningStockOfInitialization(Map<String,Object> params);
 
+	Stock selectByStockNo(String stockNo);
 }
 

@@ -278,14 +278,4 @@ public class ExcelUtil {
 			return sheet.getLastRowNum() + 1;
 		}
 	}
-
-	public static void main(String[] args) throws NoSuchFieldException, IllegalAccessException, InstantiationException {
-		Class<CustomerInfoModel> customerInfoModelClass = CustomerInfoModel.class;
-
-		CustomerInfoModel customerInfoModel = customerInfoModelClass.newInstance();
-		Field custNoField = customerInfoModelClass.getDeclaredField("custNo");
-		custNoField.setAccessible(true);
-		custNoField.set(customerInfoModel, "0001");
-		System.out.println(customerInfoModel);
-	}
 }

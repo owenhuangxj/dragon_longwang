@@ -15,6 +15,7 @@ import java.util.Map;
 
 /**
  * 订货单 Mapper 接口
+ *
  * @author Owen
  * @since 2019-04-22
  */
@@ -29,28 +30,27 @@ public interface IndentMapper extends BaseMapper<Indent> {
 
 	boolean makeSureIndentStat(String indentNo);
 
-	//int selectIndentCountForCustomerDealDetailSelective(Map<String, Object> params);
-
 	Indent selectRecordOfMaxId(String indentType);
 
-	CustSalesSummationModel selectCustSalesBillSummation(Map<String,Object> params);
+	CustSalesSummationModel selectCustSalesBillSummation(Map<String, Object> params);
 
 	List<CustSalesBillRecordsModel> selectCustSalesBillPageSelective(Map<String, Object> params, Pagination page);
 
-	List<Integer> selectCustSalesBillCountSelective(Map<String, Object> params);
+	int selectCustSalesBillCountSelective(Map<String, Object> params);
 
-	List<CustSalesSummarizingModel> selectCustSalesSummarizingAvgPrice(Map<String,Object> params);
 	List<CustSalesSummarizingModel> selectCustSalesSummarizingPageSelective(Map<String, Object> params, Pagination page);
 
 	CustSalesSummationModel selectCustSalesSummation(Map<String, Object> params);
 
-	List<Integer> selectCustSalesSummarizingCountSelective(Map<String, Object> params);
+	int selectCustSalesSummarizingCountSelective(Map<String, Object> params);
 
 	CustSalesStatisticsSummationModel selectCustSalesStatisticsSummation(Map<String, Object> params);
-	String selectCustSalesStatisticsAvgPrice(Map<String,Object> params);
+
+	String selectCustSalesStatisticsAvgPrice(Map<String, Object> params);
+
 	List<CustSalesStatisticsModel> selectCustSalesStatisticsPageSelective(Map<String, Object> params, Pagination page);
 
-	List<Integer> selectCustSalesStatisticsCountSelective(Map<String, Object> params);
+	int selectCustSalesStatisticsCountSelective(Map<String, Object> params);
 
 	List<CustSalesDetailModel> selectCustSalesDetailPageSelective(Map<String, Object> params, Pagination page);
 
@@ -58,15 +58,17 @@ public interface IndentMapper extends BaseMapper<Indent> {
 
 	List<AreaSalesRankModel> selectFirstLevelAreaSalesRank(Pagination page);
 
-	List<Integer> selectFirstLevelAreaSalesRankCount();
+	int selectFirstLevelAreaSalesRankCount();
 
-	AreaSalesRankModel selectAreaSalesRankByAreaGrpId(Integer areaGrpId );
+	AreaSalesRankModel selectAreaSalesRankByAreaGrpId(Integer areaGrpId);
 
-	AreaSalesRankModel selectSubAreaSalesRank(Map<String,Object> params);
+	AreaSalesRankModel selectSubAreaSalesRank(Map<String, Object> params);
 
 	CommonSummation selectCustSalesRankSummation(Map<String, Object> params);
+
 	List<CustSalesRankModel> selectCustSalesRank(Map<String, Object> params, Pagination page);
-	List<Integer> selectCustSalesRankCount(Map<String,Object> params);
+
+	int selectCustSalesRankCount(Map<String, Object> params);
 
 	List<GoodsSalesSummarizingModel> selectGoodsSalesSummarizing(Map<String, Object> params, Pagination page);
 
@@ -81,14 +83,16 @@ public interface IndentMapper extends BaseMapper<Indent> {
 	int selectSingleGoodsSalesDetailCount(Map<String, Object> params);
 
 	List<GoodsSalesRankModel> selectGoodsSalesRank(Map<String, Object> params, Pagination page);
-	List<Integer> selectGoodsSalesRankCount(Map<String, Object> params);
+
+	int selectGoodsSalesRankCount(Map<String, Object> params);
+
 	CommonSummation selectGoodsSalesRankSummation(Map<String, Object> params);
 
 	List<IndentStatisticsModel> selectIndentStatistics(Map<String, Object> params, Pagination page);
 
 	IndentStatisticsSummationModel selectIndentStatisticsSummation(Map<String, Object> params);
 
-	Collection<Integer> selectIndentStatisticsCount(Map<String, Object> params);
+	int selectIndentStatisticsCount(Map<String, Object> params);
 
 	CustSalesDetailSummarizingModel selectCustSalesDetailSummarizing(Map<String, Object> params);
 
@@ -96,7 +100,7 @@ public interface IndentMapper extends BaseMapper<Indent> {
 
 	List<String> selectDiscounts(Page page, Map<String, Object> params);
 
-	Collection<Integer> selectDiscountsCount(Map<String, Object> params);
+	int selectDiscountsCount(Map<String, Object> params);
 
 	DealDetailSummarizing selectDealDetailSummarizingForAdd(Map<String, Object> params);
 
@@ -106,11 +110,11 @@ public interface IndentMapper extends BaseMapper<Indent> {
 
 	List<AreaSalesRankModel> selectAreaSalesRank(Pagination page, Map<String, Object> params);
 
-	List<Integer> selectAreaSalesRankCount(Map<String, Object> params);
+	int selectAreaSalesRankCount(Map<String, Object> params);
 
 	CommonSummation selectAreaSalesRankSummation(Map<String, Object> params);
 
-	List<Integer> selectGoodsDeliveryStaticsCount(Map<String, Object> params);
+	int selectGoodsDeliveryStaticsCount(Map<String, Object> params);
 
 	List<DeliveryStaticsModel> selectGoodsDeliveryStatics(Pagination page, Map<String, Object> params);
 
@@ -124,13 +128,13 @@ public interface IndentMapper extends BaseMapper<Indent> {
 
 	List<String> selectIndentNos(Pagination page, @Param("str") String str);
 
-	List<Integer> selectIndentNosCount(@Param("str") String str);
+	int selectIndentNosCount(@Param("str") String str);
 
 	List<IndentNoCustIdNameModel> selectIndentNoCustName(Pagination page, @Param("str") String str);
 
-	List<Integer> selectIndentNoCustNameCount(@Param("str") String str);
+	int selectIndentNoCustNameCount(@Param("str") String str);
 
-	List<Integer> selectSalesmanSalesRankCount(Map<String, Object> params);
+	int selectSalesmanSalesRankCount(Map<String, Object> params);
 
 	List<SalesmanSalesRankModel> selectSalesmanSalesRank(Pagination page, Map<String, Object> params);
 

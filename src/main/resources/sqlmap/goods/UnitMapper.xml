@@ -62,7 +62,7 @@
     </select>
     <select id="selectUnitByName" resultMap="BaseResultMap">
         select <include refid="Base_Column_List"/>
-        from t_unit
-        where unit_name = #{unitName}
+        from t_unit tu
+        where tu.unit_name = #{unitName}
     </select>
 </mapper>

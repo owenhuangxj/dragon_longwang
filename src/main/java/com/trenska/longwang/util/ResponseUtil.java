@@ -8,6 +8,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 
 /**
  * 2019/5/22
@@ -23,7 +24,7 @@ public class ResponseUtil {
 
 		response.setStatus(statusCode);
 
-		response.setCharacterEncoding("utf-8");
+		response.setCharacterEncoding(StandardCharsets.UTF_8.name());
 
 		response.setContentType("application/json;charset=utf-8");
 
@@ -40,7 +41,7 @@ public class ResponseUtil {
 
 		response.setStatus(statusCode);
 
-		response.setCharacterEncoding("utf-8");
+		response.setCharacterEncoding(StandardCharsets.UTF_8.name());
 
 		response.setContentType("application/json;charset=utf-8");
 

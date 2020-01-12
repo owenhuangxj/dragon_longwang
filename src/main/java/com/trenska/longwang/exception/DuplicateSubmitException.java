@@ -5,7 +5,7 @@ package com.trenska.longwang.exception;
  * 创建人:Owen
  */
 public class DuplicateSubmitException extends RuntimeException {
-	public DuplicateSubmitException(String message) {
+	public DuplicateSubmitException(int httpStatus, String reason, String message) {
 		super(message);
 	}
 }

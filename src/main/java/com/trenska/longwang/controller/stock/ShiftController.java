@@ -1,7 +1,7 @@
 package com.trenska.longwang.controller.stock;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.plugins.Page;
-import com.trenska.longwang.annotation.DuplicateSubmitToken;
+import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.stock.Shift;
 import com.trenska.longwang.model.sys.ExistModel;
@@ -31,7 +31,7 @@ public class ShiftController {
 	private IShiftService shiftService;
 
 	@PostMapping("/add")
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "shiftName", value = "库存班次名称", paramType = "body", required = true, dataType = "string")
 	})
@@ -54,7 +54,7 @@ public class ShiftController {
 		return ResponseModel.getInstance().succ(true).msg("班次添加成功");
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/{shiftId}")
 	@ApiOperation("删除库存班次")
 	public ResponseModel deleteBrand(@ApiParam(name = "shiftId", required = true) @PathVariable("shiftId") int shiftId) {
@@ -68,7 +68,7 @@ public class ShiftController {
 		shiftService.removeById(shiftId);
 		return ResponseModel.getInstance().succ(true).msg("库存班次删除成功");
 	}
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/batch")
 	@ApiOperation("批量删除库存班次")
 	public ResponseModel batchDeleteBrand(
@@ -87,7 +87,7 @@ public class ShiftController {
 	}
 
 	@PutMapping("/update")
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "shiftId", paramType = "body", required = true, dataType = "int"),
 			@ApiImplicitParam(name = "shiftName", paramType = "body", dataType = "string")

@@ -1,8 +1,10 @@
 package com.trenska.longwang.controller.financing;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.dao.customer.AreaGrpMapper;
 import com.trenska.longwang.dao.customer.CustomerMapper;
+import com.trenska.longwang.dao.financing.DealDetailMapper;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.customer.Customer;
 import com.trenska.longwang.entity.financing.DealDetail;
@@ -25,6 +27,7 @@ import com.trenska.longwang.util.*;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
@@ -74,17 +77,26 @@ public class ReceiptController {
 	private IDealDetailService dealDetailService;
 
 	@Autowired
+	private DealDetailMapper dealDetailMapper;
+
+	@Autowired
 	private CustomerMapper customerMapper;
 
 	@PostMapping("/receipt/add")
 	@ApiOperation("新建收款单")
 	public ResponseModel addReceipt(@ApiParam(name = "receipt", value = "收款单", required = true) @RequestBody Receipt receipt, HttpServletRequest request) {
+		if (receipt == null){
+			return ResponseModel.getInstance().succ(false).msg("收款单不能为空！");
+		}
 		return receiptService.saveReceipt(receipt, request);
 	}
 
 	@PostMapping("/pay/add")
 	@ApiOperation("新建付款单")
 	public ResponseModel addPayReceipt(@ApiParam(name = "pay", value = "付款单", required = true) @RequestBody Receipt pay, HttpServletRequest request) {
+		if (pay == null){
+			return ResponseModel.getInstance().succ(false).msg("付款单不能为空！");
+		}
 		return receiptService.savePayReceipt(pay, request);
 	}
 
@@ -131,14 +143,14 @@ public class ReceiptController {
 			@ApiImplicitParam(name = "type", value = "收款单/付款单", paramType = "query", dataType = "string"),
 			@ApiImplicitParam(name = "receiptNo", value = "单号", paramType = "query", dataType = "string"),
 			@ApiImplicitParam(name = "payway", value = "收/付款方式", paramType = "query", dataType = "string"),
-			@ApiImplicitParam(name = "stat", value = "状态", paramType = "query", dataType = "int")
+			@ApiImplicitParam(name = "stat", value = "状态", paramType = "query", dataType = "boolean")
 	})
 	@ApiOperation("收款/付款单通用分页")
 	public PageHelper<Receipt> listReceiptPage(
 			@PathVariable("current") Integer current,
 			@PathVariable("size") Integer size,
-			@RequestParam(required = false, name = "stat") String stat,
 			@RequestParam(required = false, name = "type") String type,
+			@RequestParam(required = false, name = "stat") Boolean stat,
 			@RequestParam(required = false, name = "payway") String payway,
 			@RequestParam(required = false, name = "custId") Integer custId,
 			@RequestParam(required = false, name = "endTime") String endTime,
@@ -180,10 +192,13 @@ public class ReceiptController {
 	public ResponseModel cancelReceipt(@PathVariable("receiptId") Long receiptId, HttpServletRequest request) {
 		Receipt receipt = receiptService.getById(receiptId);
 		if (null == receipt) {
-			return ResponseModel.getInstance().succ(false).msg("无此收款单信息");
+			return ResponseModel.getInstance().succ(false).msg("无此收款单信息.");
 		}
 		if (receipt.getStat() == false) {
 			return ResponseModel.getInstance().succ(false).msg("收款单已作废,请勿重新操作.");
+		}
+		if (StringUtils.isNotEmpty(receipt.getBusiNo())){
+			return ResponseModel.getInstance().succ(false).msg("关联订货单的收款单请到订货单处作废.");
 		}
 		return receiptService.cancelReceipt(receipt, request);
 	}
@@ -311,31 +326,6 @@ public class ReceiptController {
 		// 处理应收欠款
 		dealDetailSummarizing.setNeedCollect(needCollect);
 		return PageHelper.getInstance().pageData(pageInfo).summarizing(dealDetailSummarizing);
-
-
-//		DealDetailSummarizing dealDetailSummarizingForAdd = indentService.getDealDetailSummarizingForAdd(params);
-//		DealDetailSummarizing dealDetailSummarizingForDecrease = receiptService.getDealDetailSummarizingForDecrease(params);
-//		dealDetailSummarizingForDecrease.setPlusDebt(dealDetailSummarizingForAdd.getPlusDebt());
-
-		// 设值上期结余欠款
-//		if (dealDetailSummarizingForDecrease != null) {
-//			if (StringUtils.isEmpty(lastSurplusDebt)) {
-//				dealDetailSummarizingForDecrease.setLastSurplusDebt("0");
-//			} else {
-//				dealDetailSummarizingForDecrease.setLastSurplusDebt(lastSurplusDebt);
-//			}
-//		} else {
-//			dealDetailSummarizingForDecrease = new DealDetailSummarizing();
-//		}
-		// 处理应收欠款
-//		dealDetailSummarizingForDecrease.setNeedCollect(
-//				new BigDecimal(dealDetailSummarizingForDecrease.getLastSurplusDebt())
-//						.add(new BigDecimal(dealDetailSummarizingForDecrease.getPlusDebt()))
-//						.subtract(new BigDecimal(dealDetailSummarizingForDecrease.getReceiptedDetb()))
-//						.subtract(new BigDecimal(dealDetailSummarizingForDecrease.getCutDebt()))
-//						.toString()
-//		);
-//		return PageHelper.getInstance().pageData(pageInfo).summarizing(dealDetailSummarizingForDecrease);
 	}
 
 	@ApiOperation(value = "打印收款单")
@@ -378,7 +368,6 @@ public class ReceiptController {
 		WebPrintModel wm = PrintSingleton.INSTNACE.getInstance().retOk(htmlContent, "24.1", "9.31");
 
 		return ResponseModel.getInstance().succ(true).data(wm);
-
 	}
 
 	@ApiOperation(value = "打印付款单")

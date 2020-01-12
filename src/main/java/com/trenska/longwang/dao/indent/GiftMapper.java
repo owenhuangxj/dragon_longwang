@@ -1,9 +1,7 @@
 package com.trenska.longwang.dao.indent;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.trenska.longwang.config.RedisCacheMybatis;
 import com.trenska.longwang.entity.indent.Gift;
-import org.apache.ibatis.annotations.CacheNamespace;
 
 import java.util.List;
 

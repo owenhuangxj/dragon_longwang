@@ -121,6 +121,9 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	@Resource(name = "redisJsonTemplate")
 	private RedisTemplate<String, Object> jsonRedisTemplate;
 
+//	@Resource(name = "redissonClient")
+//	private RedissonClient redissonClient;
+
 	@Autowired
 	private IGoodsService goodsService;
 
@@ -145,8 +148,8 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		/**
 		 * 处理订货单
 		 */
-		Integer empIdInRedis = SysUtil.getEmpIdInRedis(request);
-		indent.setEmpId(empIdInRedis);
+		Integer empIdInToken = SysUtil.getEmpId();
+		indent.setEmpId(empIdInToken);
 
 		String prefix = Constant.DH_TITLE;
 		String indentType = Constant.DHD_CHINESE;
@@ -258,12 +261,6 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		String indentNo = indent.getIndentNo();
 
-		// 删除原订货单详情记录 ==> 设置了逻辑删除，mybatisplus生成的sql会加上逻辑删除筛选条件
-//		new IndentDetail().delete(
-//				new QueryWrapper<IndentDetail>()
-//						.eq("indent_no", indentNo)
-//		);
-
 		/************************************ 直接删除订货单详情 ************************************/
 		indentDetailMapper.actualDeleteIndentDetail(indentNo);
 
@@ -286,7 +283,32 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 */
 	@Override
 	@Transactional
-	public ResponseModel confirmIndent(String indentNo, Integer custId) {
+	public ResponseModel confirmIndent(String indentNo) {
+
+		List<IndentDetail> indentDetails = indentDetailMapper.selectList(
+				new LambdaQueryWrapper<IndentDetail>()
+						.eq(IndentDetail::getIndentNo, indentNo)
+		);
+
+		List<Integer> goodsIds = indentDetails.stream().map(IndentDetail::getGoodsId).distinct().collect(Collectors.toList());
+
+		List<Goods> goodsList = goodsMapper.selectList(
+				new LambdaQueryWrapper<Goods>()
+						.in(Goods::getGoodsId, goodsIds)
+		);
+
+		List<Goods> shortStockGoods = new ArrayList<>();
+
+		for (IndentDetail indentDetail : indentDetails) {
+			Goods gd = goodsList.stream().filter(goods -> goods.getGoodsId().equals(indentDetail.getGoodsId())).findFirst().get();
+			int stock = indentDetail.getNum().intValue() * indentDetail.getMulti().intValue();
+			if (gd != null && stock > gd.getStock().intValue()) {
+				shortStockGoods.add(gd);
+			}
+		}
+		if (shortStockGoods.size() > 0) {
+			return ResponseModel.getInstance().succ(false).data(shortStockGoods).msg("订单中有商品库存不足，不能审核！");
+		}
 
 		// 1.更新订货单状态为待出库
 		Indent indent = new Indent();
@@ -298,10 +320,10 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		// 2.增加客户欠款
 		// 2.1 获取订单金额
-		indent = indent.selectOne(
-				new LambdaQueryWrapper<Indent>()
-						.eq(Indent::getIndentNo, indentNo)
-		);
+		//Indent dbIndent = this.getOne(
+		//		new LambdaQueryWrapper<Indent>()
+		//				.eq(Indent::getIndentNo, indentNo)
+		//);
 
 		// 2.2 增加客户欠款 ==>改到了出完库才增加欠款
 		//Customer customer = new Customer(custId).selectById();
@@ -309,11 +331,11 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		//BigDecimal amount = new BigDecimal(indent.getIndentTotal());
 		//CustomerUtil.addCustomerDebt(custId, oldDebt, amount);
 
-		// 记录交易明细 ,增加应收款,前缀 "+" ==>改到了出完库才记账
+		// 记录交易明细 ,增加应收款,前缀 Constant.PLUS ==>改到了出完库才记账
 		//String nameNo = StringUtil.makeNameNo(Constant.DHD_CHINESE, indentNo);
 		//String currentTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
 		//String newDebt = new BigDecimal(customer.getDebt()).add(new BigDecimal(indent.getIndentTotal())).toString();
-		//DealDetailUtil.saveDealDetail(custId,nameNo,currentTime,"+".concat(amount.toString()),newDebt,Constant.XSSP);
+		//DealDetailUtil.saveDealDetail(custId,nameNo,currentTime,Constant.PLUS.concat(amount.toString()),newDebt,Constant.XSSP);
 
 		// 3.待出库库存增加
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -348,15 +370,10 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			return ResponseModel.getInstance().succ(false).msg("订货单已取消，不能撤销");
 		}
 
-		// 更新订货单状态为已取消
-//		this.update(
-//				new LambdaUpdateWrapper<Indent>()
-//						.eq(Indent::getIndentNo,indentNo)
-//						.set(Indent::getStat,IndentStat.CANCELLED.getName())
-//		);
-
 		Long indentId = indent.getIndentId();
 		Indent updatingIndent = new Indent(indentId, IndentStat.CANCELLED.getName(), PaymentStat.CANCELLED.getName());
+		updatingIndent.setPayedAmnt("0.00");
+		updatingIndent.setReceivedAmnt("0.00");
 		this.updateById(updatingIndent);
 
 		return ResponseModel.getInstance().succ(true).msg("订货单取消成功");
@@ -501,7 +518,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		}
 		if (!updatingReceipts.isEmpty()) {
 			dbCustomer = new Customer().selectById(custId);
-			ReceiptUtil.cancelReceipts(updatingReceipts, dbCustomer, nameNo); //作废收/付款单 -> 订货单收/付款时会减少客户欠款，作废收/付款单时会增加客户欠款
+			ReceiptUtil.cancelReceipts(updatingReceipts, dbCustomer); //作废收/付款单 -> 订货单收/付款时会减少客户欠款，作废收/付款单时会增加客户欠款
 		}
 		// 3 减少待出库库存
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -543,20 +560,27 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	@Override
 	@Transactional
 	public ResponseModel stockoutIndent(Indent indent, HttpServletRequest request) {
-
 		int custId = indent.getCustId();
 		Long indentId = indent.getIndentId();
 		String indentNo = indent.getIndentNo();
+		Indent dbIndent = this.getById(indentId);
+		if (dbIndent == null) {
+			return ResponseModel.getInstance().succ(false).msg("无效的订单信息，不能出库！");
+		}
+		ResponseModel responseModel = CustomerUtil.checkDebtLimit(dbIndent.getIndentNo(), dbIndent.getCustId());
+		if (!responseModel.getSucc()) {
+			return responseModel;
+		}
 		String stockTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
 		String stockNo = StockUtil.getStockNo(Constant.CK_TITLE, Constant.CKD_CHINESE, stockMapper);
 
-		Integer empIdInRedis = SysUtil.getEmpIdInRedis(request);
-		if (null == empIdInRedis) {
+		Integer empIdInToken = SysUtil.getEmpId();
+		if (null == empIdInToken) {
 			return ResponseModel.getInstance().succ(false).msg(Constant.ACCESS_TIMEOUT_MSG);
 		}
 		Stock stockout = new Stock();
 		stockout.setStockNo(stockNo);
-		stockout.setEmpId(empIdInRedis);
+		stockout.setEmpId(empIdInToken);
 		stockout.setStockTime(stockTime);
 		stockout.setCustId(indent.getCustId());
 		stockout.setBusiNo(indent.getIndentNo());
@@ -576,7 +600,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		List<StockDetail> stockoutDetails = new ArrayList<>();
 		for (IndentDetail indentDetail : indentDetails) {
 			StockDetail stkoutDetail = new StockDetail();
-			stkoutDetail.setEmpId(empIdInRedis);
+			stkoutDetail.setEmpId(empIdInToken);
 			stkoutDetail.setBusiNo(indent.getIndentNo()); // 关联业务单号:订货单号
 			stkoutDetail.setMulti(indentDetail.getMulti());
 			stkoutDetail.setSalesPrice(indentDetail.getPrice()); // 保存出库时商品的销售单价，方便统计送货金额/出库金额
@@ -649,64 +673,72 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		// 已出库完成 订单量 == 出库量
 		boolean allStockouted = (indentNum == histroyStockoutNum);
+		boolean payed = PaymentStat.RECEIPRED.getName().equals(dbIndent.getReceiptStat());
+		Boolean audited = dbIndent.getAuditStat();
+		// 如果已付款并且已出库->设置状态为"已出库"、"已收款"、auditable=true(不管之前的状态)
+		if (allStockouted) { // 如果已出完库
+			String dbIndentTotal = dbIndent.getIndentTotal();
+			// 1.增加客户欠款 ==>改到了出完库才增加欠款
+			Customer dbCustomer = new Customer(custId).selectById();
+			String oldDebt = dbCustomer.getDebt();
+			BigDecimal amount = new BigDecimal(dbIndentTotal);
+			CustomerUtil.addCustomerDebt(custId, oldDebt, amount);
 
-		if (NumberUtil.isLongUsable(indentId)) { // 确保订单是有效的
-			Indent dbIndent = this.getById(indentId);
-			boolean payed = PaymentStat.RECEIPRED.getName().equals(dbIndent.getReceiptStat());
-			Boolean audited = dbIndent.getAuditStat();
-			// 如果已付款并且已出库->设置状态为"已出库"、"已收款"、auditable=true(不管之前的状态)
-			if (allStockouted) { // 如果已出完库
-
-				String dbIndentTotal = dbIndent.getIndentTotal();
-				// 1.增加客户欠款 ==>改到了出完库才增加欠款
-				Customer dbCustomer = new Customer(custId).selectById();
-				String oldDebt = dbCustomer.getDebt();
-				BigDecimal amount = new BigDecimal(dbIndentTotal);
-				CustomerUtil.addCustomerDebt(custId, oldDebt, amount);
-
-				// 2.记录交易明细 ,增加应收款,前缀 "+" ==>改到了出完库才记账
-				String nameNo = StringUtil.makeNameNo(Constant.DHD_CHINESE, indentNo);
+			// 2.记录交易明细 ,增加应收款,前缀 Constant.PLUS ==>改到了出完库才记账
+			String nameNo = StringUtil.makeNameNo(Constant.DHD_CHINESE, indentNo);
+			String newDebt = new BigDecimal(dbCustomer.getDebt()).add(amount).toString();
+			String auditRemarks = dbIndent.getAuditRemarks();
+			Indent updatingIndent = new Indent();
+			String dealDetailTime = "";
+			// 如果订单销售时间未设置过才设置，否则保留为第一次出库时的时间,明细的记录时间也同步
+			if (StringUtils.isEmpty(dbIndent.getSalesTime())) {
 				String currentTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
-				String newDebt = new BigDecimal(dbCustomer.getDebt()).add(amount).toString();
-				String auditRemarks = dbIndent.getAuditRemarks();
-
-				DealDetailUtil.saveDealDetail(custId, nameNo, currentTime, "+".concat(amount.toString()), newDebt, Constant.XSSP, "", "", auditRemarks);
-
-				Indent updatingIndent = new Indent();
 				updatingIndent.setSalesTime(currentTime); // 设置销售时间为订单完成出库时间
-				if (payed) { //如果已经付款
+				dealDetailTime = currentTime;
+			}else {
+				dealDetailTime = dbIndent.getSalesTime();
+			}
+			DealDetailUtil.saveDealDetail(custId, nameNo, dealDetailTime, Constant.PLUS.concat(amount.toString()),
+					newDebt, Constant.XSSP, "", "", auditRemarks);
+			if (payed) { //如果已经付款
+				updatingIndent.setAuditable(true);
+				updatingIndent.setIndentId(indentId);
+				updatingIndent.setStat(IndentStat.STOCKOUTED.getName());
+				updatingIndent.setReceiptStat(PaymentStat.RECEIPRED.getName());
+				/********************************** 确保完成状态 **********************************/
+				if (!Objects.isNull(audited) && BooleanUtils.isTrue(audited)) {
+					updatingIndent.setStat(IndentStat.FINISHED.getName());
+				}
+				// 如果已出库未付款完成->比较收款金额+付款金额是否等于代收款金额
+			} else {
+				BigDecimal iouAmnt = new BigDecimal(dbIndent.getIouAmnt());
+				BigDecimal payedAmnt = new BigDecimal(dbIndent.getPayedAmnt());
+				BigDecimal indentTotal = new BigDecimal(dbIndent.getIndentTotal());
+				BigDecimal receivedAmnt = new BigDecimal(dbIndent.getReceivedAmnt());
+				// 再次计算比较收款金额+付款金额+欠条>=应收款 确保"可以财审"状态;收款金额+付款金额==应收款 确保"已收款"状态
+				boolean auditable = indentTotal.compareTo(payedAmnt.add(receivedAmnt).add(iouAmnt)) <= 0;
+				if (auditable) {
 					updatingIndent.setAuditable(true);
 					updatingIndent.setIndentId(indentId);
 					updatingIndent.setStat(IndentStat.STOCKOUTED.getName());
-					updatingIndent.setReceiptStat(PaymentStat.RECEIPRED.getName());
-					/********************************** 确保完成状态 **********************************/
-					if (!Objects.isNull(audited) && BooleanUtils.isTrue(audited)) {
-						updatingIndent.setStat(IndentStat.FINISHED.getName());
+					payed = indentTotal.compareTo(payedAmnt.add(receivedAmnt)) == 0;
+					if (payed) {
+						updatingIndent.setReceiptStat(PaymentStat.RECEIPRED.getName());
 					}
-					// 如果已出库未付款完成->比较收款金额+付款金额是否等于代收款金额
 				} else {
-					BigDecimal iouAmnt = new BigDecimal(dbIndent.getIouAmnt());
-					BigDecimal payedAmnt = new BigDecimal(dbIndent.getPayedAmnt());
-					BigDecimal indentTotal = new BigDecimal(dbIndent.getIndentTotal());
-					BigDecimal receivedAmnt = new BigDecimal(dbIndent.getReceivedAmnt());
-					// 再次计算比较收款金额+付款金额+欠条>=应收款 确保"可以财审"状态;收款金额+付款金额==应收款 确保"已收款"状态
-					boolean auditable = indentTotal.compareTo(payedAmnt.add(receivedAmnt).add(iouAmnt)) <= 0;
-					if (auditable) {
-						updatingIndent.setAuditable(true);
-						updatingIndent.setIndentId(indentId);
-						updatingIndent.setStat(IndentStat.STOCKOUTED.getName());
-						payed = indentTotal.compareTo(payedAmnt.add(receivedAmnt)) == 0;
-						if (payed) {
-							updatingIndent.setReceiptStat(PaymentStat.RECEIPRED.getName());
-						}
-					} else {
-						updatingIndent.setAuditable(false);
-						updatingIndent.setIndentId(indentId);
-						updatingIndent.setStat(IndentStat.STOCKOUTED.getName());
-					}
+					updatingIndent.setAuditable(false);
+					updatingIndent.setIndentId(indentId);
+					updatingIndent.setStat(IndentStat.STOCKOUTED.getName());
 				}
-				updatingIndent.updateById();
 			}
+			updatingIndent.updateById();
+//				RLock lock = redissonClient.getLock(updatingIndent.getIndentNo());
+//				lock.lock(30, TimeUnit.SECONDS);
+//				try{
+//				updatingIndent.updateById();
+//				}finally {
+//					lock.unlock();
+//				}
 		}
 		return ResponseModel.getInstance().succ(true).msg("订货单出库成功.");
 	}
@@ -830,22 +862,22 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 				stockDetail.setMadeDate(madeDate);
 				stockDetail.insert(); // 保存入库单详细
 				/******************************************保存库存明细******************************************/
-				StockDetailsUtil.saveStockDetails(stockDetail);
+				StockDetailsUtil.dbLogStockDetail(stockDetail);
 				// 总额 += 商品总价
 				odrAmount = odrAmount.add(stockPrice.multiply(num));
 			}
 		}
 		// 处理退货退款付款单
-		int empIdInRedis = SysUtil.getEmpIdInRedis(request);
+		int empIdInToken = SysUtil.getEmpId();
 //		String receiptNo = ReceiptUtil.getReceiptNo(Constant.FK_TITLE, Constant.FKD_CHINESE, receiptMapper);
 //		Receipt receipt = new Receipt();
 //		receipt.setCustId(custId);
 //		receipt.setBusiNo(indentNo);
-//		receipt.setEmpId(empIdInRedis);
+//		receipt.setEmpId(empIdInToken);
 //		receipt.setReceiptNo(receiptNo);
 //		receipt.setCreateTime(currentTime);
 //		receipt.setReceiptTime(currentTime);
-//		receipt.setChargemanId(empIdInRedis);
+//		receipt.setChargemanId(empIdInToken);
 //		receipt.setAccountType(Constant.THTK);
 //		receipt.setType(Constant.FKD_CHINESE);
 //		receipt.setReceiptAmount(odrAmount.toString());
@@ -860,7 +892,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		String newDebt = new BigDecimal(customer.getDebt()).subtract(odrAmount).toString();
 
 		// 保存交易明细 客户应收欠款减少 加前缀 -
-		DealDetailUtil.saveDealDetail(custId, nameNo, currentTime, "-".concat(odrAmount.toString()), newDebt, Constant.THTK, "", "");
+		DealDetailUtil.saveDealDetail(custId, nameNo, currentTime, Constant.MINUS.concat(odrAmount.toString()), newDebt, Constant.THTK, "", "");
 
 		indent.setOdrAmnt(odrAmount.toString());
 		indent.setIndentTotal(odrAmount.toString()); // 退货单的订单总额和应收款总额相同
@@ -936,7 +968,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		String oper = Constant.THTK_ZF;
 
 		// 作废退货单 客户欠款+
-		DealDetailUtil.saveDealDetail(custId, nameNo, currentTime, "+".concat(indentTotal.toString()), newDebt, oper, "", "");
+		DealDetailUtil.saveDealDetail(custId, nameNo, currentTime, Constant.PLUS.concat(indentTotal.toString()), newDebt, oper, "", "");
 
 		// 作废退货单
 		new Indent(indent.getIndentId(), IndentStat.INVALID.getName()).updateById();
@@ -1233,6 +1265,11 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		if (false == iouStat) {
 			return ResponseModel.getInstance().succ(false).msg("未交账的订货单不可以进行财务审核");
 		}
+		Integer custId = dbIndent.getCustId();
+		ResponseModel responseModel = CustomerUtil.checkDebtLimit(dbIndent.getIndentNo(), custId);
+		if (!responseModel.getSucc()) {
+			return responseModel;
+		}
 		dbIndent.setAuditStat(true);
 		String dbAuditRemarks = dbIndent.getAuditRemarks();
 		String indentStat = dbIndent.getStat();
@@ -1289,8 +1326,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		receipts.add(receipt);
 		int custId = receipt.getCustId();
 		Customer dbCustomer = customerMapper.selectById(custId);
-		String nameNo = StringUtil.makeNameNo(Constant.DHD_CHINESE, busiNo);
-		ReceiptUtil.cancelReceipts(receipts, dbCustomer, nameNo);
+		ReceiptUtil.cancelReceipts(receipts, dbCustomer);
 
 		return ResponseModel.getInstance().succ(true).msg("作废收款单成功");
 	}
@@ -1322,10 +1358,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		pays.add(pay);
 		int custId = pay.getCustId();
 		Customer dbCustomer = customerMapper.selectById(custId);
-
-		String nameNo = StringUtil.makeNameNo(Constant.DHD_CHINESE, busiNo);
-
-		ReceiptUtil.cancelReceipts(pays, dbCustomer, nameNo);
+		ReceiptUtil.cancelReceipts(pays, dbCustomer);
 		return ResponseModel.getInstance().succ(true).msg("作废付款单成功");
 	}
 
@@ -1350,23 +1383,6 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 */
 
 	public ResponseModel changeIndent(Indent indent, HttpServletRequest request) {
-
-//		Long indentId = indent.getIndentId();
-//		// 根据订单id获取数据库中的订单
-//		Indent dbIndent = this.getById(indentId);
-//
-//		String indentNo = dbIndent.getIndentNo();
-//		// 旧订单商品详情（数据库中的订单商品详情）
-//		List<IndentDetail> dbIndentDetails = indentDetailMapper.selectList(
-//				new LambdaQueryWrapper<IndentDetail>()
-//						.eq(IndentDetail::getIndentNo, indentNo)
-//		);
-//		dbIndent.setIndentDetails(dbIndentDetails);
-//
-//		Integer empIdInRedis = SysUtil.getEmpIdInRedis(request);
-//
-//		IndentUtil.changeIndent(indent, dbIndent, empIdInRedis);
-
 		Long indentId = indent.getIndentId();
 
 		if (NumberUtil.isLongNotUsable(indentId)) {
@@ -1385,17 +1401,14 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			return ResponseModel.getInstance().succ(false).msg("订单已财审，不能核改");
 		}
 
-		String indentStat = dbIndent.getStat();
-
-		if (IndentStat.FINISHED.getName().equals(indentStat)) {
+		if (IndentStat.FINISHED.getName().equals(dbIndent.getStat())) {
 			return ResponseModel.getInstance().succ(false).msg("订单已完成，不能核改");
 		}
 
 		String indentNo = dbIndent.getIndentNo();
 
-
 		// 如果为已出库状态，则需要处理客户欠款问题
-		if (IndentStat.STOCKOUTED.getName().equals(indentStat)) {
+		if (IndentStat.STOCKOUTED.getName().equals(dbIndent.getStat())) {
 			Integer custId = dbIndent.getCustId();
 			BigDecimal dbIndentTotal = new BigDecimal(dbIndent.getIndentTotal());
 			String nameNo = StringUtil.makeNameNo(Constant.DHD_CHINESE, indentNo);
@@ -1417,16 +1430,20 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		// 处理订货单商品信息
 		if (CollectionUtils.isNotEmpty(stockouts)) {
+			Map<String, Object> params = new HashMap<>();
+			params.put("stat", Constant.VALID);
+			params.put("stockType", Constant.CKD_CHINESE);
+			params.put("operType", Constant.XSCK_CHINESE);
 			stockouts.forEach(stock -> {
-				String stockNo = stock.getStockNo();
-				List<StockDetail> stockoutDetails = stockDetailMapper.selectByStockNo(stockNo);
+				params.put("stockNo", stock.getStockNo());
+				List<StockDetail> stockoutDetails = stockDetailMapper.selectByParams(params);
 				stock.setStockouts(stockoutDetails);
 			});
 		}
-		Integer empIdInRedis = SysUtil.getEmpIdInRedis(request);
+		Integer empIdInToken = SysUtil.getEmpId();
 
 		// 删除出库信息
-		StockUtil.deleteStockout(stockouts, empIdInRedis);
+		StockUtil.deleteStockout(stockouts, empIdInToken);
 
 		// 删除旧订货单信息
 		new IndentDetail().delete(
@@ -1456,7 +1473,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	@Override
 //	@Cacheable(value = "key", keyGenerator = "redisCacheKeyGenerator")
 	public Page<String> getDiscounts(Page page, Map<String, Object> params) {
-		int total = super.baseMapper.selectDiscountsCount(params).size();
+		int total = super.baseMapper.selectDiscountsCount(params);
 		List<String> discounts = super.baseMapper.selectDiscounts(page, params);
 		page.setTotal(total);
 		page.setRecords(discounts);
@@ -1488,10 +1505,10 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 	@Override
 	public Page<DeliveryStaticsModel> getGoodsDeliveryStatics(Page page, Map<String, Object> params, HttpServletRequest request) {
-		int total = super.baseMapper.selectGoodsDeliveryStaticsCount(params).size();
+		int total = super.baseMapper.selectGoodsDeliveryStaticsCount(params);
 		List<DeliveryStaticsModel> deliveryStatics = super.baseMapper.selectGoodsDeliveryStatics(page, params);
 
-		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
+		int retain = SysUtil.getSysConfigRetain();
 
 		for (DeliveryStaticsModel deliveryStatic : deliveryStatics) {
 
@@ -1516,7 +1533,10 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	public CommonSummation getGoodsDeliveryStaticsSummarizing(Map<String, Object> params) {
 
 		CommonSummation summation = super.baseMapper.selectGoodsDeliveryStaticsSummarizing(params);
-		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
+		if (summation == null) {
+			return null;
+		}
+		int retain = SysUtil.getSysConfigRetain();
 
 		return this.dealRetain(summation, retain);
 	}
@@ -1524,7 +1544,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	@Override
 	public DeliveryStaticsModel getGoodsDeliveryDetailsStaticsSummarizing(Map<String, Object> params) {
 		DeliveryStaticsModel deliveryStaticsModel = super.baseMapper.selectGoodsDeliveryDetailsStaticsSummarizing(params);
-		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
+		int retain = SysUtil.getSysConfigRetain();
 
 		BigDecimal indentTotal = new BigDecimal(deliveryStaticsModel.getIndentTotal());
 		BigDecimal discountTotal = new BigDecimal(deliveryStaticsModel.getDiscountTotal());
@@ -1546,7 +1566,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	@Override
 	public Page<DeliveryDetailsStaticsModel> getGoodsDeliveryDetailsStatics(Map<String, Object> params, Page page, HttpServletRequest request) {
 
-		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
+		int retain = SysUtil.getSysConfigRetain();
 
 		List<DeliveryDetailsStaticsModel> records = super.baseMapper.selectGoodsDeliveryDetailsStatics(page, params);
 
@@ -1576,7 +1596,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	@Override
 	public Page<String> getIndentNosSelective(Page page, String str) {
 		List<String> records = super.baseMapper.selectIndentNos(page, str);
-		int total = super.baseMapper.selectIndentNosCount(str).size();
+		int total = super.baseMapper.selectIndentNosCount(str);
 		page.setTotal(total);
 		page.setRecords(records);
 		return page;
@@ -1585,7 +1605,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	@Override
 	public Page<IndentNoCustIdNameModel> getIndentNoCustNameSelective(Page page, String str) {
 		List<IndentNoCustIdNameModel> records = super.baseMapper.selectIndentNoCustName(page, str);
-		int total = super.baseMapper.selectIndentNoCustNameCount(str).size();
+		int total = super.baseMapper.selectIndentNoCustNameCount(str);
 		page.setTotal(total);
 		page.setRecords(records);
 		return page;
@@ -1596,7 +1616,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		int retain = SysUtil.getSysConfigRetain();
 
-		int total = super.baseMapper.selectSalesmanSalesRankCount(params).size();
+		int total = super.baseMapper.selectSalesmanSalesRankCount(params);
 
 		List<SalesmanSalesRankModel> records = super.baseMapper.selectSalesmanSalesRank(page, params);
 
@@ -1648,13 +1668,6 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		return summation;
 	}
 
-	@Override
-	public Page<Indent> getIndentPage(Page page) {
-		page.setRecords(list());
-		page.setTotal(count());
-		return page;
-	}
-
 	/**
 	 * 在服务层注入数据权限控制，通过empId查找对应的数据权限-> 可以产看的所有的用户id
 	 *
@@ -1667,7 +1680,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	@DataAuthVerification
 	public Page<Indent> getIndentPageSelective(Map<String, Object> params, Page page, HttpServletRequest request) {
 
-		int empId = SysUtil.getEmpIdInRedis();
+		int empId = SysUtil.getEmpId();
 
 		SysConfig sysConfig = (SysConfig) jsonRedisTemplate.opsForValue().get(Constant.SYS_CONFIG_IDENTIFIER + empId);
 
@@ -1736,16 +1749,6 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		return page;
 	}
 
-	/**
-	 * 通过订货单编号获取订货单信息
-	 *
-	 * @param indentNo
-	 * @return
-	 */
-	@Override
-	public Indent getIndentByNo(String indentNo) {
-		return baseMapper.getIndentByNo(indentNo);
-	}
 
 	@Override
 	public List<IndentDetail> getIndentDetails(String indentNo) {
@@ -1766,26 +1769,37 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		}
 
 		Map<String, Object> params = new HashMap<>();
-		Indent indent = this.getById(indentId);
-		if (null == indent) {
+		Indent dbIndent = this.getById(indentId);
+
+		if (null == dbIndent) {
 			return params;
 		}
 
-		List<IndentDetail> indentDetails = this.getIndentDetails(indent.getIndentNo());
+		List<IndentDetail> indentDetails = this.getIndentDetails(dbIndent.getIndentNo());
 
-		SysEmp sales = empService.getById(indent.getSalesmanId());
-		SysEmp emp = empService.getById(indent.getEmpId());
-		Customer customer = customerService.getById(indent.getCustId());
+		SysEmp sales = empService.getById(dbIndent.getSalesmanId());
+		SysEmp emp = empService.getById(dbIndent.getEmpId());
+		Customer dbCustomer = customerService.getById(dbIndent.getCustId());
+		Integer areaGrpId = dbCustomer.getAreaGrpId();
+		if(NumberUtil.isIntegerUsable(areaGrpId)){
+			AreaGrp dbAreaGrp = areaGrpMapper.selectOne(
+				new LambdaQueryWrapper<AreaGrp>()
+					.eq(AreaGrp::getAreaGrpId,areaGrpId)
+			);
+			if (dbAreaGrp != null){
+				params.put("areaGrp",dbAreaGrp.getAreaGrpName());
+			}
+		}
 		params.put("custName", "");
-		if (null != customer) {
-			params.put("custName", customer.getCustName() + "  " + customer.getLinkPhone() + " " + customer.getAddr());
+		if (null != dbCustomer) {
+			params.put("custName", dbCustomer.getCustName() + "  " + dbCustomer.getLinkPhone() + " " + dbCustomer.getAddr());
 		}
 
 		//构建数据
-		params.put("dhdNo", indent.getIndentNo());
-		params.put("orderTime", indent.getSalesTime()); //销售时间  不想改模板
-		params.put("indentTime", indent.getIndentTime());//下单时间
-		List<Stock> stocks = stockService.list(new QueryWrapper<Stock>().eq("busi_no", indent.getIndentNo()));
+		params.put("dhdNo", dbIndent.getIndentNo());
+		params.put("orderTime", dbIndent.getSalesTime()); //销售时间  不想改模板
+		params.put("indentTime", dbIndent.getIndentTime());//下单时间
+		List<Stock> stocks = stockService.list(new QueryWrapper<Stock>().eq("busi_no", dbIndent.getIndentNo()));
 		// 送货人
 		Set<String> shipMans = new HashSet<>(5);
 		// 出库经手人
@@ -1808,10 +1822,9 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			for (String man : stockoutMans) {
 				stockoutMan.append(man).append(" ");
 			}
-//			String stockoutManStr = stockoutMan.substring(0, stockoutMan.length() - 1);
 			params.put("stockoutMan", stockoutMan.toString()); //出库经手人
 		}
-		params.put("ddremark", indent.getIndentRemarks());//订单备注
+		params.put("ddremark", dbIndent.getIndentRemarks());//订单备注
 
 		if (null != sales) {
 			params.put("salesMan", sales.getEmpName());
@@ -1830,7 +1843,6 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		//扣点金额合计
 		BigDecimal totalDiscount = BigDecimal.ZERO;
-
 
 		//优惠
 		BigDecimal offerAmount = BigDecimal.ZERO;
@@ -1977,13 +1989,10 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	@DataAuthVerification
 	public Page<CustSalesBillModel> getCustSales(Map<String, Object> params, Page page, HttpServletRequest request) {
 
-		SysConfig sysConfig = (SysConfig) jsonRedisTemplate.opsForValue().get(Constant.SYS_CONFIG_IDENTIFIER + SysUtil.getEmpIdInRedis(request));
+		SysConfig sysConfig = (SysConfig) jsonRedisTemplate.opsForValue().get(Constant.SYS_CONFIG_IDENTIFIER + SysUtil.getEmpId());
 		Integer retain = sysConfig.getRetain();
 
-//		params = SysUtil.dealDataPermAndAreaGrp(params, areaGrpMapper, request);
-
 		CustSalesSummationModel summation = super.baseMapper.selectCustSalesBillSummation(params);
-
 
 		BigDecimal salesDiscountSum = new BigDecimal(summation.getSalesDiscountSum());
 
@@ -2018,10 +2027,9 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 			discountTotal = discountTotal.setScale(retain, RoundingMode.HALF_UP);
 			custSalesBillRecord.setDiscountTotal(discountTotal.toString());
-
 		}
 
-		int total = super.baseMapper.selectCustSalesBillCountSelective(params).size();
+		int total = super.baseMapper.selectCustSalesBillCountSelective(params);
 
 		List<CustSalesBillModel> records = new ArrayList<>();
 		CustSalesBillModel custSalesBillModel = new CustSalesBillModel();
@@ -2032,7 +2040,6 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		page.setRecords(records);
 		page.setTotal(total);
 		return page;
-
 	}
 
 	/**
@@ -2047,7 +2054,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	@DataAuthVerification
 	public Page<CustSalesSummarizingModel> getCustSalesSummarizing(Map<String, Object> params, Page page, HttpServletRequest request) {
 
-		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
+		int retain = SysUtil.getSysConfigRetain();
 
 		//获取数据
 		List<CustSalesSummarizingModel> records = super.baseMapper.selectCustSalesSummarizingPageSelective(params, page);
@@ -2056,6 +2063,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 			BigDecimal discountAmnt = new BigDecimal(record.getDiscountAmnt());
 			BigDecimal amount = new BigDecimal(record.getAmount());
+			BigDecimal avgPrice = new BigDecimal(record.getAvgPrice());
 
 			BigDecimal salesAmnt = amount.add(discountAmnt);
 			salesAmnt = salesAmnt.setScale(retain, RoundingMode.HALF_UP);
@@ -2067,21 +2075,11 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			amount = amount.setScale(retain, RoundingMode.HALF_UP);
 			record.setAmount(amount.toString());
 
+			avgPrice = avgPrice.setScale(retain, RoundingMode.HALF_UP);
+			record.setAvgPrice(avgPrice.toString());
 		}
 
-		// 获取均价
-		List<CustSalesSummarizingModel> custSalesSummarizingAvgPrices = super.baseMapper.selectCustSalesSummarizingAvgPrice(params);
-		for (CustSalesSummarizingModel record : records) {
-			for (CustSalesSummarizingModel avgPrice : custSalesSummarizingAvgPrices) {
-				if (record.getCustId() == avgPrice.getCustId() && record.getGoodsName().equals(avgPrice.getGoodsName())) {
-					BigDecimal price = new BigDecimal(avgPrice.getAvgPrice()).setScale(retain, RoundingMode.HALF_UP);
-					record.setAvgPrice(price.toString());
-					break;
-				}
-			}
-		}
-
-		int total = super.baseMapper.selectCustSalesSummarizingCountSelective(params).size();
+		int total = super.baseMapper.selectCustSalesSummarizingCountSelective(params);
 		page.setRecords(records);
 		page.setTotal(total);
 		return page;
@@ -2101,7 +2099,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		CustSalesStatisticsSummationModel custSalesStatisticsSummationModel = super.baseMapper.selectCustSalesStatisticsSummation(params);
 
-		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
+		int retain = SysUtil.getSysConfigRetain();
 
 		BigDecimal indentTotalSum = new BigDecimal(custSalesStatisticsSummationModel.getIndentTotalSum());
 		BigDecimal discountAmntSum = new BigDecimal(custSalesStatisticsSummationModel.getDiscountAmntSum());
@@ -2130,18 +2128,17 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	@Override
 	public Page<CustSalesStatisticsModel> getCustSalesStatistics(Map<String, Object> params, Page page, HttpServletRequest request) {
 
-		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
+		int retain = SysUtil.getSysConfigRetain();
 
 		List<CustSalesStatisticsModel> records = super.baseMapper.selectCustSalesStatisticsPageSelective(params, page);
 
-		int total = super.baseMapper.selectCustSalesStatisticsCountSelective(params).size();
+		int total = super.baseMapper.selectCustSalesStatisticsCountSelective(params);
 		// 去重
 		List<CustSalesStatisticsModel> uniqueGoodsIdAndCustId = records.stream().collect(
 				Collectors.collectingAndThen(
-						Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(o -> o.getGoodsId() + "::" + o.getCustId()))), ArrayList::new)
+						Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(o -> o.getGoodsId() + Constant.SPLITTER + o.getCustId()))), ArrayList::new)
 		);
 
-//		Map<String, String> goodsIdCustIdMap = uniqueGoodsIdAndCustId.stream().collect(Collectors.toMap(CustSalesStatisticsModel::getGoodsId, CustSalesStatisticsModel::getCustId));
 		uniqueGoodsIdAndCustId.forEach(unique -> {
 			String custId = unique.getCustId();
 			String goodsId = unique.getGoodsId();
@@ -2190,7 +2187,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		List<CustSalesDetailModel> records = super.baseMapper.selectCustSalesDetailPageSelective(params, page);
 
-		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
+		int retain = SysUtil.getSysConfigRetain();
 
 		for (CustSalesDetailModel record : records) {
 
@@ -2210,7 +2207,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 				salesAmnt = salesAmnt.negate();
 				indentTotal = indentTotal.negate();
 				discountAmount = discountAmount.negate();
-				record.setSalesNum("-".concat(record.getSalesNum()));
+				record.setSalesNum(Constant.MINUS.concat(record.getSalesNum()));
 			}
 
 			record.setSalesAmnt(salesAmnt.toString());
@@ -2278,45 +2275,8 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	@Override
 	@DataAuthVerification
 	public Page<AreaSalesRankModel> getAreaSalesRank(Map<String, Object> params, Page page) {
-//		Integer rootId = (Integer) params.get("areaGrpId");
-//		List<Integer> areaGrpIds = areaGrpMapper.selectDirectSubAreaGrpIds(rootId);// 获取areaGrpId的所有直属下级区域
-//		List<AreaSalesRankModel> areaSalesRanks = new ArrayList<>();
-//		if (!areaGrpIds.isEmpty()) {
-//			areaGrpIds.forEach(areaGrpId -> {
-//				Map<String, Object> map = new HashMap<>();
-//				String beginTime = (String) params.get("beginTime");
-//				String endTime = (String) params.get("endTime");
-//				map.put("beginTime", beginTime);
-//				map.put("endTime", endTime);
-//				map.put("areaGrpId", areaGrpId);
-//				AreaSalesRankModel areaSalesRankModel = super.baseMapper.selectSubAreaSalesRank(map);
-//				areaSalesRanks.add(areaSalesRankModel);
-//			});
-//		}
-//		List<AreaSalesRankModel> records =
-//				areaSalesRanks.stream()
-//						.filter(areaSalesRankModel -> StringUtils.isNotEmpty(areaSalesRankModel.getAreaGrpName()))
-//						.collect(Collectors.toList());
-//
-//		Boolean byAmount = (Boolean) params.get("byAmount");
-//		if (byAmount != null) {
-//			if (byAmount) {
-//				records = records.stream().sorted(
-//						(asr1, asr2) -> new BigDecimal(asr2.getSalesAmnt()).compareTo(new BigDecimal(asr1.getSalesAmnt()))
-//				).collect(Collectors.toList());
-//			} else {
-//				records = records.stream().sorted(
-//						(asr1, asr2) -> new BigDecimal(asr2.getSalesNum()).compareTo(new BigDecimal(asr1.getSalesNum()))
-//				).collect(Collectors.toList());
-//			}
-//		}
-//		for (int i = 0; i < records.size(); i++) {
-//			records.get(i).setRankNum((i + 1) + "");
-//		}
-//		int total = records.size();
-		/**************************************************************************************************************/
 		List<AreaSalesRankModel> records = super.baseMapper.selectAreaSalesRank(page, params);
-		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
+		int retain = SysUtil.getSysConfigRetain();
 		for (AreaSalesRankModel record : records) {
 			BigDecimal indentTotal = new BigDecimal(record.getIndentTotal());
 			BigDecimal discountTotal = new BigDecimal(record.getDiscountTotal());
@@ -2330,9 +2290,8 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 			discountTotal = discountTotal.setScale(retain, RoundingMode.HALF_UP);
 			record.setDiscountTotal(discountTotal.toString());
-
 		}
-		int total = super.baseMapper.selectAreaSalesRankCount(params).size();
+		int total = super.baseMapper.selectAreaSalesRankCount(params);
 		/**************************************************************************************************************/
 		page.setRecords(records);
 		page.setTotal(total);
@@ -2345,7 +2304,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		CommonSummation summation = super.baseMapper.selectAreaSalesRankSummation(params);
 
-		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
+		int retain = SysUtil.getSysConfigRetain();
 
 		summation = this.dealRetain(summation, retain);
 
@@ -2355,23 +2314,8 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	@Override
 	@DataAuthVerification
 	public Page<CustSalesRankModel> getCustSalesRank(Map<String, Object> params, Page page) {
-
-		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
-
+		int retain = SysUtil.getSysConfigRetain();
 		List<CustSalesRankModel> records = super.baseMapper.selectCustSalesRank(params, page);
-//		Boolean byAmount = (Boolean) params.get("byAmount");
-//
-//		if (byAmount != null) {
-//			if (byAmount) {
-//				records = records.stream().sorted(
-//						(asr1, asr2) -> asr2.getSalesAmnt().compareTo(asr1.getSalesAmnt())
-//				).collect(Collectors.toList());
-//			} else {
-//				records = records.stream().sorted(
-//						(asr1, asr2) -> asr2.getSalesNum().compareTo(asr1.getSalesNum())
-//				).collect(Collectors.toList());
-//			}
-//		}
 		for (CustSalesRankModel record : records) {
 
 			BigDecimal discountTotal = new BigDecimal(record.getDiscountTotal());
@@ -2386,11 +2330,9 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 			indentTotal = indentTotal.setScale(retain, RoundingMode.HALF_UP);
 			record.setIndentTotal(indentTotal.toString());
-
-
 		}
 		page.setRecords(records);
-		int total = super.baseMapper.selectCustSalesRankCount(params).size();
+		int total = super.baseMapper.selectCustSalesRankCount(params);
 		page.setTotal(total);
 		return page;
 	}
@@ -2400,7 +2342,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		CommonSummation summation = super.baseMapper.selectCustSalesRankSummation(params);
 
-		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
+		int retain = SysUtil.getSysConfigRetain();
 
 		summation = dealRetain(summation, retain);
 
@@ -2419,7 +2361,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 //	@DataAuthVerification
 	public Page<GoodsSalesSummarizingModel> getGoodsSalesSummarizing(Map<String, Object> params, Page page, HttpServletRequest request) {
 
-		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
+		int retain = SysUtil.getSysConfigRetain();
 		List<GoodsSalesSummarizingModel> records = super.baseMapper.selectGoodsSalesSummarizing(params, page);
 
 		for (GoodsSalesSummarizingModel record : records) {
@@ -2458,7 +2400,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	public CommonSummation getGoodsSalesSummation(Map<String, Object> params) {
 
 		CommonSummation summation = super.baseMapper.selectGoodsSalesSummation(params);
-		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
+		int retain = SysUtil.getSysConfigRetain();
 		return this.dealRetain(summation, retain);
 
 	}
@@ -2470,7 +2412,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	@Override
 	public Page<SingleGoodsSalesDetailModel> getSingleGoodsSalesDetail(Map<String, Object> params, Page page, HttpServletRequest request) {
 
-		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
+		int retain = SysUtil.getSysConfigRetain();
 
 		SingleGoodsSalesDetailModel singleGoodsSalesDetailModel = super.baseMapper.selectSingleGoodsSalesDetail(params);
 
@@ -2500,7 +2442,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 				salesAmnt = salesAmnt.negate();
 				indentTotal = indentTotal.negate();
 				discountAmount = discountAmount.negate();
-				record.setNum("-".concat(record.getNum()));
+				record.setNum(Constant.MINUS.concat(record.getNum()));
 			}
 
 			salesAmnt = salesAmnt.setScale(retain, RoundingMode.HALF_UP);
@@ -2515,10 +2457,6 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		singleGoodsSalesDetailModel.setIndentDetails(singleGoodsSalesIndentDetailModels);
 
 		int total = indentDetailMapper.selectSingleGoodsIndentDetailCount(params);
-
-//		CommonSummation summation = super.baseMapper.selectSingleGoodsSalesDetailSummation(params);
-//		singleGoodsSalesDetailModel.setSalesAmntSum(summation.getSalesAmntSum());
-//		singleGoodsSalesDetailModel.setSalesNumSum(summation.getSalesNumSum());
 
 		List<SingleGoodsSalesDetailModel> records = new ArrayList<>();
 		records.add(singleGoodsSalesDetailModel);
@@ -2535,7 +2473,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	@Override
 	public Page<GoodsSalesRankModel> getGoodsSalesRank(Map<String, Object> params, Page page, HttpServletRequest request) {
 
-		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
+		int retain = SysUtil.getSysConfigRetain();
 
 		List<GoodsSalesRankModel> records = super.baseMapper.selectGoodsSalesRank(params, page);
 
@@ -2556,7 +2494,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		}
 
-		int total = super.baseMapper.selectGoodsSalesRankCount(params).size();
+		int total = super.baseMapper.selectGoodsSalesRankCount(params);
 		page.setRecords(records);
 		page.setTotal(total);
 		return page;
@@ -2568,14 +2506,14 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	@Override
 	public CommonSummation getGoodsSalesRankSummation(Map<String, Object> params) {
 		CommonSummation summation = super.baseMapper.selectGoodsSalesRankSummation(params);
-		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
+		int retain = SysUtil.getSysConfigRetain();
 		return this.dealRetain(summation, retain);
 	}
 
 	@Override
 	public Page<IndentStatisticsModel> getIndentStatistics(Map<String, Object> params, Page page) {
 
-		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
+		int retain = SysUtil.getSysConfigRetain();
 
 		List<IndentStatisticsModel> records = super.baseMapper.selectIndentStatistics(params, page);
 		// 计算金额合计=订货金额-退货金额
@@ -2595,7 +2533,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			record.setReturnAmnt(returnAmnt.toString());
 
 		});
-		int total = super.baseMapper.selectIndentStatisticsCount(params).size();
+		int total = super.baseMapper.selectIndentStatisticsCount(params);
 		page.setRecords(records);
 		page.setTotal(total);
 		return page;
@@ -2606,7 +2544,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		IndentStatisticsSummationModel summation = super.baseMapper.selectIndentStatisticsSummation(params);
 
-		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
+		int retain = SysUtil.getSysConfigRetain();
 
 		BigDecimal orderAmntSum = new BigDecimal(summation.getOrderAmntSum());
 		BigDecimal returnAmntSum = new BigDecimal(summation.getReturnAmntSum());
@@ -2639,8 +2577,9 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	@Override
 //	@DataAuthVerification
 	public CustSalesDetailSummarizingModel getCustSalesDetailSummarizing(Map<String, Object> params, HttpServletRequest request) {
-		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
+		int retain = SysUtil.getSysConfigRetain();
 		CustSalesDetailSummarizingModel custSalesDetailSummarizingModel = super.baseMapper.selectCustSalesDetailSummarizing(params);
+
 
 		BigDecimal salesDiscountSum = new BigDecimal(custSalesDetailSummarizingModel.getSalesDiscountSum());
 		BigDecimal receivableAmntSum = new BigDecimal(custSalesDetailSummarizingModel.getReceivableAmntSum());
@@ -2665,7 +2604,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		CustSalesSummationModel custSalesSummationModel = super.baseMapper.selectCustSalesSummation(params);
 
-		int retain = SysUtil.getSysConfigRetain(redisTemplate, jsonRedisTemplate);
+		int retain = SysUtil.getSysConfigRetain();
 
 		BigDecimal receivableAmntSum = new BigDecimal(custSalesSummationModel.getReceivableAmntSum());
 		BigDecimal salesDiscountSum = new BigDecimal(custSalesSummationModel.getSalesDiscountSum());
@@ -2687,7 +2626,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	public Indent getIndentInfo(String indentNo) {
 		Indent indent = super.baseMapper.getIndentByNo(indentNo);
 		List<IndentDetail> indentDetails = indent.getIndentDetails();
-		SysConfig sysConfig = (SysConfig) jsonRedisTemplate.opsForValue().get(Constant.SYS_CONFIG_IDENTIFIER + SysUtil.getEmpIdInRedis());
+		SysConfig sysConfig = (SysConfig) jsonRedisTemplate.opsForValue().get(Constant.SYS_CONFIG_IDENTIFIER + SysUtil.getEmpId());
 		Integer retain = sysConfig.getRetain();
 
 		for (IndentDetail indentDetail : indentDetails) {
@@ -2713,9 +2652,6 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			discountAmount = discountAmount.setScale(retain, RoundingMode.HALF_UP);
 			indentDetail.setDiscountAmount(discountAmount.toString());
 
-
-//			List<StockoutMadedate> stockoutMadedates = stockDetailMapper.selectStockoutDetailInfo(indentDetail.getGoodsId(), indentNo);
-//			indentDetail.setStockoutMadedates(stockoutMadedates);
 		}
 
 		BigDecimal indentTotal = new BigDecimal(indent.getIndentTotal());
@@ -2773,12 +2709,27 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		Integer custId = indent.getCustId();
 		Long indentId = indent.getIndentId();
 		String indentNo = indent.getIndentNo();
-		// 作废收/付款单
-		new Receipt().update(
+
+		receiptService.update(
 				new LambdaUpdateWrapper<Receipt>()
 						.eq(Receipt::getBusiNo, indentNo)
 						.set(Receipt::getStat, false)
 		);
+
+		//todo 先实现业务......
+//		List<Receipt> receipts = receiptMapper.selectList(
+//			new LambdaQueryWrapper<Receipt>()
+//				.eq(Receipt::getBusiNo, indentNo)
+//				.eq(Receipt::getStat, true)
+//		);
+//
+//		for (Receipt receipt : receipts) {
+//			if (receipt.getType().equals(Constant.FKD_CHINESE)){
+//				receiptService.cancelPayReceiptById(receipt.getReceiptId());
+//			}else{
+//				receiptService.cancelReceipt(receipt,request);
+//			}
+//		}
 
 		// 2.1作废出库单
 		// 找出关联出库记录
@@ -2843,16 +2794,6 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		 * 如果存在ActiveGoods那么通过activeId和giftId查找出对应Active和Gift
 		 */
 		Collection<Active> actives = new HashSet<>();
-//		List<ActiveGoods> activeGoods = activeGoodsMapper.selectActivesByGoodsId(goodsId);
-//		if (!activeGoods != null && !activeGoods.isEmpty()) {
-//			for (ActiveGoods ag : activeGoods) {
-//				Active active = new Active().selectById(ag.getActiveId());
-//				if (NumberUtil.isIntegerUsable(active.getDiscount()) {
-//					active.setGift(goodsMapper.selectUnDeletedGoodsByGoodsId(ag.getGiftId()));
-//				}
-//				actives.add(active);
-//			}
-//		}
 		/**
 		 * 找出指定商品，指定客户所在的区域分组所关联的活动 : 集合
 		 * 3.通过客户custId 找到 t_customer.area_grp_id

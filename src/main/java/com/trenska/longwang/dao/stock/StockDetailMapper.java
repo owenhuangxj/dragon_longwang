@@ -45,6 +45,8 @@ public interface StockDetailMapper extends BaseMapper<StockDetail> {
 
 	List<StockDetail> selectByBusiNo(String indentNo);
 
+	List<StockDetail> selectByParams(Map<String, Object> params);
+
 	List<StockDetail> selectByStockNo(String stockNo);
 
 	Set<String> getUniqueMadeDatesByIndentNo(@Param("indentNo") String indentNo,@Param("goodsId") Integer goodsId);

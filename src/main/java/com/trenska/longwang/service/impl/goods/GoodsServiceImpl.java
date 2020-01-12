@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.baomidou.mybatisplus.generator.config.IFileCreate;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.constant.Constant;
 import com.trenska.longwang.context.ApplicationContextHolder;
@@ -14,14 +13,11 @@ import com.trenska.longwang.dao.stock.StockMapper;
 import com.trenska.longwang.entity.goods.*;
 import com.trenska.longwang.entity.indent.IndentDetail;
 import com.trenska.longwang.entity.sys.SysConfig;
-import com.trenska.longwang.enums.IndentStat;
 import com.trenska.longwang.model.goods.GoodsExportModel;
-import com.trenska.longwang.model.goods.GoodsQueryModel;
 import com.trenska.longwang.model.sys.ResponseModel;
 import com.trenska.longwang.service.goods.*;
 import com.trenska.longwang.util.GoodsUtil;
 import com.trenska.longwang.util.NumberUtil;
-import com.trenska.longwang.util.ObjectCopier;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -119,7 +115,7 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
 		}
 		//GoodsUtil.dealGoodsInitStock(goods, stockMapper, request);
 		if(initStock > 0) { // 如果客户选择了期初入库
-			ResponseModel responseModel = GoodsUtil.initGoodsStock(goods, stockMapper, request);
+			ResponseModel responseModel = GoodsUtil.initGoodsStock(goods, stockMapper);
 			if (!responseModel.getSucc()) {
 				return responseModel;
 			}
@@ -137,12 +133,6 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
 		if (CollectionUtils.isNotEmpty(indentDetails)) {
 			return ResponseModel.getInstance().succ(false).msg("商品还有没有完成的订单，不能删除.");
 		}
-
-		// 商品的规格信息不能删除，因为查看订货单信息的时候需要获取规格信息
-//		goodsSpecMapper.delete(
-//				new QueryWrapper<GoodsSpec>()
-//						.eq("goods_id", goodsId)
-//		);
 
 		goodsCustSpecialMapper.delete(
 				new LambdaQueryWrapper<GoodsCustSpecify>()
@@ -200,28 +190,6 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
 		page.setTotal(count());
 		return page;
 	}
-
-//	@Override
-//	public Page<Goods> getGoodsPageSelective(Goods goods, Page page) {
-//		List<Goods> records = super.baseMapper.selectGoodsPageSelective(goods, page);
-//		page.setRecords(records);
-//		page.setTotal(super.baseMapper.selectCountSelective(goods));
-//		return page;
-//	}
-
-//	@Override
-//	public Page<Goods> getGoodsPageByQueryModelSelective(GoodsQueryModel goodsQueryModel, Page page) {
-//		Goods goods = new Goods();
-//		ObjectCopier.copyProperties(goodsQueryModel, goods);
-//		List<Goods> records = super.baseMapper.selectGoodsPageSelective(goods, page);
-//		for (Goods gds : records) {
-//			List<GoodsSpec> goodsSpecs = goodsSpecMapper.selectGoodsSpecByGoodsIdAndPropName(gds.getGoodsId(), goodsQueryModel.getPropName());
-//			gds.setGoodsSpecs(goodsSpecs);
-//		}
-//		page.setRecords(records);
-//		page.setTotal(super.baseMapper.selectCountSelective(goods));
-//		return page;
-//	}
 
 	@Override
 	@Transactional

@@ -7,14 +7,13 @@ import com.alibaba.excel.read.builder.ExcelReaderBuilder;
 import com.alibaba.excel.read.metadata.ReadSheet;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.plugins.Page;
-import com.trenska.longwang.annotation.DuplicateSubmitToken;
+import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.constant.Constant;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.goods.Goods;
 import com.trenska.longwang.entity.goods.GoodsSpec;
 import com.trenska.longwang.excel_import.GoodsImportListener;
 import com.trenska.longwang.model.goods.GoodsExportModel;
-import com.trenska.longwang.model.goods.GoodsQueryModel;
 import com.trenska.longwang.model.sys.ExistModel;
 import com.trenska.longwang.model.sys.ResponseModel;
 import com.trenska.longwang.service.goods.IGoodsService;
@@ -25,9 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.shiro.SecurityUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -85,7 +81,7 @@ public class GoodsController {
 //	})
 //	@ApiOperation("添加商品，返回对象中data属性是添加成功的商品的id")
 	@PostMapping("/add")
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	public ResponseModel addGoods(@RequestBody @Valid @ApiParam Goods goods, HttpServletRequest request) {
 		if (goods == null) {
 			ResponseModel.getInstance().succ(false).msg("无效商品，请完善商品信息");
@@ -93,7 +89,7 @@ public class GoodsController {
 		return goodsService.saveGoods(goods, request);
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@ApiOperation("删除商品")
 	@DeleteMapping("/delete/{goodsId}")
 	public ResponseModel deleteGoods(@ApiParam(name = "goodsId", required = true) @PathVariable("goodsId") Integer goodsId) {
@@ -105,7 +101,7 @@ public class GoodsController {
 		return goodsService.removeGoodsById(goodsId);
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/batch")
 	@ApiOperation("批量删除商品")
 	public ResponseModel batchDeleteGoods(@ApiParam(name = "goodsIds", value = "需要批量删除的商品id集合/数组", required = true) @RequestParam(value = "goodsIds") Collection<Integer> goodsIds) {
@@ -113,7 +109,7 @@ public class GoodsController {
 		return ResponseModel.getInstance().succ(removed).msg(removed ? "商品删除成功" : "商品删除失败");
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@PutMapping("/update")
 //	@ApiImplicitParams({
 //			@ApiImplicitParam(name = "goodsId", value = "商品id", paramType = "body", dataType = "int"),
@@ -146,7 +142,7 @@ public class GoodsController {
 		return goodsService.updateGoods(goods);
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@PutMapping("/update/stat/up")
 	@ApiOperation("批量上架商品")
 	public ResponseModel batchUpGoodsStat(@NotNull @RequestParam Collection<Integer> goodsIds) {
@@ -154,7 +150,7 @@ public class GoodsController {
 		return ResponseModel.getInstance().succ(successful).msg(successful ? "批量上架商品成功" : "批量上架商品失败");
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@PutMapping("/update/stat/down")
 	@ApiOperation("批量上架商品")
 	public ResponseModel batchDownGoodsStat(@Valid @RequestParam Collection<Integer> goodsIds) {
@@ -162,7 +158,7 @@ public class GoodsController {
 		return ResponseModel.getInstance().succ(successful).msg(successful ? "批量下架商品成功" : "批量下架商品失败");
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@PutMapping("/spec/update")
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "goodsId", paramType = "body", required = true, dataType = "int"),

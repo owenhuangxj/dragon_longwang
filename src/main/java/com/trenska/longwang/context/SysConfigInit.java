@@ -16,18 +16,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class SysConfigInit implements ApplicationContextAware, ApplicationListener<ContextRefreshedEvent> {
-
-//	private Logger logger = LoggerFactory.getLogger(SysConfigInit.class);
-//	@Value("${spring.datasource.url}")
-//	private String url;
-//	@Value("${spring.datasource.username}")
-//	private String username;
-//	@Value("${spring.datasource.password}")
-//	private String password;
-//	@Value("${spring.datasource.driver-class-name}")
-//	private String driverClassName;
-
-private ConfigurableApplicationContext applicationContext;
+	private ConfigurableApplicationContext applicationContext;
 
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
@@ -36,15 +25,10 @@ private ConfigurableApplicationContext applicationContext;
 
 	@Override
 	public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
-//		DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) applicationContext.getBeanFactory();//定义spring相关信息
-//		JdbcTemplate jdbcTemplate = new JdbcTemplate();
-//		jdbcTemplate.setDataSource(ApplicationContextHolder.getBean("druidDataSource"));
-//		beanFactory.registerSingleton(Constant.SYS_CONFIG_IDENTIFIER,jdbcTemplate.queryForObject("select * from t_sys_config where sys_emp_id = ?",new SysConfigRowMapper(),10000));
-		/**
-		 * sys_emp_id为10000的记录为系统默认配置
-		 */
-		// mybatis-plus就是爽啊......
-		SysConfig sysConfig = new SysConfig().selectById(10000);
-		((DefaultListableBeanFactory)contextRefreshedEvent.getApplicationContext().getAutowireCapableBeanFactory()).registerSingleton(Constant.SYS_CONFIG_IDENTIFIER,sysConfig);
+		/* ys_emp_id为10000的记录为系统默认配置*/
+		SysConfig sysConfig = new SysConfig().selectById(Constant.DEFAULT_CONFIG_NUMBER);
+		DefaultListableBeanFactory beanFactory =
+				(DefaultListableBeanFactory) contextRefreshedEvent.getApplicationContext().getAutowireCapableBeanFactory();
+		beanFactory.registerSingleton(Constant.SYS_CONFIG_IDENTIFIER.concat(String.valueOf(Constant.DEFAULT_CONFIG_NUMBER)), sysConfig);
 	}
 }

@@ -1,7 +1,7 @@
 package com.trenska.longwang.controller.customer;
 
 import com.baomidou.mybatisplus.plugins.Page;
-import com.trenska.longwang.annotation.DuplicateSubmitToken;
+import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.customer.CustType;
 import com.trenska.longwang.model.sys.ResponseModel;
@@ -30,7 +30,7 @@ public class CustTypeController{
 	@Autowired
 	private ICustTypeService custTypeService;
 	@PostMapping("/add")
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@ApiOperation(value = "添加客户类型", notes = "返回的数据中data属性是添加成功的客户类型id，即custTypeId")
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "custTypeName", value = "客户类型名称", paramType = "body", required = true, dataType = "String"),
@@ -40,7 +40,7 @@ public class CustTypeController{
 		return ResponseModel.getInstance().succ(custTypeService.save(custType)).msg("客户信息添加成功");
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/{custTypeId}")
 	@ApiOperation(value = "删除客户类型")
 	@ApiImplicitParams({
@@ -50,7 +50,7 @@ public class CustTypeController{
 		return ResponseModel.getInstance().succ(custTypeService.removeById(custTypeId)).msg("客户类型信息删除成功");
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/batch")
 	@ApiOperation(value = "批量删除客户类型信息")
 	@ApiImplicitParams({
@@ -60,7 +60,7 @@ public class CustTypeController{
 		return ResponseModel.getInstance().succ(custTypeService.removeByIds(custTypeIds)).msg("批量删除客户类型信息成功");
 	}
 
-	@DuplicateSubmitToken
+	@CheckDuplicateSubmit
 	@PutMapping("/update")
 	@ApiOperation(value = "修改客户类型")
 	@ApiImplicitParams({

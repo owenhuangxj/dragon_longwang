@@ -1,10 +1,8 @@
 package com.trenska.longwang.dao.sys;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.trenska.longwang.config.RedisCacheMybatis;
 import com.trenska.longwang.entity.sys.SysPerm;
 import com.trenska.longwang.model.sys.PermModel;
-import org.apache.ibatis.annotations.CacheNamespace;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
