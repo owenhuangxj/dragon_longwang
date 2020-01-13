@@ -111,7 +111,7 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 		Stock stock = stockMapper.selectStockInfo(params);
 
 		List<StockDetail> stockDetails = super.baseMapper.selectStockDetailPage(params, page);
-		Integer retain = ((SysConfig) ApplicationContextHolder.getBean(Constant.SYS_CONFIG_IDENTIFIER)).getRetain();
+		int retain = SysUtil.getSysConfigRetain();
 
 		//处理金额总计
 		BigDecimal total = new BigDecimal(0);
