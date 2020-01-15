@@ -194,7 +194,7 @@ public class CustomerUtil {
 	 */
 	public static ResponseModel checkDebtLimit(String indentNo, int custId){
 		Customer customer = new Customer(custId).selectById();
-		if (Objects.isNull(customer)) {
+		if (customer == null) {
 			return ResponseModel.getInstance().succ(false).msg(Constant.CUSTOMER_NOT_EXISTS_MSG);
 		}
 

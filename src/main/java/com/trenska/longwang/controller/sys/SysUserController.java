@@ -113,9 +113,9 @@ public class SysUserController {
 		if (sysConfig == null) {
 			sysConfig = ApplicationContextHolder.getBean(SysConfig.class);// 获取Spring容器中的系统配置
 		}
-		// 将配置存入redis中
+		// 将配置存入redis中,时间与token的失效时间相同
 		jsonRedisTemplate.opsForValue().set(Constant.SYS_CONFIG_IDENTIFIER.concat(String.valueOf(empId)),
-				sysConfig);
+				sysConfig,tokenTimeout,TimeUnit.MILLISECONDS);
 
 		/**
 		 * 更新客户的登陆ip,最后一次登陆时间，总登陆次数

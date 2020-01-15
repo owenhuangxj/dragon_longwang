@@ -83,7 +83,7 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 		page.setTotal(baseMapper.selectReceiptCountSelective(params));
 		List<Receipt> receipts = baseMapper.selectReceiptPageSelective(params, page);
 
-		SysConfig sysConfig = (SysConfig) jsonRedisTemplate.opsForValue().get(Constant.SYS_CONFIG_IDENTIFIER + SysUtil.getEmpId());
+		SysConfig sysConfig = SysUtil.getSysConfig(SysUtil.getEmpId());
 		Integer retain = sysConfig.getRetain();
 
 		for (Receipt receipt : receipts) {
@@ -454,8 +454,7 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 	@Override
 	public CommonReceiptSummation getReceiptSelectiveSummation(Map<String, Object> params) {
 
-		SysConfig sysConfig = (SysConfig) jsonRedisTemplate.opsForValue().get(Constant.SYS_CONFIG_IDENTIFIER + SysUtil.getEmpId());
-
+		SysConfig sysConfig = SysUtil.getSysConfig(SysUtil.getEmpId());
 		Integer retain = sysConfig.getRetain();
 
 		CommonReceiptSummation commonReceiptSummation = super.baseMapper.selectReceiptSelectiveSummation(params);

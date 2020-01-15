@@ -124,7 +124,6 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
 	@Override
 	@Transactional
 	public ResponseModel addCustomer(Customer customer) {
-
 		List<Customer> dbCustomers = this.list(
 				new LambdaQueryWrapper<Customer>()
 						.eq(Customer::getCustName, customer.getCustName())
@@ -149,38 +148,25 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
 		if (StringUtils.isEmpty(customer.getDebtLimit())) {
 			customer.setDebtLimit(Constant.NO_DEBT_LIMIT_LABEL);
 		}
-		customer.setCreatedTime(TimeUtil.getCurrentTime(Constant.TIME_FORMAT));
+		String time = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
+		customer.setCreatedTime(time);
 		String initDebt = customer.getInitDebt();
-		String amount = "";
-		// 同步debt为客户的期初欠款 ->newDebt = initDebt
-		String debt = "";
-		if (StringUtil.isNumeric(initDebt,false)) {
-			customer.setDebt(customer.getInitDebt());
-			if (new BigDecimal(initDebt).compareTo(BigDecimal.ZERO) > 0) {
-				if (!initDebt.startsWith(Constant.PLUS)) {
-					amount = Constant.PLUS + initDebt;
-				} else {
-					amount = initDebt;
-				}
-			} else if (new BigDecimal(initDebt).compareTo(BigDecimal.ZERO) < 0) {
-				if (!initDebt.startsWith(Constant.MINUS)) {
-					amount = Constant.MINUS + initDebt;
-				} else {
-					amount = initDebt;
-				}
+		String amount = "0.00";
+		if (new BigDecimal(initDebt).compareTo(BigDecimal.ZERO) > 0) {
+			if (!initDebt.startsWith(Constant.PLUS)) {
+				amount = Constant.PLUS.concat(initDebt);
 			}
-			debt = initDebt;
-		} else {
-			debt = "0";
-			amount = "0";
+		} else if (new BigDecimal(initDebt).compareTo(BigDecimal.ZERO) < 0) {
+			if (!initDebt.startsWith(Constant.MINUS)) {
+				amount = Constant.MINUS.concat(initDebt);
+			}
 		}
 		// mybatis的insert方法会返回自增的id给对应的主键，比如此时会将t_customer表的cust_id返回给custId属性
 		super.baseMapper.insert(customer);
 
 		/********************* 插入一条期初欠款交易明细 , 无期初欠款欠款默认为0 *********************/
 		Integer custId = customer.getCustId();
-		String time = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
-		DealDetailUtil.saveDealDetail(custId, "", time, amount, debt, Constant.QCQK_CHINESE, "", "");
+		DealDetailUtil.saveDealDetail(custId, "", time, amount, initDebt, Constant.QCQK_CHINESE, "", "");
 
 		// 处理拥有所有数据权限的账号不能看到新建的客户信息的bug
 
@@ -189,8 +175,7 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
 
 	@Override
 	public String getCustomerSpecialPrice(Map<String, Object> params) {
-		SysConfig sysConfig = ApplicationContextHolder.getBean(Constant.SYS_CONFIG_IDENTIFIER);
-		Integer retain = sysConfig.getRetain();
+		Integer retain = SysUtil.getSysConfigRetain();
 		return NumberFormatter.format(BigDecimal.valueOf(Double.valueOf(super.baseMapper.selectCustomerSpecialPrice(params))), retain);
 
 	}
@@ -238,15 +223,14 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
 		}
 
 		Integer invalidReceiptCount = receiptMapper.selectCount(
-			new LambdaQueryWrapper<Receipt>()
-				.eq(Receipt::getCustId,custId)
-				.ne(Receipt::getStat,false)
+				new LambdaQueryWrapper<Receipt>()
+						.eq(Receipt::getCustId, custId)
+						.ne(Receipt::getStat, false)
 		);
 
-		if (invalidReceiptCount > 0){
+		if (invalidReceiptCount > 0) {
 			return ResponseModel.getInstance().succ(false).msg("客户关联了未作废的收款或付款单，不能删除");
 		}
-
 
 
 		// 删除客户特价信息

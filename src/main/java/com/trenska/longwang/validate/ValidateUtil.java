@@ -1,6 +1,5 @@
 package com.trenska.longwang.validate;
 
-import com.trenska.longwang.constant.Constant;
 import com.trenska.longwang.util.ResponseUtil;
 import org.apache.commons.lang3.StringUtils;
 

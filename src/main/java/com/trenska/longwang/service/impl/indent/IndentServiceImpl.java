@@ -255,8 +255,6 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			return ResponseModel.getInstance().succ(false).msg("待审核的订货单才可编辑!!");
 		}
 
-		SysConfig sysConfig = ApplicationContextHolder.getBean(Constant.SYS_CONFIG_IDENTIFIER);
-
 		indent.setIndentTime(TimeUtil.getCurrentTime(Constant.TIME_FORMAT));
 
 		String indentNo = indent.getIndentNo();
@@ -1682,9 +1680,8 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		int empId = SysUtil.getEmpId();
 
-		SysConfig sysConfig = (SysConfig) jsonRedisTemplate.opsForValue().get(Constant.SYS_CONFIG_IDENTIFIER + empId);
-
-		Integer retain = sysConfig.getRetain();
+		SysConfig sysConfig = SysUtil.getSysConfig(empId);
+		int retain = sysConfig.getRetain();
 
 		List<Indent> indents = super.baseMapper.selectIndentPageSelective(params, page);
 		for (Indent indent : indents) {
@@ -1989,8 +1986,8 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	@DataAuthVerification
 	public Page<CustSalesBillModel> getCustSales(Map<String, Object> params, Page page, HttpServletRequest request) {
 
-		SysConfig sysConfig = (SysConfig) jsonRedisTemplate.opsForValue().get(Constant.SYS_CONFIG_IDENTIFIER + SysUtil.getEmpId());
-		Integer retain = sysConfig.getRetain();
+		SysConfig sysConfig = SysUtil.getSysConfig(SysUtil.getEmpId());
+		int retain = sysConfig.getRetain();
 
 		CustSalesSummationModel summation = super.baseMapper.selectCustSalesBillSummation(params);
 
@@ -2626,8 +2623,8 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	public Indent getIndentInfo(String indentNo) {
 		Indent indent = super.baseMapper.getIndentByNo(indentNo);
 		List<IndentDetail> indentDetails = indent.getIndentDetails();
-		SysConfig sysConfig = (SysConfig) jsonRedisTemplate.opsForValue().get(Constant.SYS_CONFIG_IDENTIFIER + SysUtil.getEmpId());
-		Integer retain = sysConfig.getRetain();
+		SysConfig sysConfig = SysUtil.getSysConfig(SysUtil.getEmpId());
+		int retain = sysConfig.getRetain();
 
 		for (IndentDetail indentDetail : indentDetails) {
 
@@ -2762,7 +2759,8 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		indentInfoModel.setGoods(new Goods().selectById(goodsId));
 
 		/**
-		 * 1.通过客户id和商品id 找到满足 t_goods_cust_special.cust_id、t_goods_cust_special.goods_id找到GoodsCustSpecial，如果有表示客户对该商品有特价/指定价，则不需要进行第2步
+		 * 1.通过客户id和商品id 找到满足 t_goods_cust_special.cust_id、t_goods_cust_special.goods_id找到GoodsCustSpecial，
+		 * 如果有表示客户对该商品有特价/指定价，则不需要进行第2步
 		 */
 		GoodsCustSpecify goodsCustSpecify =
 				new GoodsCustSpecify().selectOne(

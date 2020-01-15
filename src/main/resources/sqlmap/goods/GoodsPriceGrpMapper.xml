@@ -22,11 +22,14 @@
         where tgpg.goods_id = #{goodsId}
     </select>
     <select id="selectByGoodsIdAndCustId" resultType="com.trenska.longwang.entity.goods.GoodsPriceGrp">
-        select tgpg.goods_price_grp_id, tgpg.goods_id, tgpg.price_grp_id, tgpg.price
-        from t_customer tc,t_goods tg,t_goods_price_grp tgpg
+        select tgpg.goods_price_grp_id as goodsPriceGrpId,tgpg.goods_id as goodsId, tgpg.price_grp_id as
+            priceGrpId, case when(tgpg.price is null or tgpg.price = '') then tg.price else tgpg.price end
+            as price , tpg.price_grp_name as priceGrpName
+        from t_customer tc,t_goods tg,t_goods_price_grp tgpg,t_price_grp tpg
         where tg.stat = 1
         and tg.goods_id = tgpg.goods_id
         and tc.price_grp_id = tgpg.price_grp_id
+        and tpg.price_grp_id = tgpg.price_grp_id
         and tc.cust_id = #{custId}
         and tg.goods_id = #{goodsId}
     </select>

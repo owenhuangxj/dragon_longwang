@@ -48,8 +48,6 @@ import java.util.stream.Collectors;
 public class StockServiceImpl extends ServiceImpl<StockMapper, Stock> implements IStockService {
 
 	private final static Logger logger = LoggerFactory.getLogger(StockServiceImpl.class);
-//	@Autowired
-//	private StockDetailMapper detailMapper;
 
 	@Autowired
 	private IStockDetailService stockoutService;
@@ -138,7 +136,6 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, Stock> implements
 			totalNum += num;
 
 			totalPrice += num * price; //总价格
-
 		}
 
 		params.put("flow_list", recordsList); //详细数据
@@ -148,8 +145,6 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, Stock> implements
 
 		params.put("lowAmount", totalPrice);
 		params.put("capAmount", RMBUtil.toUpper(totalPrice.toString()));//金额大写
-
-
 		return params;
 	}
 
@@ -258,14 +253,7 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, Stock> implements
 
 	@Override
 	public Page<GoodsStockinStatisticsModel> getGoodsStockinStatistics(Map<String, Object> params, Page page) {
-
-
 		List<GoodsStockinStatisticsModel> records = super.baseMapper.selectGoodsStockinStatistic(params, page);
-//		int retain = SysUtil.getSysConfigRetain();
-//		records.forEach(record->{
-//			String avgPrice = new BigDecimal(record.getAvgPrice()).setScale(retain, RoundingMode.HALF_UP).toString();
-//			record.setAvgPrice(avgPrice);
-//		});
 		int total = super.baseMapper.selectGoodsStockinStatisticsCount(params).size();
 		page.setRecords(records);
 		page.setTotal(total);
@@ -277,11 +265,7 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, Stock> implements
 		return super.baseMapper.selectGoodsStockinSummation(params);
 	}
 
-
 	public int getGoodsBeginningStock(Map<String, Object> params) {
-
 		return -1;
-
 	}
-
 }
