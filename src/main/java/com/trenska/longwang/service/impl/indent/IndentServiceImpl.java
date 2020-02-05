@@ -2577,10 +2577,8 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		int retain = SysUtil.getSysConfigRetain();
 		CustSalesDetailSummarizingModel custSalesDetailSummarizingModel = super.baseMapper.selectCustSalesDetailSummarizing(params);
 
-
 		BigDecimal salesDiscountSum = new BigDecimal(custSalesDetailSummarizingModel.getSalesDiscountSum());
 		BigDecimal receivableAmntSum = new BigDecimal(custSalesDetailSummarizingModel.getReceivableAmntSum());
-
 
 		BigDecimal salesAmntSum = salesDiscountSum.add(receivableAmntSum);
 		salesAmntSum = salesAmntSum.setScale(retain, RoundingMode.HALF_UP);
@@ -2591,7 +2589,6 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		receivableAmntSum = receivableAmntSum.setScale(retain, RoundingMode.HALF_UP);
 		custSalesDetailSummarizingModel.setReceivableAmntSum(receivableAmntSum.toString());
-
 
 		return custSalesDetailSummarizingModel;
 	}

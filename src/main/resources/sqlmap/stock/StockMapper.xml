@@ -281,15 +281,15 @@
         select tg.goods_id as goodsId,ifnull(tg.goods_no,"") as goodsNo,tg.goods_name as
         goodsName,ifnull(tg.brand_name,"") as brandName,tsd.unit_name as unitName,
         #{beginTime} as beginTime,#{endTime} as endTime,
-        abs(sum(if(tsd.oper_type = '生产入库' and tsd.stock_type = '入库单',tsd.history,0))) as makeIn,
-        abs(sum(if(tsd.oper_type = '采购入库' and tsd.stock_type = '入库单',tsd.history,0))) as purchaseIn,
-        abs(sum(if(tsd.oper_type = '退货出库' and tsd.stock_type = '出库单',tsd.history,0))) as returnsOut,
-        abs(sum(if(tsd.oper_type = '退货入库' and tsd.stock_type = '入库单',tsd.history,0))) as returnsIn,
-        abs(sum(if(tsd.oper_type = '销售出库' and tsd.stock_type = '出库单',tsd.history,0))) as salesOut,
-        abs(sum(if(tsd.oper_type = '报溢入库' and tsd.stock_type = '入库单',tsd.history,0))) as overflow,
-        abs(sum(if(tsd.oper_type = '报损出库' and tsd.stock_type = '出库单',tsd.history,0))) as breakage,
-        abs(sum(if(tsd.oper_type = '其他入库' and tsd.stock_type = '入库单',tsd.history,0))) as otherIn,
-        abs(sum(if(tsd.oper_type = '其他出库' and tsd.stock_type = '出库单',tsd.history,0))) as otherOut
+        sum(if(tsd.oper_type = '生产入库',tsd.history,0)) as makeIn,
+        sum(if(tsd.oper_type = '采购入库',tsd.history,0)) as purchaseIn,
+        sum(if(tsd.oper_type = '退货出库',tsd.history,0)) as returnsOut,
+        sum(if(tsd.oper_type = '退货入库',tsd.history,0)) as returnsIn,
+        sum(if(tsd.oper_type = '销售出库',tsd.history,0)) as salesOut,
+        sum(if(tsd.oper_type = '报溢入库',tsd.history,0)) as overflow,
+        sum(if(tsd.oper_type = '报损出库',tsd.history,0)) as breakage,
+        sum(if(tsd.oper_type = '其他入库',tsd.history,0)) as otherIn,
+        sum(if(tsd.oper_type = '其他出库',tsd.history,0)) as otherOut
         from (
             select tg.goods_id as goods_id,tg.goods_no as goods_no,tg.goods_name as goods_name,
                    tg.brand_name as brand_name from t_goods tg
@@ -315,10 +315,8 @@
               </if>
             </trim>
         ) as tg,(
-          select stock_type,oper_type,history,goods_id,unit_name from t_stock_detail tsd,t_unit tu
-            where tsd.stat = 1
-            and tsd.unit_id = tu.unit_id
-            <trim prefix="and" prefixOverrides="and">
+          select stock_type,oper_type,history,goods_id,unit_name from t_stock_details tsd
+            <trim prefix="where" prefixOverrides="and">
                 <if test="beginTime != null and endTime != null ">
                     and stock_time between #{beginTime} and #{endTime}
                 </if>
@@ -377,10 +375,8 @@
             </if>
         </trim>
         ) as tg,(
-        select stock_type,oper_type,history,goods_id,unit_name from t_stock_detail tsd,t_unit tu
-        where tsd.stat = 1
-        and tsd.unit_id = tu.unit_id
-        <trim prefix="and" prefixOverrides="and">
+        select stock_type,oper_type,history,goods_id,unit_name from t_stock_details tsd
+        <trim prefix="where" prefixOverrides="and">
             <if test="beginTime != null and endTime != null ">
                 and stock_time between #{beginTime} and #{endTime}
             </if>

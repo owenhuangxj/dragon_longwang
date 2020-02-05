@@ -46,13 +46,13 @@ public class MyBatisPlusConfig {
      * 打印 sql
      * properties.setProperty("format", "true"); 格式化sql语句
      */
-//    @Bean
-//    @Profile("ali")
-//    public PerformanceInterceptor performanceInterceptor() {
-//        PerformanceInterceptor performanceInterceptor = new PerformanceInterceptor();
-//        Properties properties = new Properties();
-//        properties.setProperty("format", "true");
-//        performanceInterceptor.setProperties(properties);
-//        return performanceInterceptor;
-//    }
+    @Bean
+    @Profile("dev")
+    public PerformanceInterceptor performanceInterceptor() {
+        PerformanceInterceptor performanceInterceptor = new PerformanceInterceptor();
+        Properties properties = new Properties();
+        properties.setProperty("format", "true");
+        performanceInterceptor.setProperties(properties);
+        return performanceInterceptor;
+    }
 }

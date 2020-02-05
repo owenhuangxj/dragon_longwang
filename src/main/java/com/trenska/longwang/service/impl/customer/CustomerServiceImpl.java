@@ -151,14 +151,19 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
 		String time = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
 		customer.setCreatedTime(time);
 		String initDebt = customer.getInitDebt();
+		customer.setDebt(initDebt);
 		String amount = "0.00";
 		if (new BigDecimal(initDebt).compareTo(BigDecimal.ZERO) > 0) {
 			if (!initDebt.startsWith(Constant.PLUS)) {
 				amount = Constant.PLUS.concat(initDebt);
+			}else{
+				amount = initDebt;
 			}
 		} else if (new BigDecimal(initDebt).compareTo(BigDecimal.ZERO) < 0) {
 			if (!initDebt.startsWith(Constant.MINUS)) {
 				amount = Constant.MINUS.concat(initDebt);
+			}else {
+				amount = initDebt;
 			}
 		}
 		// mybatis的insert方法会返回自增的id给对应的主键，比如此时会将t_customer表的cust_id返回给custId属性
@@ -275,5 +280,4 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
 	public Set<Integer> getCustIdsOfSalesman(Integer salesmanId) {
 		return super.baseMapper.selectCustIdsOfSalesman(salesmanId);
 	}
-
 }

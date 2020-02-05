@@ -248,6 +248,9 @@
             <if test="scdCatName != null and scdCatName != ''">
                 and tg.scd_cat_name = #{scdCatName}
             </if>
+            <if test="custName != null and custName != ''">
+                and instr(tc.cust_name,#{custName})
+            </if>
             <if test="areaGrpId != null">
                 and tc.area_grp_id in (
                   select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
@@ -293,6 +296,9 @@
             </if>
             <if test="scdCatName != null and scdCatName !=''">
                 and tg.scd_cat_name = #{scdCatName}
+            </if>
+            <if test="custName != null and custName != ''">
+                and instr(tc.cust_name,#{custName})
             </if>
             <if test="areaGrpId != null">
                 and tc.area_grp_id in (
@@ -747,7 +753,7 @@
 
     <!--条件都是外层统计(销售账本)带进来的-->
     <select id="selectCustSalesDetailPageSelective" resultMap="CustSalesDetailResultMap">
-        select date(ti.indent_time) as indentTime , ti.indent_no as indentNo , tid.goods_id as goodsId ,
+        select ti.indent_time as indentTime , ti.indent_no as indentNo , tid.goods_id as goodsId ,
                ifnull(tg.goods_no,"") as goodsNo ,tg.goods_name as goodsName , tu.unit_name as unitName ,
                tid.num as salesNum , tid.price as price ,tid.amount as indentTotal,tid.discount_amount as discountAmount
         from t_customer tc , t_indent ti , t_indent_detail tid , t_goods tg , t_unit tu
@@ -1003,19 +1009,14 @@
     <!--客户销售排名合计部分-->
     <select id="selectCustSalesRankSummation" resultType="com.trenska.longwang.model.report.CommonSummation">
         select
-        ifnull(sum( case when ti.indent_type = '订货单' then ti.odr_amnt else -ti.odr_amnt end ) , 0 ) as salesAmntSum,
-        ifnull(sum( case when ti.indent_type = '订货单' then ti.indent_total else -ti.indent_total end ) , 0 ) as indentTotalSum,
-        ifnull(sum( case when ti.indent_type = '订货单' then ti.discount_total else -discount_total end ) , 0 ) as discountAmntSum,
-        ifnull(sum( case when ti.indent_type = '订货单' then (ti.sum + ti.gift_sum) else -(ti.sum + ti.gift_sum) end ) ,0 ) as salesNumSum
-        from t_indent ti , t_customer tc
-        <if test="(frtCatName != null and frtCatName != '') or (scdCatName != null and scdCatName != '')">
-            ,t_goods tg , t_indent_detail tid
-        </if>
+        ifnull(sum( case when ti.indent_type = '订货单' then (tid.amount + tid.discount_amount) else -(tid.amount + tid.discount_amount) end ) , 0 ) as salesAmntSum,
+        ifnull(sum( case when ti.indent_type = '订货单' then tid.amount else -tid.amount end ) , 0 ) as indentTotalSum,
+        ifnull(sum( case when ti.indent_type = '订货单' then tid.discount_amount else -tid.discount_amount end ) , 0 ) as discountAmntSum,
+        ifnull(sum( case when ti.indent_type = '订货单' then tid.num * tid.multi else -tid.num * tid.multi end ) ,0 ) as salesNumSum
+        from t_indent ti , t_customer tc ,t_goods tg , t_indent_detail tid
         where ti.stat in ('已出库','已完成')
-        <if test="(frtCatName != null and frtCatName != '') or (scdCatName != null and scdCatName != '')">
-            and ti.indent_no = tid.indent_no
-            and tid.goods_id = tg.goods_id
-        </if>
+        and ti.indent_no = tid.indent_no
+        and tid.goods_id = tg.goods_id
         and tc.cust_id = ti.cust_id
         <if test="custIds != null and custIds.size() > 0">
             <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
@@ -1048,21 +1049,21 @@
                result.custName,concat(@rownum:=@rownum+1,'') as rankNum
         from(
             select ti.cust_id as custId , tc.cust_name as custName,
-            ifnull(sum( case when ti.indent_type = '订货单' then ti.odr_amnt else -ti.odr_amnt end ) , 0 ) as salesAmnt ,
-            ifnull(sum( case when ti.indent_type = '订货单' then ti.indent_total else -ti.indent_total end ) , 0 ) as indentTotal ,
-            ifnull(sum( case when ti.indent_type = '订货单' then ti.discount_total else -ti.discount_total end ) , 0 ) as discountTotal ,
-            ifnull(sum( case when ti.indent_type = '订货单' then (ti.sum + ti.gift_sum) else -(ti.sum + ti.gift_sum) end ) ,0 ) as salesNum
-            from t_indent ti , t_customer tc
+            ifnull(sum( case when ti.indent_type = '订货单' then (tid.amount + tid.discount_amount) else -(tid.amount + tid.discount_amount) end ) , 0 ) as salesAmnt ,
+            ifnull(sum( case when ti.indent_type = '订货单' then tid.amount else -tid.amount end ) , 0 ) as indentTotal ,
+            ifnull(sum( case when ti.indent_type = '订货单' then tid.discount_amount else -tid.discount_amount end ) , 0 ) as discountTotal ,
+            ifnull(sum( case when ti.indent_type = '订货单' then tid.num * tid.multi else -tid.num * tid.multi end ) ,0 ) as salesNum
+            from t_indent ti , t_customer tc ,t_indent_detail tid
             <if test="(frtCatName != null and frtCatName != '') or (scdCatName != null and scdCatName != '')">
-                ,t_goods tg , t_indent_detail tid
+                ,t_goods tg
             </if>
             where ti.stat in ('已出库','已完成')
+            and ti.indent_no = tid.indent_no
+            and tc.cust_id = ti.cust_id
             <if test="(frtCatName != null and frtCatName != '') or (scdCatName != null and scdCatName != '')">
-                and ti.indent_no = tid.indent_no
                 and tid.goods_id = tg.goods_id
             </if>
-            and tc.cust_id = ti.cust_id
-            <if test="custIds != null and custIds.size() > 0">
+        <if test="custIds != null and custIds.size() > 0">
                 <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
                     #{custId}
                 </foreach>
