@@ -174,9 +174,9 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, Stock> implements
 							.add(new BigDecimal(record.getOtherIn()))
 							.add(new BigDecimal(record.getReturnsIn()))
 							.add(new BigDecimal(record.getOverflow()))
-							.subtract(new BigDecimal(record.getSalesOut()))
-							.subtract(new BigDecimal(record.getOtherOut()))
-							.subtract(new BigDecimal(record.getBreakage()))
+							.add(new BigDecimal(record.getSalesOut()))
+							.add(new BigDecimal(record.getOtherOut()))
+							.add(new BigDecimal(record.getBreakage()))
 							.toString();
 			record.setOverStock(overStock);
 		}
@@ -219,9 +219,9 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, Stock> implements
 							.add(new BigDecimal(record.getOtherIn()))
 							.add(new BigDecimal(record.getReturnsIn()))
 							.add(new BigDecimal(record.getOverflow()))
-							.subtract(new BigDecimal(record.getSalesOut()))
-							.subtract(new BigDecimal(record.getOtherOut()))
-							.subtract(new BigDecimal(record.getBreakage()))
+							.add(new BigDecimal(record.getSalesOut()))
+							.add(new BigDecimal(record.getOtherOut()))
+							.add(new BigDecimal(record.getBreakage()))
 							.toString();
 			record.setOverStock(overStock);
 

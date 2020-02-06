@@ -2395,11 +2395,9 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 	@Override
 	public CommonSummation getGoodsSalesSummation(Map<String, Object> params) {
-
 		CommonSummation summation = super.baseMapper.selectGoodsSalesSummation(params);
 		int retain = SysUtil.getSysConfigRetain();
 		return this.dealRetain(summation, retain);
-
 	}
 
 	/**

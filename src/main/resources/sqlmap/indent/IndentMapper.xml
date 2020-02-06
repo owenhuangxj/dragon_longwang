@@ -1799,9 +1799,9 @@
     <select id="selectGoodsSalesRankSummation" resultType="com.trenska.longwang.model.report.CommonSummation">
         select
         ifnull(sum( case when ti.indent_type = '订货单' then (tid.amount + tid.discount_amount) else -(tid.amount + tid.discount_amount) end ),0) as salesAmntSum,
-        ifnull(sum( case when ti.indent_type = '订货单' then tid.discount_amount else -tid.discount_amount end ),0) as discountAmntSum,
         ifnull(sum( case when ti.indent_type = '订货单' then tid.amount else -tid.amount end ),0) as indentTotalSum,
-        ifnull(sum( case when ti.indent_type = '订货单' then tid.num else -tid.num end),0) as salesNumSum
+        ifnull(sum( case when ti.indent_type = '订货单' then tid.discount_amount else -tid.discount_amount end ),0) as discountAmntSum,
+        ifnull(sum( case when ti.indent_type = '订货单' then tid.num * tid.multi else -tid.num * tid.multi end),0) as salesNumSum
         from t_indent_detail tid , t_indent ti , t_goods tg
         <if test="custName != null and custName != ''">
             , t_customer tc
