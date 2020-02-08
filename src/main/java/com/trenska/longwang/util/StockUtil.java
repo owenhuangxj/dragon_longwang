@@ -390,13 +390,12 @@ public class StockUtil {
 
 
 	/**
-	 * @param stockins
-	 * @param request
+	 * @param stockins 入库单
 	 * @param stockType 入库单(作废)/退货单(作废)
 	 * @return
 	 */
-	public static ResponseModel cancelStockin(List<Stock> stockins, HttpServletRequest request, String stockType) {
-		Integer empIdInToken = SysUtil.getEmpId();
+	public static ResponseModel cancelStockin(List<Stock> stockins, String stockType) {
+		int empIdInToken = SysUtil.getEmpId();
 		if (Objects.isNull(empIdInToken)) {
 			return ResponseModel.getInstance().succ(false).msg(Constant.ACCESS_TIMEOUT_MSG).code(Constant.ACCESS_TIMEOUT);
 		}

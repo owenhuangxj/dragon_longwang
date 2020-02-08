@@ -144,7 +144,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 	@Override
 	@Transactional
-	public ResponseModel saveIndent(Indent indent, HttpServletRequest request) {
+	public ResponseModel saveIndent(Indent indent) {
 		/**
 		 * 处理订货单
 		 */
@@ -409,7 +409,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 */
 	@Override
 	@Transactional
-	public ResponseModel repealIndent(long indentId, HttpServletRequest request) {
+	public ResponseModel repealIndent(long indentId) {
 
 		Indent dbIndent = this.getById(indentId);
 		if (Objects.isNull(dbIndent)) {
@@ -527,7 +527,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		Set<String> stockNos = stockMapper.selectStockNoByBusiNo(indentNo);
 		// 如果已经部分出库 --> 作废出库单，还回商品库存和批次库存
 		if (!Objects.isNull(stockNos) && !stockNos.isEmpty()) {
-			stockNos.forEach(stockNo -> stockDetailService.cancelStockout(stockNo, request));
+			stockNos.forEach(stockNo -> stockDetailService.cancelStockout(stockNo));
 		}
 		return ResponseModel.getInstance().succ(true).msg("订货单撤销成功");
 	}
@@ -557,11 +557,11 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 */
 	@Override
 	@Transactional
-	public ResponseModel stockoutIndent(Indent indent, HttpServletRequest request) {
+	public ResponseModel stockoutIndent(Indent indent) {
 		int custId = indent.getCustId();
 		Long indentId = indent.getIndentId();
 		String indentNo = indent.getIndentNo();
-		Indent dbIndent = this.getById(indentId);
+		Indent dbIndent = super.getById(indentId);
 		if (dbIndent == null) {
 			return ResponseModel.getInstance().succ(false).msg("无效的订单信息，不能出库！");
 		}
@@ -745,7 +745,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 //					lock.unlock();
 //				}
 		}
-		return ResponseModel.getInstance().succ(true).msg("订货单出库成功.");
+		return ResponseModel.getInstance().succ(true).msg("订货单出库成功！");
 	}
 
 	/**
@@ -761,7 +761,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 */
 	@Override
 	@Transactional
-	public ResponseModel saveSalesReturn(Indent indent, HttpServletRequest request) {
+	public ResponseModel saveSalesReturn(Indent indent) {
 
 		String currentTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
 		indent.setIndentTime(currentTime);
@@ -917,8 +917,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 * @return
 	 */
 	@Override
-	public ResponseModel invalidSalseReturn(Indent indent, HttpServletRequest request) {
-
+	public ResponseModel invalidSalseReturn(Indent indent) {
 		Integer custId = indent.getCustId();
 		String indentNo = indent.getIndentNo();
 		String currentTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
@@ -953,7 +952,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		stockin.setStockins(stockinDetails);
 
 		// 作废入库单: 作废入库单、减少总库存、减少批次库存、保存库存明细
-		StockUtil.cancelStockin(stockins, request, Constant.RKDZF_CHINESE);
+		StockUtil.cancelStockin(stockins, Constant.RKDZF_CHINESE);
 
 		// 增加客户应收欠款
 		Customer customer = customerMapper.selectById(custId);
@@ -1302,7 +1301,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	}
 
 	@Override
-	public ResponseModel cancelReceipt(Receipt receipt, HttpServletRequest request) {
+	public ResponseModel cancelReceipt(Receipt receipt) {
 
 		/*****************************************处理订单金额 ，减少已收款金额****************************************/
 		String busiNo = receipt.getBusiNo();
@@ -1336,7 +1335,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	}
 
 	@Override
-	public ResponseModel cancelPayReceipt(Receipt pay, HttpServletRequest request) {
+	public ResponseModel cancelPayReceipt(Receipt pay) {
 		/*****************************************处理订单金额 ，减少已付款金额****************************************/
 		String busiNo = pay.getBusiNo();
 		Indent dbIndent = this.getOne(
@@ -1386,7 +1385,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 * @return
 	 */
 
-	public ResponseModel changeIndent(Indent indent, HttpServletRequest request) {
+	public ResponseModel changeIndent(Indent indent) {
 		Long indentId = indent.getIndentId();
 
 		if (NumberUtil.isLongNotUsable(indentId)) {
@@ -1508,7 +1507,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	}
 
 	@Override
-	public Page<DeliveryStaticsModel> getGoodsDeliveryStatics(Page page, Map<String, Object> params, HttpServletRequest request) {
+	public Page<DeliveryStaticsModel> getGoodsDeliveryStatics(Page page, Map<String, Object> params) {
 		int total = super.baseMapper.selectGoodsDeliveryStaticsCount(params);
 		List<DeliveryStaticsModel> deliveryStatics = super.baseMapper.selectGoodsDeliveryStatics(page, params);
 
@@ -1567,7 +1566,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	}
 
 	@Override
-	public Page<DeliveryDetailsStaticsModel> getGoodsDeliveryDetailsStatics(Map<String, Object> params, Page page, HttpServletRequest request) {
+	public Page<DeliveryDetailsStaticsModel> getGoodsDeliveryDetailsStatics(Map<String, Object> params, Page page) {
 
 		int retain = SysUtil.getSysConfigRetain();
 
@@ -1615,7 +1614,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	}
 
 	@Override
-	public Page<SalesmanSalesRankModel> getSalesmanSalesRank(Map<String, Object> params, Page page, HttpServletRequest request) {
+	public Page<SalesmanSalesRankModel> getSalesmanSalesRank(Map<String, Object> params, Page page) {
 
 		int retain = SysUtil.getSysConfigRetain();
 
@@ -1681,7 +1680,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 */
 	@Override
 	@DataAuthVerification
-	public Page<Indent> getIndentPageSelective(Map<String, Object> params, Page page, HttpServletRequest request) {
+	public Page<Indent> getIndentPageSelective(Map<String, Object> params, Page page) {
 
 		int empId = SysUtil.getEmpId();
 
@@ -1989,7 +1988,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 */
 	@Override
 	@DataAuthVerification
-	public Page<CustSalesBillModel> getCustSales(Map<String, Object> params, Page page, HttpServletRequest request) {
+	public Page<CustSalesBillModel> getCustSales(Map<String, Object> params, Page page) {
 
 		SysConfig sysConfig = SysUtil.getSysConfig(SysUtil.getEmpId());
 		int retain = sysConfig.getRetain();
@@ -2049,12 +2048,11 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 *
 	 * @param params
 	 * @param page
-	 * @param request
 	 * @return
 	 */
 	@Override
 	@DataAuthVerification
-	public Page<CustSalesSummarizingModel> getCustSalesSummarizing(Map<String, Object> params, Page page, HttpServletRequest request) {
+	public Page<CustSalesSummarizingModel> getCustSalesSummarizing(Map<String, Object> params, Page page) {
 
 		int retain = SysUtil.getSysConfigRetain();
 
@@ -2093,11 +2091,10 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 * 因为客户信息是销售账本筛选(区域分组)和数据权限筛选完之后的客户
 	 *
 	 * @param params
-	 * @param request
 	 * @return
 	 */
 	@Override
-	public CustSalesStatisticsSummationModel selectCustSalesStatisticsSummation(Map<String, Object> params, HttpServletRequest request) {
+	public CustSalesStatisticsSummationModel selectCustSalesStatisticsSummation(Map<String, Object> params) {
 
 		CustSalesStatisticsSummationModel custSalesStatisticsSummationModel = super.baseMapper.selectCustSalesStatisticsSummation(params);
 
@@ -2124,11 +2121,10 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 * 因为客户信息是销售账本筛选(区域分组)和数据权限筛选完之后的客户
 	 *
 	 * @param params
-	 * @param request
 	 * @return
 	 */
 	@Override
-	public Page<CustSalesStatisticsModel> getCustSalesStatistics(Map<String, Object> params, Page page, HttpServletRequest request) {
+	public Page<CustSalesStatisticsModel> getCustSalesStatistics(Map<String, Object> params, Page page) {
 
 		int retain = SysUtil.getSysConfigRetain();
 
@@ -2181,11 +2177,10 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 * 因为客户信息是销售账本筛选(区域分组)和数据权限筛选完之后的客户
 	 *
 	 * @param params
-	 * @param request
 	 * @return
 	 */
 	@Override
-	public Page<CustSalesDetailModel> getCustSalesDetail(Map<String, Object> params, Page page, HttpServletRequest request) {
+	public Page<CustSalesDetailModel> getCustSalesDetail(Map<String, Object> params, Page page) {
 
 		List<CustSalesDetailModel> records = super.baseMapper.selectCustSalesDetailPageSelective(params, page);
 
@@ -2355,12 +2350,11 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 *
 	 * @param params
 	 * @param page
-	 * @param request
 	 * @return
 	 */
 	@Override
 //	@DataAuthVerification
-	public Page<GoodsSalesSummarizingModel> getGoodsSalesSummarizing(Map<String, Object> params, Page page, HttpServletRequest request) {
+	public Page<GoodsSalesSummarizingModel> getGoodsSalesSummarizing(Map<String, Object> params, Page page) {
 
 		int retain = SysUtil.getSysConfigRetain();
 		List<GoodsSalesSummarizingModel> records = super.baseMapper.selectGoodsSalesSummarizing(params, page);
@@ -2409,7 +2403,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 * selectSingleGoodsSalesDetail(params,page) 只有一条记录，但是为了将分页数据一起返回，所以封装方法时类型为Page<SingleGoodsSalesDetailModel>
 	 */
 	@Override
-	public Page<SingleGoodsSalesDetailModel> getSingleGoodsSalesDetail(Map<String, Object> params, Page page, HttpServletRequest request) {
+	public Page<SingleGoodsSalesDetailModel> getSingleGoodsSalesDetail(Map<String, Object> params, Page page) {
 
 		int retain = SysUtil.getSysConfigRetain();
 
@@ -2470,7 +2464,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 * 商品销售排名不做数据权限控制
 	 */
 	@Override
-	public Page<GoodsSalesRankModel> getGoodsSalesRank(Map<String, Object> params, Page page, HttpServletRequest request) {
+	public Page<GoodsSalesRankModel> getGoodsSalesRank(Map<String, Object> params, Page page) {
 
 		int retain = SysUtil.getSysConfigRetain();
 
@@ -2575,7 +2569,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 */
 	@Override
 //	@DataAuthVerification
-	public CustSalesDetailSummarizingModel getCustSalesDetailSummarizing(Map<String, Object> params, HttpServletRequest request) {
+	public CustSalesDetailSummarizingModel getCustSalesDetailSummarizing(Map<String, Object> params) {
 		int retain = SysUtil.getSysConfigRetain();
 		CustSalesDetailSummarizingModel custSalesDetailSummarizingModel = super.baseMapper.selectCustSalesDetailSummarizing(params);
 
@@ -2700,7 +2694,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 */
 	@Override
 	@Transactional
-	public ResponseModel invalidIndent(Indent indent, HttpServletRequest request) {
+	public ResponseModel invalidIndent(Indent indent) {
 
 		Integer custId = indent.getCustId();
 		Long indentId = indent.getIndentId();

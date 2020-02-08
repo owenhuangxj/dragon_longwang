@@ -216,7 +216,7 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 	 */
 	@Override
 	@DataAuthVerification
-	public Page<AccountCheckingModel> getAccountChecking(Map<String, Object> params, Page page, HttpServletRequest request) {
+	public Page<AccountCheckingModel> getAccountChecking(Map<String, Object> params, Page page) {
 
 		// 处理业务员: 查询业务员就是查询该业务员所有的客户 ; 将业务员的客户和处数据权限的客户区交集
 		Integer salesmanId = (Integer) params.get("salesmanId");
@@ -274,7 +274,7 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 	}
 
 	@Override
-	public AccountCheckingSummationModel getAccountCheckingSummation(Map<String, Object> params, HttpServletRequest request) {
+	public AccountCheckingSummationModel getAccountCheckingSummation(Map<String, Object> params) {
 
 		Set<Integer> custIds = (Set<Integer>) params.get(Constant.CUST_IDS_LABEL);
 		// 没有满足条件的记录(没有客户信息)就不去做统计了
@@ -403,7 +403,7 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 
 	@Override
 	@DataAuthVerification
-	public Page<Map<String, List<Map<String, String>>>> getReceiptStatics(Map<String, Object> params, Page page, HttpServletRequest request) {
+	public Page<Map<String, List<Map<String, String>>>> getReceiptStatics(Map<String, Object> params, Page page) {
 
 		String type = String.valueOf(params.get("type"));
 

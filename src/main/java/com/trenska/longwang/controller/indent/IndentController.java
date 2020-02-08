@@ -86,8 +86,8 @@ public class IndentController {
 	})
 	@PostMapping("/add")
 	@ApiOperation("添加订货单")
-	public ResponseModel addIndent(@RequestBody Indent indent, HttpServletRequest request) {
-		return indentService.saveIndent(indent, request);
+	public ResponseModel addIndent(@RequestBody Indent indent) {
+		return indentService.saveIndent(indent);
 	}
 
 	/**
@@ -188,7 +188,6 @@ public class IndentController {
 			@RequestParam(required = false, name = "endTime") String endTime,
 			@RequestParam(required = false, name = "beginTime") String beginTime
 	) {
-
 		Map<String, Object> params = new HashMap<>();
 		params.put("endTime", endTime);
 		params.put("beginTime", beginTime);
@@ -208,11 +207,11 @@ public class IndentController {
 			@ApiImplicitParam(name = "indentId", value = "订货单id", paramType = "path", dataType = "long"),
 	})
 	@ApiOperation("撤销审核订货单")
-	public ResponseModel repealIndentByNo(@PathVariable("indentId") Long indentId, HttpServletRequest request) {
+	public ResponseModel repealIndentByNo(@PathVariable("indentId") Long indentId) {
 		if (NumberUtil.isLongNotUsable(indentId)) {
 			return ResponseModel.getInstance().succ(false).msg("无此订货单信息");
 		}
-		return indentService.repealIndent(indentId, request);
+		return indentService.repealIndent(indentId);
 	}
 
 	/**
@@ -226,7 +225,7 @@ public class IndentController {
 	})
 	@ApiOperation("订货单出库")
 	@CheckDuplicateSubmit
-	public ResponseModel stockoutIndent(@RequestBody Indent indent, HttpServletRequest request) {
+	public ResponseModel stockoutIndent(@RequestBody Indent indent) {
 		if (indent == null) {
 			return ResponseModel.getInstance().succ(false).msg("不存在该订货单信息，不能出库！");
 		}
@@ -243,7 +242,7 @@ public class IndentController {
 		if (NumberUtil.isLongNotUsable(indentId) || StringUtils.isEmpty(indent.getIndentNo())) {
 			return ResponseModel.getInstance().succ(false).msg("出库失败:订单关键信息不能为空！");
 		}
-		return indentService.stockoutIndent(indent, request);
+		return indentService.stockoutIndent(indent);
 	}
 
 	/**
@@ -253,13 +252,13 @@ public class IndentController {
 	 */
 	@PostMapping("/stockout/invalid/{indentNo}/{stockNo}")
 	@ApiOperation("作废订货单的出库单")
-	public ResponseModel validStockout(@PathVariable("indentNo") String indentNo, @PathVariable("stockNo") String stockNo, HttpServletRequest request) {
+	public ResponseModel validStockout(@PathVariable("indentNo") String indentNo, @PathVariable("stockNo") String stockNo) {
 		return null;
 	}
 
 	@PutMapping("/invalid/receipt/{receiptId}")
 	@ApiOperation("作废订货单的收款单")
-	public ResponseModel invalidReceiptById(@PathVariable("receiptId") Long receiptId, HttpServletRequest request) {
+	public ResponseModel invalidReceiptById(@PathVariable("receiptId") Long receiptId) {
 		if (NumberUtil.isLongNotUsable(receiptId)) {
 			return ResponseModel.getInstance().succ(false).msg(Constant.INVALID_RECEIPT);
 		}
@@ -272,12 +271,12 @@ public class IndentController {
 		if (StringUtils.isEmpty(busiNo)) {
 			return ResponseModel.getInstance().succ(false).msg(Constant.INVALID_INDENT);
 		}
-		return indentService.cancelReceipt(receipt, request);
+		return indentService.cancelReceipt(receipt);
 	}
 
 	@PutMapping("/invalid/pay/{receiptId}")
 	@ApiOperation("作废订货单的付款单")
-	public ResponseModel cancelPayReceiptById(@PathVariable("receiptId") Long receiptId, HttpServletRequest request) {
+	public ResponseModel cancelPayReceiptById(@PathVariable("receiptId") Long receiptId) {
 		boolean notUsable = NumberUtil.isLongNotUsable(receiptId);
 		if (notUsable) {
 			return ResponseModel.getInstance().succ(false).msg(Constant.INVALID_PAY_RECEIPT);
@@ -292,7 +291,7 @@ public class IndentController {
 		if (StringUtils.isEmpty(busiNo)) {
 			return ResponseModel.getInstance().succ(false).msg(Constant.INVALID_INDENT);
 		}
-		return indentService.cancelPayReceipt(pay, request);
+		return indentService.cancelPayReceipt(pay);
 	}
 
 	/**
@@ -343,7 +342,7 @@ public class IndentController {
 	})
 	@ApiOperation("作废订货单")
 	@CheckDuplicateSubmit
-	public ResponseModel invalid(@PathVariable("indentId") Long indentId, HttpServletRequest request) {
+	public ResponseModel invalid(@PathVariable("indentId") Long indentId) {
 		if (!NumberUtil.isLongUsable(indentId)) {
 			return ResponseModel.getInstance().succ(false).msg("不存在该订货单信息");
 		}
@@ -366,7 +365,7 @@ public class IndentController {
 		 * 	 	3.1 增加一条欠款明细，金额是订单金额
 		 * 	 	3.2 客户欠款减少，金额是订单金额
 		 */
-		return indentService.invalidIndent(indent, request);
+		return indentService.invalidIndent(indent);
 	}
 
 	@PutMapping("/update")
@@ -402,14 +401,14 @@ public class IndentController {
 	})
 	@ApiOperation("核定修改订货单")
 	@CheckDuplicateSubmit
-	public ResponseModel changeIndent(@RequestBody Indent indent, HttpServletRequest request) {
+	public ResponseModel changeIndent(@RequestBody Indent indent) {
 		if (indent == null) {
 			return ResponseModel.getInstance().succ(false).msg("无效的订单信息!");
 		}
 		if (indent.getIndentDetails().isEmpty()) {
 			return ResponseModel.getInstance().succ(false).msg("无效的商品信息!");
 		}
-		return indentService.changeIndent(indent, request);
+		return indentService.changeIndent(indent);
 	}
 
 	@GetMapping("/list/page/search/{current}/{size}")
@@ -431,8 +430,8 @@ public class IndentController {
 	})
 	@ApiOperation("订货/退货单通用分页")
 	public ResponseModel<Indent> listIndentPage(
-			@PathVariable(value = "current") Integer current,
 			@PathVariable(value = "size") Integer size,
+			@PathVariable(value = "current") Integer current,
 			@RequestParam(value = "indentType") String indentType,
 			@RequestParam(required = false, name = "stat") String stat,
 			@RequestParam(required = false, name = "custId") Integer custId,
@@ -445,8 +444,7 @@ public class IndentController {
 			@RequestParam(required = false, name = "areaGrpId") Integer areaGrpId,
 			@RequestParam(required = false, name = "auditStat") Boolean auditStat,
 			@RequestParam(required = false, name = "iouStatus") Boolean iouStatus,
-			@RequestParam(required = false, name = "receiptStat") String receiptStat,
-			HttpServletRequest request
+			@RequestParam(required = false, name = "receiptStat") String receiptStat
 	) {
 		Page page = new Page(current, size);
 		Map<String, Object> params = new HashMap<>();
@@ -464,7 +462,7 @@ public class IndentController {
 		params.put("indentType", indentType);
 		params.put("receiptStat", receiptStat);
 
-		Page<Indent> pageInfo = indentService.getIndentPageSelective(params, page, request);
+		Page<Indent> pageInfo = indentService.getIndentPageSelective(params, page);
 		return ResponseModel.getInstance().page(pageInfo);
 	}
 

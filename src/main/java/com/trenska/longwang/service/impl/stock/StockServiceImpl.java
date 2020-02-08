@@ -149,7 +149,7 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, Stock> implements
 	}
 
 	@Override
-	public Page<GoodsStockSummarizingModel> getGoodsStockSummarizing(Map<String, Object> params, Page page, HttpServletRequest request) {
+	public Page<GoodsStockSummarizingModel> getGoodsStockSummarizing(Map<String, Object> params, Page page) {
 
 		List<GoodsStockSummarizingModel> records = super.baseMapper.selectGoodsStockSummarizing(params, page);
 

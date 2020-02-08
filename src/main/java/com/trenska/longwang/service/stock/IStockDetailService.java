@@ -19,7 +19,7 @@ import java.util.Map;
  */
 public interface IStockDetailService extends IService<StockDetail> {
 
-	ResponseModel stockin(Stock stock, HttpServletRequest request);
+	ResponseModel stockin(Stock stock);
 
 	ResponseModel stockout(Stock stock, HttpServletRequest request);
 
@@ -31,11 +31,11 @@ public interface IStockDetailService extends IService<StockDetail> {
 
 	Page<StockWarningModel> getStockWarningPage(Map<String, Object> params, Page page);
 
-	ResponseModel cancelStockin(String stockNo,HttpServletRequest request);
+	ResponseModel cancelStockin(String stockNo);
 
-	ResponseModel cancelStockout(String stockNo, HttpServletRequest request);
+	ResponseModel cancelStockout(String stockNo);
 
-	ResponseModel changeStockin(Stock stock, HttpServletRequest request) throws IOException;
+	ResponseModel changeStockin(Stock stock) throws IOException;
 
 	//	Page<List<OverBrkModel>> getOverBrkStockPage(Map<String, Object> params, Page page);
 }

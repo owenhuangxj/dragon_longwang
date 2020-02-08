@@ -80,7 +80,6 @@ public class ReportsController {
 	})
 	@ApiOperation("客户销售总账")
 	public PageHelper<CustSalesBillModel> custSalesBillAmount(
-			HttpServletRequest request,
 			@RequestParam(required = false, name = "endTime") String endTime,
 			@RequestParam(required = false, name = "custName") String custName,
 			@RequestParam(required = false, name = "brandName") String brandName,
@@ -103,7 +102,7 @@ public class ReportsController {
 		params.put("goodsScope", goodsScope);
 		params.put("salesmanId", salesmanId);
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
-		Page<CustSalesBillModel> pageInfo = indentService.getCustSales(params, page, request);
+		Page<CustSalesBillModel> pageInfo = indentService.getCustSales(params, page);
 		return PageHelper.getInstance().pageData(pageInfo);
 	}
 
@@ -125,7 +124,6 @@ public class ReportsController {
 	})
 	@ApiOperation("客户销售汇总")
 	public PageHelper<CustSalesSummarizingModel> custSalesSummarizing(
-			HttpServletRequest request,
 			@RequestParam(required = false, name = "custId") Integer custId,
 			@RequestParam(required = false, name = "custName") String custName,
 			@RequestParam(required = false, name = "brandName") String brandName,
@@ -155,7 +153,7 @@ public class ReportsController {
 
 		System.out.println("sysEmp : " + sysEmp);
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
-		Page<CustSalesSummarizingModel> pageInfo = indentService.getCustSalesSummarizing(params, page, request);
+		Page<CustSalesSummarizingModel> pageInfo = indentService.getCustSalesSummarizing(params, page);
 		CustSalesSummationModel summarizing = indentService.getCustSalesSummation(params);
 		return PageHelper.getInstance().pageData(pageInfo).summarizing(summarizing);
 	}
@@ -175,7 +173,6 @@ public class ReportsController {
 	})
 	@ApiOperation("客户销售统计-->销售账本的商品汇总")
 	public PageHelper<CustSalesStatisticsModel> custSalesStatistic(
-			HttpServletRequest request,
 			@RequestParam(required = false, name = "custId") Integer custId,
 			@RequestParam(required = false, name = "custName") String custName,
 			@RequestParam(required = false, name = "endTime") String endTime,
@@ -197,8 +194,8 @@ public class ReportsController {
 		params.put("frtCatName", frtCatName);
 		params.put("scdCatName", scdCatName);
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
-		CustSalesStatisticsSummationModel summarizing = indentService.selectCustSalesStatisticsSummation(params, request);
-		Page<CustSalesStatisticsModel> pageInfo = indentService.getCustSalesStatistics(params, page, request);
+		CustSalesStatisticsSummationModel summarizing = indentService.selectCustSalesStatisticsSummation(params);
+		Page<CustSalesStatisticsModel> pageInfo = indentService.getCustSalesStatistics(params, page);
 		return PageHelper.getInstance().pageData(pageInfo).summarizing(summarizing);
 	}
 
@@ -218,7 +215,6 @@ public class ReportsController {
 	})
 	@ApiOperation("客户销售明细 --> 销售账本的客户订单汇总")
 	public PageHelper<CustSalesDetailModel> custSalesDetail(
-			HttpServletRequest request,
 			@RequestParam(required = false, name = "custId") Integer custId,
 			@RequestParam(required = false, name = "endTime") String endTime,
 			@RequestParam(required = false, name = "brandName") String brandName,
@@ -239,8 +235,8 @@ public class ReportsController {
 		params.put("frtCatName", frtCatName);
 		params.put("scdCatName", scdCatName);
 		params.put("salesmanId", salesmanId);
-		Page<CustSalesDetailModel> pageInfo = indentService.getCustSalesDetail(params, page, request);
-		CustSalesDetailSummarizingModel summarizing = indentService.getCustSalesDetailSummarizing(params, request);
+		Page<CustSalesDetailModel> pageInfo = indentService.getCustSalesDetail(params, page);
+		CustSalesDetailSummarizingModel summarizing = indentService.getCustSalesDetailSummarizing(params);
 
 		if (ObjectUtils.isEmpty(summarizing)){
 			summarizing = new CustSalesDetailSummarizingModel();
@@ -395,7 +391,7 @@ public class ReportsController {
 		params.put("specPropId", specPropId);
 		params.put("salesmanId", salesmanId);
 		CommonSummation summarizing = indentService.getGoodsSalesSummation(params);
-		Page<GoodsSalesSummarizingModel> pageInfo = indentService.getGoodsSalesSummarizing(params, page, request);
+		Page<GoodsSalesSummarizingModel> pageInfo = indentService.getGoodsSalesSummarizing(params, page);
 		return PageHelper.getInstance().pageData(pageInfo).summarizing(summarizing);
 	}
 
@@ -424,7 +420,6 @@ public class ReportsController {
 	})
 	@ApiOperation("商品销售明细")
 	public PageHelper<SingleGoodsSalesDetailModel> singleGoodsSalesDetail(
-			HttpServletRequest request,
 			@RequestParam(name = "goodsId") Integer goodsId,
 			@RequestParam(required = false, name = "goodsScope") Integer goodsScope,
 			@RequestParam(required = false, name = "empId") Integer empId,
@@ -463,7 +458,7 @@ public class ReportsController {
 		/**
 		 * 实际上外层只有一条记录，内层的订货单信息为分页信息
 		 */
-		Page<SingleGoodsSalesDetailModel> pageInfo = indentService.getSingleGoodsSalesDetail(params, page, request);
+		Page<SingleGoodsSalesDetailModel> pageInfo = indentService.getSingleGoodsSalesDetail(params, page);
 
 		return PageHelper.getInstance().pageData(pageInfo);
 	}
@@ -488,7 +483,6 @@ public class ReportsController {
 	})
 	@ApiOperation("商品销售排名")
 	public PageHelper<GoodsSalesRankModel> goodsSalesRank(
-			HttpServletRequest request,
 			@RequestParam(required = false, name = "endTime") String endTime,
 			@RequestParam(required = false, name = "custName") String custName,
 			@RequestParam(required = false, name = "beginTime") String beginTime,
@@ -513,7 +507,7 @@ public class ReportsController {
 		params.put("frtCatName", frtCatName);
 		params.put("scdCatName", scdCatName);
 		params.put("statisticsWay", statisticsWay);
-		Page<GoodsSalesRankModel> pageInfo = indentService.getGoodsSalesRank(params, page, request);
+		Page<GoodsSalesRankModel> pageInfo = indentService.getGoodsSalesRank(params, page);
 		CommonSummation summation = indentService.getGoodsSalesRankSummation(params);
 		return PageHelper.getInstance().pageData(pageInfo).summarizing(summation);
 	}
@@ -536,7 +530,6 @@ public class ReportsController {
 	})
 	@ApiOperation("业务员销售排名")
 	public PageHelper<SalesmanSalesRankModel> salesmanSalesRank(
-			HttpServletRequest request,
 			@RequestParam(required = false, name = "endTime") String endTime,
 			@RequestParam(required = false, name = "beginTime") String beginTime,
 			@RequestParam(required = false, name = "brandName") String brandName,
@@ -555,7 +548,7 @@ public class ReportsController {
 		params.put("brandName", brandName);
 		params.put("frtCatName", frtCatName);
 		params.put("scdCatName", scdCatName);
-		Page<SalesmanSalesRankModel> pageInfo = indentService.getSalesmanSalesRank(params, page, request);
+		Page<SalesmanSalesRankModel> pageInfo = indentService.getSalesmanSalesRank(params, page);
 		CommonSummation summation = indentService.getSalesmanSalesRankSummation(params);
 		return PageHelper.getInstance().pageData(pageInfo).summarizing(summation);
 	}
@@ -576,7 +569,6 @@ public class ReportsController {
 	})
 	@ApiOperation("进出库数量汇总")
 	public PageHelper<GoodsStockSummarizingModel> goodsStockSummarizing(
-			HttpServletRequest request,
 			@RequestParam(required = false, name = "endTime") String endTime,
 			@RequestParam(required = false, name = "combine") String combine,
 			@RequestParam(required = false, name = "operType") String operType,
@@ -597,7 +589,7 @@ public class ReportsController {
 		params.put("frtCatName", frtCatName);
 		params.put("scdCatName", scdCatName);
 		params.put("specPropId", specPropId);
-		Page<GoodsStockSummarizingModel> pageInfo = stockService.getGoodsStockSummarizing(params, page, request);
+		Page<GoodsStockSummarizingModel> pageInfo = stockService.getGoodsStockSummarizing(params, page);
 		GoodsStockSummationModel summarizing = stockService.getGoodsStockSummartion(params);
 		return PageHelper.getInstance().pageData(pageInfo).summarizing(summarizing);
 	}
@@ -700,7 +692,7 @@ public class ReportsController {
 		params.put("areaGrpId", areaGrpId);
 		params.put("salesmanId", salesmanId);
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
-		Page<Map<String, List<Map<String, String>>>> receiptStatics = receiptService.getReceiptStatics(params, page,request);
+		Page<Map<String, List<Map<String, String>>>> receiptStatics = receiptService.getReceiptStatics(params, page);
 
 		return PageHelper.getInstance().pageData(receiptStatics);
 
@@ -734,7 +726,7 @@ public class ReportsController {
 		params.put("beginTime", beginTime);
 		params.put("shipmanId", shipmanId);
 		CommonSummation summarizing = indentService.getGoodsDeliveryStaticsSummarizing(params);
-		Page<DeliveryStaticsModel> pageInfo = indentService.getGoodsDeliveryStatics(page,params,request);
+		Page<DeliveryStaticsModel> pageInfo = indentService.getGoodsDeliveryStatics(page,params);
 		return PageHelper.getInstance().pageData(pageInfo).summarizing(summarizing);
 	}
 
@@ -752,7 +744,6 @@ public class ReportsController {
 	})
 	@ApiOperation("商品送货明细统计")
 	public PageHelper<DeliveryDetailsStaticsModel> goodsDeliveryDetailStatics(
-			HttpServletRequest request,
 			@RequestParam(required = false, name = "endTime") String endTime,
 			@RequestParam(required = false, name = "custName") String custName,
 			@RequestParam(required = false, name = "beginTime") String beginTime,
@@ -767,7 +758,7 @@ public class ReportsController {
 		params.put("beginTime", beginTime);
 		params.put("shipmanId", shipmanId);
 		DeliveryStaticsModel summarizing = indentService.getGoodsDeliveryDetailsStaticsSummarizing(params);
-		Page<DeliveryDetailsStaticsModel> pageInfo = indentService.getGoodsDeliveryDetailsStatics(params, page, request);
+		Page<DeliveryDetailsStaticsModel> pageInfo = indentService.getGoodsDeliveryDetailsStatics(params, page);
 		return PageHelper.getInstance().pageData(pageInfo).summarizing(summarizing);
 	}
 }

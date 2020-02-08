@@ -68,14 +68,14 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
 	 * @return
 	 */
 	@Override
-	public Page<Customer> getCustomerPage(Page page, HttpServletRequest request) {
+	public Page<Customer> getCustomerPage(Page page) {
 
 		int customerCount = count();
 		if (customerCount == 0) {
 			return new Page<Customer>(1, 0);
 		}
 		// 在服务层注入数据权限控制，通过empId查找对应的数据权限 : 可以查看的用户
-		Set<Integer> custIds = CustomerUtil.getCurrentUserDataAuth(request, areaGrpMapper);
+		Set<Integer> custIds = CustomerUtil.getCurrentUserDataAuth(areaGrpMapper);
 
 		if (CollectionUtils.isEmpty(custIds)) {
 			try {
@@ -113,7 +113,7 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
 
 	@Override
 	@DataAuthVerification
-	public Page<Customer> getCustomerPageSelective(Map<String, Object> params, Page page, HttpServletRequest request) {
+	public Page<Customer> getCustomerPageSelective(Map<String, Object> params, Page page) {
 		Integer total = super.baseMapper.selectCustomerCountSelective(params);
 		List<Customer> records = super.baseMapper.selectCustomerWithDataPermPageSelective(params, page);
 		page.setTotal(total);
@@ -265,12 +265,11 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
 	 * 注意: 添加了数据权限
 	 *
 	 * @param params
-	 * @param request
 	 * @return
 	 */
 	@Override
 	@DataAuthVerification
-	public List<CustomerInfoModel> getCustomerInfoSelective(Map<String, Object> params, HttpServletRequest request) {
+	public List<CustomerInfoModel> getCustomerInfoSelective(Map<String, Object> params) {
 		Set<Integer> custIds = new HashSet<>();
 		List<CustomerInfoModel> customerInfos = super.baseMapper.selectExportingCustomerInfoSelective(params);
 		return customerInfos;

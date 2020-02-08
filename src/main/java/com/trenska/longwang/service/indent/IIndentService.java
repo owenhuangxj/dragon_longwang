@@ -24,7 +24,7 @@ import java.util.Map;
  */
 public interface IIndentService extends IService<Indent> {
 
-	ResponseModel saveIndent(Indent indent, HttpServletRequest request);
+	ResponseModel saveIndent(Indent indent);
 
 	ResponseModel removeIndentById(Long indentId, String indentType);
 
@@ -34,25 +34,25 @@ public interface IIndentService extends IService<Indent> {
 
 	ResponseModel updateIndent(Indent indent);
 
-	Page<Indent> getIndentPageSelective(Map<String, Object> params, Page page, HttpServletRequest request);
+	Page<Indent> getIndentPageSelective(Map<String, Object> params, Page page);
 
 	ResponseModel confirmIndent(String indentNo);
 
 	ResponseModel cancelIndentByNo(String indentNo);
 
-	ResponseModel repealIndent(long indentId, HttpServletRequest request);
+	ResponseModel repealIndent(long indentId);
 
-	ResponseModel stockoutIndent(Indent indent, HttpServletRequest request);
+	ResponseModel stockoutIndent(Indent indent);
 
 	Indent getIndentInfo(String indentNo);
 
-	ResponseModel invalidIndent(Indent indent, HttpServletRequest request);
+	ResponseModel invalidIndent(Indent indent);
 
 	List<IndentDetail> getIndentDetails(String indentNo);
 
-	ResponseModel saveSalesReturn(Indent indent, HttpServletRequest request);
+	ResponseModel saveSalesReturn(Indent indent);
 
-	ResponseModel invalidSalseReturn(Indent indent, HttpServletRequest request);
+	ResponseModel invalidSalseReturn(Indent indent);
 
 	ResponseModel removeReturnSalesById(Long indentId);
 
@@ -68,15 +68,15 @@ public interface IIndentService extends IService<Indent> {
 
 	Map<String, Object> pdfAndPrintThd(Long indentId);
 
-	Page<CustSalesBillModel> getCustSales(Map<String, Object> params, Page page, HttpServletRequest request);
+	Page<CustSalesBillModel> getCustSales(Map<String, Object> params, Page page);
 
-	Page<CustSalesSummarizingModel> getCustSalesSummarizing(Map<String, Object> params, Page page, HttpServletRequest request);
+	Page<CustSalesSummarizingModel> getCustSalesSummarizing(Map<String, Object> params, Page page);
 
-	CustSalesStatisticsSummationModel selectCustSalesStatisticsSummation(Map<String, Object> params, HttpServletRequest request);
+	CustSalesStatisticsSummationModel selectCustSalesStatisticsSummation(Map<String, Object> params);
 
-	Page<CustSalesStatisticsModel> getCustSalesStatistics(Map<String, Object> params, Page page, HttpServletRequest request);
+	Page<CustSalesStatisticsModel> getCustSalesStatistics(Map<String, Object> params, Page page);
 
-	Page<CustSalesDetailModel> getCustSalesDetail(Map<String, Object> params, Page page, HttpServletRequest request);
+	Page<CustSalesDetailModel> getCustSalesDetail(Map<String, Object> params, Page page);
 
 	Page<AreaSalesRankModel> getFirstLevelAreaSalesRank(Page page);
 
@@ -88,13 +88,13 @@ public interface IIndentService extends IService<Indent> {
 
 	CommonSummation getCustSalesRankSummation(Map<String, Object> params);
 
-	Page<GoodsSalesSummarizingModel> getGoodsSalesSummarizing(Map<String, Object> params, Page page, HttpServletRequest request);
+	Page<GoodsSalesSummarizingModel> getGoodsSalesSummarizing(Map<String, Object> params, Page page);
 
 	CommonSummation getGoodsSalesSummation(Map<String, Object> params);
 
-	Page<SingleGoodsSalesDetailModel> getSingleGoodsSalesDetail(Map<String, Object> params, Page page, HttpServletRequest request);
+	Page<SingleGoodsSalesDetailModel> getSingleGoodsSalesDetail(Map<String, Object> params, Page page);
 
-	Page<GoodsSalesRankModel> getGoodsSalesRank(Map<String, Object> params, Page page, HttpServletRequest request);
+	Page<GoodsSalesRankModel> getGoodsSalesRank(Map<String, Object> params, Page page);
 
 	CommonSummation getGoodsSalesRankSummation(Map<String, Object> params);
 
@@ -102,7 +102,7 @@ public interface IIndentService extends IService<Indent> {
 
 	IndentStatisticsSummationModel getIndentStatisticsSummation(Map<String, Object> params);
 
-	CustSalesDetailSummarizingModel getCustSalesDetailSummarizing(Map<String, Object> params, HttpServletRequest request);
+	CustSalesDetailSummarizingModel getCustSalesDetailSummarizing(Map<String, Object> params);
 
 	CustSalesSummationModel getCustSalesSummation(Map<String, Object> params);
 
@@ -110,13 +110,13 @@ public interface IIndentService extends IService<Indent> {
 
 	ResponseModel auditIndentById(Long indentId, String auditRemarks);
 
-	ResponseModel cancelReceipt(Receipt receipt, HttpServletRequest request);
+	ResponseModel cancelReceipt(Receipt receipt);
 
-	ResponseModel cancelPayReceipt(Receipt pay, HttpServletRequest request);
+	ResponseModel cancelPayReceipt(Receipt pay);
 
 	ResponseModel cancelIndentById(Long indentId);
 
-	ResponseModel changeIndent(Indent indent, HttpServletRequest request);
+	ResponseModel changeIndent(Indent indent);
 
 	Page<String> getDiscounts(Page page, Map<String, Object> params);
 
@@ -124,19 +124,19 @@ public interface IIndentService extends IService<Indent> {
 
 	ResponseModel updateAuditRemarks(String indentNo, String auditRemarks);
 
-	Page<DeliveryStaticsModel> getGoodsDeliveryStatics(Page page, Map<String, Object> params, HttpServletRequest request);
+	Page<DeliveryStaticsModel> getGoodsDeliveryStatics(Page page, Map<String, Object> params);
 
 	CommonSummation getGoodsDeliveryStaticsSummarizing(Map<String, Object> params);
 
 	DeliveryStaticsModel getGoodsDeliveryDetailsStaticsSummarizing(Map<String, Object> params);
 
-	Page<DeliveryDetailsStaticsModel> getGoodsDeliveryDetailsStatics(Map<String, Object> params, Page page, HttpServletRequest request);
+	Page<DeliveryDetailsStaticsModel> getGoodsDeliveryDetailsStatics(Map<String, Object> params, Page page);
 
 	Page<String> getIndentNosSelective(Page page, String str);
 
 	Page<IndentNoCustIdNameModel> getIndentNoCustNameSelective(Page page, String str);
 
-	Page<SalesmanSalesRankModel> getSalesmanSalesRank(Map<String, Object> params, Page page, HttpServletRequest request);
+	Page<SalesmanSalesRankModel> getSalesmanSalesRank(Map<String, Object> params, Page page);
 
 	CommonSummation getSalesmanSalesRankSummation(Map<String, Object> params);
 }

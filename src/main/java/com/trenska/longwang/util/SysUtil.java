@@ -125,13 +125,11 @@ public class SysUtil {
 	 *
 	 * @param srcParams
 	 * @param areaGrpMapper
-	 * @param request
 	 * @return
 	 */
-	public static Map<String, Object> dealDataPermAndAreaGrp(Map<String, Object> srcParams, AreaGrpMapper areaGrpMapper, HttpServletRequest request) {
-
+	public static Map<String, Object> dealDataPermAndAreaGrp(Map<String, Object> srcParams, AreaGrpMapper areaGrpMapper) {
 		///////////////////////////////////// 处理数据权限 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-		Set<Integer> custIds = CustomerUtil.getCurrentUserDataAuth(request, areaGrpMapper);
+		Set<Integer> custIds = CustomerUtil.getCurrentUserDataAuth(areaGrpMapper);
 		srcParams.put(Constant.CUST_IDS_LABEL, custIds);
 
 		///////////////////////////////////// 处理区域分组 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\

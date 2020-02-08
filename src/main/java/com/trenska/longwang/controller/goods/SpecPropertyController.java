@@ -94,7 +94,7 @@ public class SpecPropertyController {
 	@ApiOperation("商品规格值通用分页")
 	public PageHelper<SpecProperty> listSpecPropertyPageSelective(@PathVariable("current") Integer current, @PathVariable("size") Integer size, @RequestParam(value = "PropName",required = false) String PropName, @RequestParam(value = "stat",required = false) Boolean stat) {
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
-		Page<SpecProperty> pageInfo = null;
+		Page<SpecProperty> pageInfo;
 		if (ObjectUtils.anyNotNull(PropName,stat)) {
 			SpecProperty specProperty = new SpecProperty();
 			specProperty.setPropName(PropName);
@@ -177,4 +177,3 @@ public class SpecPropertyController {
 //		return PageHelper.getInstance().pageData(pageData);
 //	}
 }
-

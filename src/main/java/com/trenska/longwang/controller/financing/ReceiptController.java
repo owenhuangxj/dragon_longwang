@@ -243,7 +243,6 @@ public class ReceiptController {
 	})
 	@ApiOperation("客户对帐通用分页")
 	public PageHelper<AccountCheckingModel> listAccountChecking(
-			HttpServletRequest request,
 			@RequestParam(required = false, name = "endTime") String endTime,
 			@RequestParam(required = false, name = "custName") String custName,
 			@RequestParam(required = false, name = "beginTime") String beginTime,
@@ -262,12 +261,12 @@ public class ReceiptController {
 
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
 
-		Page<AccountCheckingModel> pageInfo = receiptService.getAccountChecking(params, page, request);
+		Page<AccountCheckingModel> pageInfo = receiptService.getAccountChecking(params, page);
 		List<AccountCheckingModel> records = pageInfo.getRecords();
 		AccountCheckingSummationModel dbSummation = new AccountCheckingSummationModel();
 		// 没有满足条件的记录就不去做统计了
 		if(CollectionUtils.isNotEmpty(records)){
-			dbSummation = receiptService.getAccountCheckingSummation(params, request);
+			dbSummation = receiptService.getAccountCheckingSummation(params);
 		}
 		// 保证数据库无数据时返回的各统计为 0
 		AccountCheckingSummationModel summarizing = dbSummation != null ? dbSummation : new AccountCheckingSummationModel();
@@ -373,7 +372,6 @@ public class ReceiptController {
 	@ApiOperation(value = "打印付款单")
 	@RequestMapping(value = "/printFkd/{receiptId}", method = RequestMethod.GET)
 	public ResponseModel printFkd(@PathVariable Long receiptId) {
-
 		Map<String, Object> params = new HashMap<>();
 		Receipt receipt = receiptService.getById(receiptId);
 		params.put("receipt_no", receipt.getReceiptNo());
@@ -384,7 +382,6 @@ public class ReceiptController {
 			Customer customer = customerService.getById(receipt.getCustId());
 			params.put("customer", customer.getCustName());
 		}
-
 		params.put("empName", "");
 		params.put("remarks", receipt.getReceiptRemarks());
 		params.put("receipt_type", receipt.getAccountType());
@@ -395,13 +392,8 @@ public class ReceiptController {
 			SysEmp sysemp = empService.getById(receipt.getEmpId());
 			params.put("empName", sysemp != null ? sysemp.getEmpName() : "");//制单人
 		}
-
 		String htmlContent = PDFUtil.freemarkerRender(params, templatePath + File.separator + "fkdpdftpl/fkd.ftl");
-
 		WebPrintModel wm = PrintSingleton.INSTNACE.getInstance().retOk(htmlContent, "24.1", "9.31");
-
 		return ResponseModel.getInstance().succ(true).data(wm);
-
 	}
-
 }

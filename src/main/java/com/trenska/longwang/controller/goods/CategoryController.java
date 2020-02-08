@@ -137,7 +137,7 @@ public class CategoryController {
 	public PageHelper<Category> listCategoryPageSelective(@PathVariable("current") Integer current, @PathVariable("size") Integer size, @RequestParam(value = "catName",required = false) String catName, @RequestParam(value = "stat",required = false) Boolean stat) {
 
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
-		Page<Category> pageInfo = null;
+		Page<Category> pageInfo;
 		if (ObjectUtils.anyNotNull(catName,stat)) {
 			Category category = new Category();
 			category.setCatName(catName);

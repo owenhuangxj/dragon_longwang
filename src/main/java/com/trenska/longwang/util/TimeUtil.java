@@ -12,9 +12,7 @@ public class TimeUtil {
 	public static String getCurrentDate(){
 		return new Date(System.currentTimeMillis()).toString();
 	}
-
 	public static String getCurrentTime(String pattern) {
 		return LocalDateTime.now().format(DateTimeFormatter.ofPattern(pattern));
 	}
-
 }

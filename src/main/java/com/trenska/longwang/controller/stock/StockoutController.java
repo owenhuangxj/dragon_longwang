@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -41,7 +42,7 @@ import java.util.Objects;
 @Api(description = "出库接口")
 @CrossOrigin
 @Slf4j
-public class  StockoutController {
+public class StockoutController {
 
 	@Autowired
 	private IStockDetailService stockoutService;
@@ -61,29 +62,29 @@ public class  StockoutController {
 	@PostMapping("/add")
 	@CheckDuplicateSubmit
 	@ApiOperation("商品出库")
-	public ResponseModel stockout(@RequestBody @ApiParam Stock stock , HttpServletRequest request) {
+	public ResponseModel stockout(@RequestBody @ApiParam Stock stock, HttpServletRequest request) {
 
-		if(Objects.isNull(stock)){
+		if (Objects.isNull(stock)) {
 			return ResponseModel.getInstance().succ(false).msg("出库失败:请输入有效的库存信息");
 		}
-		if(Objects.isNull(stock.getStockouts())){
+		if (Objects.isNull(stock.getStockouts())) {
 			return ResponseModel.getInstance().succ(false).msg("出库信息不能为null");
 		}
-		if(stock.getStockouts().isEmpty()){
+		if (stock.getStockouts().isEmpty()) {
 			return ResponseModel.getInstance().succ(false).msg("出库的商品信息不能为空");
 		}
 		// 出库
-		return stockoutService.stockout(stock,request);
+		return stockoutService.stockout(stock, request);
 	}
 
 	@CheckDuplicateSubmit
 	@PutMapping("/cancel/{stockNo}")
 	@ApiOperation("作废出库单")
-	public ResponseModel cancelStockout(@PathVariable("stockNo") String stockNo, HttpServletRequest request) {
-		if(StringUtils.isEmpty(stockNo)){
+	public ResponseModel cancelStockout(@PathVariable("stockNo") String stockNo) {
+		if (StringUtils.isEmpty(stockNo)) {
 			return ResponseModel.getInstance().succ(false).msg("无效的出库单");
 		}
-		return stockoutService.cancelStockout(stockNo,request);
+		return stockoutService.cancelStockout(stockNo);
 	}
 
 	@GetMapping("/list/page/made-date/{current}/{size}")
@@ -113,6 +114,7 @@ public class  StockoutController {
 
 	/**
 	 * http://localhost/stock/out/exportPDF/3/BY
+	 *
 	 * @param stockId
 	 * @param
 	 * @return
@@ -124,38 +126,30 @@ public class  StockoutController {
 			@ApiImplicitParam(name = "type", value = "单据类型 出库单:CK  入库单:RK  报溢单:BY  报损单:BS", required = true, paramType = "path", dataType = "string")
 
 	})
-	public ResponseEntity<?> exportPDF(@PathVariable Long stockId,@PathVariable String type) {
+	public ResponseEntity<?> exportPDF(@PathVariable Long stockId, @PathVariable String type) {
 		HttpHeaders headers = new HttpHeaders();
 		log.info("template = " + templatePath);
 		try {
 			Map<String, Object> params = stockService.prinAndPdf(stockId);
-			if (null == params || params.isEmpty())
-			{
-				return  new ResponseEntity<String>("{ \"succ\" : \"false\", \"msg\" : \"获取数据失败\" }",
+			if (null == params || params.isEmpty()) {
+				return new ResponseEntity<String>("{ \"succ\" : \"false\", \"msg\" : \"获取数据失败\" }",
 						headers, HttpStatus.NOT_FOUND);
 			}
 
-			String htmlStr ="";
+			String htmlStr = "";
 			String title = "";
-			if ("CK".equals(type.toUpperCase()))
-			{
+			if ("CK".equals(type.toUpperCase())) {
 				htmlStr = PDFUtil.freemarkerRender(params, templatePath + File.separator + "ckdpdftpl/tpl.ftl");
-				title = new String(( "出库单-" +  params.get("stockNo")).getBytes("gb2312"), "ISO8859-1") + ".pdf";
-			}
-			else if ("RK".equals(type.toUpperCase()))
-			{
+				title = new String(("出库单-" + params.get("stockNo")).getBytes("gb2312"), "ISO8859-1") + ".pdf";
+			} else if ("RK".equals(type.toUpperCase())) {
 				htmlStr = PDFUtil.freemarkerRender(params, templatePath + File.separator + "rkdpdftpl/tpl.ftl");
-				title = new String(( "入库单-" +  params.get("stockNo")).getBytes("gb2312"), "ISO8859-1") + ".pdf";
-			}
-			else if ("BY".equals(type.toUpperCase()))
-			{
+				title = new String(("入库单-" + params.get("stockNo")).getBytes("gb2312"), "ISO8859-1") + ".pdf";
+			} else if ("BY".equals(type.toUpperCase())) {
 				htmlStr = PDFUtil.freemarkerRender(params, templatePath + File.separator + "bydpdftpl/tpl.ftl");
-				title = new String(( "报溢单-" +  params.get("stockNo")).getBytes("gb2312"), "ISO8859-1") + ".pdf";
-			}
-			else if ("BS".equals(type.toUpperCase()))
-			{
+				title = new String(("报溢单-" + params.get("stockNo")).getBytes("gb2312"), "ISO8859-1") + ".pdf";
+			} else if ("BS".equals(type.toUpperCase())) {
 				htmlStr = PDFUtil.freemarkerRender(params, templatePath + File.separator + "bsdpdftpl/tpl.ftl");
-				title = new String(( "报损单-" +  params.get("stockNo")).getBytes("gb2312"), "ISO8859-1") + ".pdf";
+				title = new String(("报损单-" + params.get("stockNo")).getBytes("gb2312"), "ISO8859-1") + ".pdf";
 			}
 			log.info("html= " + htmlStr);
 			byte[] pdfBytes = PDFUtil.createPDF(htmlStr, templatePath + File.separator + "simsun.ttc");
@@ -165,20 +159,20 @@ public class  StockoutController {
 				return new ResponseEntity<byte[]>(pdfBytes, headers, HttpStatus.OK);
 			}
 
-		}catch (UnsupportedEncodingException e)
-		{
+		} catch (UnsupportedEncodingException e) {
 			headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
 			return new ResponseEntity<String>("{ \"code\" : \"404\", \"message\" : \"not found\" }",
 					headers, HttpStatus.NOT_FOUND);
 
 		}
 		headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
-		return  new ResponseEntity<String>("{ \"succ\" : \"false\", \"msg\" : \"获取数据失败\" }",
+		return new ResponseEntity<String>("{ \"succ\" : \"false\", \"msg\" : \"获取数据失败\" }",
 				headers, HttpStatus.NOT_FOUND);
 	}
 
 	/**
 	 * http://localhost/stock/out/exportPDF/3/BY
+	 *
 	 * @param stockId
 	 * @param type
 	 * @return
@@ -190,32 +184,23 @@ public class  StockoutController {
 			@ApiImplicitParam(name = "type", value = "单据类型 出库单:CK  入库单:RK  报溢单:BY  报损单:BS", required = true, paramType = "path", dataType = "string")
 
 	})
-	public ResponseModel printCkd(@PathVariable Long stockId, @PathVariable String type ) {
+	public ResponseModel printCkd(@PathVariable Long stockId, @PathVariable String type) {
 
 		Map<String, Object> params = stockService.prinAndPdf(stockId);
 
 		String htmlContent = "";
-		if ("CK".equals(type))
-		{
+		if ("CK".equals(type)) {
 			htmlContent = PDFUtil.freemarkerRender(params, templatePath + File.separator + "ckdpdftpl/tpl.ftl");
-		}
-		else if ("RK".equals(type))
-		{
+		} else if ("RK".equals(type)) {
 			htmlContent = PDFUtil.freemarkerRender(params, templatePath + File.separator + "rkdpdftpl/tpl.ftl");
-		}
-		else if ("BY".equals(type))
-		{
+		} else if ("BY".equals(type)) {
 			htmlContent = PDFUtil.freemarkerRender(params, templatePath + File.separator + "bydpdftpl/tpl.ftl");
-		}
-		else if ("BS".equals(type))
-		{
+		} else if ("BS".equals(type)) {
 			htmlContent = PDFUtil.freemarkerRender(params, templatePath + File.separator + "bsdpdftpl/tpl.ftl");
 		}
 
 		WebPrintModel wm = PrintSingleton.INSTNACE.getInstance().retOk(htmlContent, "24.1", "13");
 
 		return ResponseModel.getInstance().succ(true).data(wm);
-
 	}
-
 }

@@ -8,7 +8,6 @@ import com.trenska.longwang.entity.sys.SysConfig;
  * 创建人:Owen
  */
 public class SysConfigUtil {
-
 	public static SysConfig getSysConfig(){
 		SysConfig sysConfig = ApplicationContextHolder.getBean(SysConfig.class);
 		if(null == sysConfig){

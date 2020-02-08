@@ -130,9 +130,9 @@ public class StockController {
 
 	@GetMapping("/list/page/goods-stock/{current}/{size}")
 	@ApiImplicitParams({
+			@ApiImplicitParam(name = "goodsId", value = "商品id", paramType = "query", dataType = "int"),
 			@ApiImplicitParam(name = "current", value = "当前页", required = true, paramType = "path", dataType = "int"),
-			@ApiImplicitParam(name = "size", value = "每页记录数", required = true, paramType = "path", dataType = "int"),
-			@ApiImplicitParam(name = "goodsId", value = "商品id", required = false, paramType = "query", dataType = "int")
+			@ApiImplicitParam(name = "size", value = "每页记录数", required = true, paramType = "path", dataType = "int")
 	})
 	@ApiOperation("获取商品的批次库存分页,查询所有商品不传递goodsId或者goodsId传空")
 	public PageHelper<GoodsStock> listGoodsStockPage(
@@ -161,8 +161,8 @@ public class StockController {
 	})
 	@ApiOperation("入库/出库通用分页")
 	public PageHelper<Stock> listStockPage(
-			@PathVariable(value = "current") Integer current,
 			@PathVariable(value = "size") Integer size,
+			@PathVariable(value = "current") Integer current,
 			@RequestParam(value = "stockType") String stockType,
 			@RequestParam(required = false, name = "stat") Boolean stat,
 			@RequestParam(required = false, name = "endTime") String endTime,
@@ -194,8 +194,8 @@ public class StockController {
 	})
 	@ApiOperation("入库/出库详情通用分页")
 	public PageHelper<Stock> listStockDetailPage(
-			@PathVariable(value = "current") Integer current,
 			@PathVariable(value = "size") Integer size,
+			@PathVariable(value = "current") Integer current,
 			@RequestParam(name = "stockNo") String stockNo,
 			@RequestParam(value = "stockType") String stockType,
 			@RequestParam(required = false,name = "stat") Boolean stat,
@@ -222,8 +222,8 @@ public class StockController {
 	})
 	@ApiOperation("商品预警分页")
 	public PageHelper<StockWarningModel> listStockWarningPage(
-			@PathVariable(value = "current") Integer current,
 			@PathVariable(value = "size") Integer size,
+			@PathVariable(value = "current") Integer current,
 			@RequestParam(name = "combine",required = false) String combine,
 			@RequestParam(name = "label",required = false) String label
 	) {

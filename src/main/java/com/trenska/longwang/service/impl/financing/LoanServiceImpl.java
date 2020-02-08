@@ -53,7 +53,7 @@ public class LoanServiceImpl extends ServiceImpl<LoanMapper, Loan> implements IL
 	 */
 	@Override
 	@Transactional
-	public ResponseModel addLoan(Loan loan, HttpServletRequest request) {
+	public ResponseModel addLoan(Loan loan) {
 
 		Integer empIdInToken = SysUtil.getEmpId();
 

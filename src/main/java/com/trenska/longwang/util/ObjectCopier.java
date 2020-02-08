@@ -70,5 +70,4 @@ public class ObjectCopier {
 		//使用TypeReference可以让Bean里面的Bean不被JSONObject覆盖
 		return JSONObject.parseObject(jsonStr, type, Feature.AllowComment);
 	}
-
 }

@@ -65,7 +65,6 @@ public class ReportsExcelController {
 	@GetMapping("/cust-sales-bill-excel/{current}/{size}")
 	@ApiOperation("客户销售账本excel导出")
 	public ResponseEntity<byte[]> custSalesBillAmountExcel(
-			HttpServletRequest request,
 			@RequestParam(required = false, name = "endTime") String endTime,
 			@RequestParam(required = false, value = "beginTime") String beginTime,
 			@RequestParam(required = false, name = "brandName") String brandName,
@@ -86,7 +85,7 @@ public class ReportsExcelController {
 		params.put("frtCatName", frtCatName);
 		params.put("scdCatName", scdCatName);
 		params.put("salesmanId", salesmanId);
-		Page<CustSalesBillModel> pageInfo = indentService.getCustSales(params, page, request);
+		Page<CustSalesBillModel> pageInfo = indentService.getCustSales(params, page);
 		List<CustSalesBillRecordsModel> contents = new ArrayList<>();
 		List<CustSalesBillRecordsModel> records = pageInfo.getRecords().get(0).getRecords();
 		contents.addAll(records);
@@ -147,7 +146,6 @@ public class ReportsExcelController {
 		wb.write(baos);
 		// 通过ResponseEntity将Excel输出到客户端
 		return new ResponseEntity<byte[]>(baos.toByteArray(), headers, HttpStatus.CREATED);
-
 	}
 
 	@GetMapping("/cust-sales-summarizing-excel/{current}/{size}")
@@ -249,7 +247,7 @@ public class ReportsExcelController {
 		params.put("scdCatName", scdCatName);
 		params.put("goodsScope", goodsScope);
 
-		Page<CustSalesSummarizingModel> pageInfo = indentService.getCustSalesSummarizing(params, page, request);
+		Page<CustSalesSummarizingModel> pageInfo = indentService.getCustSalesSummarizing(params, page);
 		List<CustSalesSummarizingModel> contents = pageInfo.getRecords();
 
 		Map<String, String> title = new LinkedHashMap<>();
@@ -294,7 +292,6 @@ public class ReportsExcelController {
 	})
 	@ApiOperation("客户销售统计报表导出")
 	public ResponseEntity<byte[]> custSalesStatistic(
-			HttpServletRequest request,
 			@RequestParam(required = false, name = "shipman") String shipman,
 			@RequestParam(required = false, name = "shipmanId") Integer shipmanId,
 			@RequestParam(required = false, name = "endTime") String endTime,
@@ -316,8 +313,8 @@ public class ReportsExcelController {
 		params.put("goodsScope",goodsScope);
 		params.put("frtCatName", frtCatName);
 		params.put("scdCatName", scdCatName);
-		CustSalesStatisticsSummationModel custSalesStatisticsSummarizing = indentService.selectCustSalesStatisticsSummation(params, request);
-		Page<CustSalesStatisticsModel> pageInfo = indentService.getCustSalesStatistics(params, page, request);
+		CustSalesStatisticsSummationModel custSalesStatisticsSummarizing = indentService.selectCustSalesStatisticsSummation(params);
+		Page<CustSalesStatisticsModel> pageInfo = indentService.getCustSalesStatistics(params, page);
 
 		Map<String, String> summarizing = new LinkedHashMap<>();
 		summarizing.put("销售数量合计", custSalesStatisticsSummarizing.getSalesNumSum());
@@ -457,9 +454,9 @@ public class ReportsExcelController {
 		title.put("salesAmnt", "销售金额");
 		title.put("indentTotal", "实收金额");
 		title.put("madeDates", "生产批次");
-		Page<CustSalesDetailModel> pageInfo = indentService.getCustSalesDetail(params, page, request);
+		Page<CustSalesDetailModel> pageInfo = indentService.getCustSalesDetail(params, page);
 
-		CustSalesDetailSummarizingModel custSalesDetailSummarizing = indentService.getCustSalesDetailSummarizing(params, request);
+		CustSalesDetailSummarizingModel custSalesDetailSummarizing = indentService.getCustSalesDetailSummarizing(params);
 
 		BigDecimal salesAmntSum = new BigDecimal(custSalesDetailSummarizing.getSalesAmntSum());
 
@@ -640,7 +637,7 @@ public class ReportsExcelController {
 		params.put("goodsScope", goodsScope);
 		params.put("frtCatName", frtCatName);
 		params.put("scdCatName", scdCatName);
-		Page<GoodsSalesSummarizingModel> pageInfo = indentService.getGoodsSalesSummarizing(params, page, request);
+		Page<GoodsSalesSummarizingModel> pageInfo = indentService.getGoodsSalesSummarizing(params, page);
 		///////////////////////////////////////////// 处理合计部分 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 		CommonSummation goodsSalesSummation = indentService.getGoodsSalesSummation(params);
 		Map<String, String> summarizing = new LinkedHashMap<>();
@@ -761,7 +758,6 @@ public class ReportsExcelController {
 	})
 	@ApiOperation("商品销售明细")
 	public ResponseEntity<byte[]> singleGoodsSalesDetail(
-			HttpServletRequest request,
 			@RequestParam(name = "goodsId") Integer goodsId,
 			@RequestParam(required = false, name = "empId") Integer empId,
 			@RequestParam(required = false, name = "custId") Integer custId,
@@ -802,7 +798,7 @@ public class ReportsExcelController {
 		params.put("salesmanId", salesmanId);
 		params.put("frtCatName", frtCatName);
 		params.put("scdCatName", scdCatName);
-		Page<SingleGoodsSalesDetailModel> pageInfo = indentService.getSingleGoodsSalesDetail(params, page, request);
+		Page<SingleGoodsSalesDetailModel> pageInfo = indentService.getSingleGoodsSalesDetail(params, page);
 
 		SingleGoodsSalesDetailModel singleGoodsSalesDetail = pageInfo.getRecords().get(0);
 
@@ -967,7 +963,7 @@ public class ReportsExcelController {
 		title.put("salesAmnt", "销售金额");
 		title.put("indentTotal", "实收金额");
 		title.put("salesNum", "销售数量");
-		Page<GoodsSalesRankModel> pageInfo = indentService.getGoodsSalesRank(params, page, request);
+		Page<GoodsSalesRankModel> pageInfo = indentService.getGoodsSalesRank(params, page);
 		CommonSummation summation = indentService.getGoodsSalesRankSummation(params);
 		Map<String, String> summarizing = new LinkedHashMap<>();
 		summarizing.put("销售金额合计", summation.getSalesAmntSum());
@@ -1022,7 +1018,7 @@ public class ReportsExcelController {
 		params.put("specPropId", specPropId);
 		params.put("frtCatName", frtCatName);
 		params.put("scdCatName", scdCatName);
-		Page<GoodsStockSummarizingModel> pageInfo = stockService.getGoodsStockSummarizing(params, page, request);
+		Page<GoodsStockSummarizingModel> pageInfo = stockService.getGoodsStockSummarizing(params, page);
 
 		GoodsStockSummationModel goodsStockSummartion = stockService.getGoodsStockSummartion(params);
 
@@ -1291,7 +1287,6 @@ public class ReportsExcelController {
 	})
 	@ApiOperation("客户对帐报表导出")
 	public ResponseEntity<byte[]> listAccountChecking(
-			HttpServletRequest request,
 			@RequestParam(required = false, name = "empId") Integer empId,
 			@RequestParam(required = false, name = "empName") String empName,
 			@RequestParam(required = false, name = "endTime") String endTime,
@@ -1312,9 +1307,9 @@ public class ReportsExcelController {
 		params.put("priceGrpId", priceGrpId);
 
 		// 处理数据权限和客户区域分组
-		params = SysUtil.dealDataPermAndAreaGrp(params, areaGrpMapper, request);
-		Page<AccountCheckingModel> pageInfo = receiptService.getAccountChecking(params, PageUtils.getPageParam(new PageHelper(current, size)), request);
-		AccountCheckingSummationModel accountCheckingSummation = receiptService.getAccountCheckingSummation(params, request);
+		params = SysUtil.dealDataPermAndAreaGrp(params, areaGrpMapper);
+		Page<AccountCheckingModel> pageInfo = receiptService.getAccountChecking(params, PageUtils.getPageParam(new PageHelper(current, size)));
+		AccountCheckingSummationModel accountCheckingSummation = receiptService.getAccountCheckingSummation(params);
 
 		////////////////////////////////////////////// 处理列标题 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 		Map<String, String> title = new LinkedHashMap<>();
@@ -1532,7 +1527,6 @@ public class ReportsExcelController {
 	})
 	@ApiOperation("商品送货统计")
 	public ResponseEntity<byte[]>goodsDeliveryStaticsExcel(
-			HttpServletRequest request,
 			@RequestParam(required = false, name = "shipman") String shipman,
 			@RequestParam(required = false, name = "endTime") String endTime,
 			@RequestParam(required = false, name = "custName") String custName,
@@ -1547,7 +1541,7 @@ public class ReportsExcelController {
 		params.put("beginTime", beginTime);
 		params.put("shipmanId", shipmanId);
 		CommonSummation summation = indentService.getGoodsDeliveryStaticsSummarizing(params);
-		Page<DeliveryStaticsModel> pageInfo = indentService.getGoodsDeliveryStatics(page,params,request);
+		Page<DeliveryStaticsModel> pageInfo = indentService.getGoodsDeliveryStatics(page,params);
 		List<DeliveryStaticsModel> records = pageInfo.getRecords();
 		////////////////////////////////////////////// 处理列标题 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 		Map<String, String> title = new LinkedHashMap<>();
@@ -1604,7 +1598,6 @@ public class ReportsExcelController {
 	})
 	@ApiOperation("商品送货明细统计")
 	public ResponseEntity<byte[]> goodsDeliveryDetailStaticsExcel(
-			HttpServletRequest request,
 			@RequestParam(required = false, name = "endTime") String endTime,
 			@RequestParam(required = false, name = "custName") String custName,
 			@RequestParam(required = false, name = "beginTime") String beginTime,
@@ -1619,7 +1612,7 @@ public class ReportsExcelController {
 		params.put("beginTime", beginTime);
 		params.put("shipmanId", shipmanId);
 		DeliveryStaticsModel summation = indentService.getGoodsDeliveryDetailsStaticsSummarizing(params);
-		Page<DeliveryDetailsStaticsModel> pageInfo = indentService.getGoodsDeliveryDetailsStatics(params, page, request);
+		Page<DeliveryDetailsStaticsModel> pageInfo = indentService.getGoodsDeliveryDetailsStatics(params, page);
 		List<DeliveryDetailsStaticsModel> records = pageInfo.getRecords();
 		////////////////////////////////////////////// 处理列标题 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 		Map<String, String> title = new LinkedHashMap<>();

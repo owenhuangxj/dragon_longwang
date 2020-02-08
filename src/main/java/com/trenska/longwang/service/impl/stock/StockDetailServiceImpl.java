@@ -67,7 +67,7 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 	 */
 	@Override
 	@Transactional
-	public ResponseModel stockin(Stock stock, HttpServletRequest request) {
+	public ResponseModel stockin(Stock stock) {
 		Integer empIdInToken = SysUtil.getEmpId();
 		if (Objects.isNull(empIdInToken)) {
 			return ResponseModel.getInstance().succ(false).msg(Constant.ACCESS_TIMEOUT_MSG).code(Constant.ACCESS_TIMEOUT);
@@ -200,7 +200,7 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 	 */
 	@Override
 	@Transactional
-	public ResponseModel cancelStockin(String stockNo, HttpServletRequest request) {
+	public ResponseModel cancelStockin(String stockNo) {
 
 		Integer empIdInToken = SysUtil.getEmpId();
 		if (Objects.isNull(empIdInToken)) {
@@ -258,8 +258,7 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 	 */
 	@Override
 	@Transactional
-	public ResponseModel cancelStockout(String stockNo, HttpServletRequest request) {
-
+	public ResponseModel cancelStockout(String stockNo) {
 		Stock dbStockout = stockMapper.selectOne(
 				new LambdaQueryWrapper<Stock>()
 						.eq(Stock::getStockNo, stockNo)
@@ -287,7 +286,7 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 
 	@Override
 	@Transactional
-	public ResponseModel changeStockin(Stock stock, HttpServletRequest request) throws IOException {
+	public ResponseModel changeStockin(Stock stock) throws IOException {
 		String stockNo = stock.getStockNo();
 
 		Stock dbStockin = stockMapper.selectByStockNo(stockNo);

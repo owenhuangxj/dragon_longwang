@@ -95,7 +95,7 @@ public class UnitController {
 	@ApiOperation("通用分页")
 	public PageHelper<Unit> listUnitPageSelective(@PathVariable("current") Integer current, @PathVariable("size") Integer size, @RequestParam(value = "unitName",required = false) String unitName, @RequestParam(value = "stat",required = false) Boolean stat) {
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
-		Page<Unit> pageInfo = null;
+		Page<Unit> pageInfo;
 		if (ObjectUtils.anyNotNull(unitName,stat)) {
 			Unit unit = new Unit();
 			unit.setUnitName(unitName);
@@ -181,6 +181,4 @@ public class UnitController {
 //		Page<Unit> pageData = unitService.getUnitPageByStat(PageUtils.getPageParam(new PageHelper(current, size)), stat);
 //		return PageHelper.getInstance().pageData(pageData);
 //	}
-
 }
-

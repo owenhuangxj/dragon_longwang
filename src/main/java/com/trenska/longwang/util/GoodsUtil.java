@@ -41,7 +41,7 @@ public class GoodsUtil {
 	/**
 	 * 新建商品时处理商品的期初库存
 	 */
-	public static boolean dealGoodsInitStock(Goods goods, StockMapper stockMapper, HttpServletRequest request) {
+	public static boolean dealGoodsInitStock(Goods goods, StockMapper stockMapper) {
 
 		// 确保客户有期初库存->没有输入期初库存默认为 0
 		if (!NumberUtil.isIntegerUsable(goods.getInitStock())) {
@@ -130,7 +130,6 @@ public class GoodsUtil {
 	 * @return
 	 */
 	public static String dealGoodsCombineProperty(Goods goods) {
-
 		String combine = "";
 		if (goods.getGoodsName() != null && goods.getGoodsName() != "") {
 			combine += goods.getGoodsName() + " ";
@@ -141,8 +140,6 @@ public class GoodsUtil {
 		if (goods.getBarcode() != null && goods.getBarcode() != "") {
 			combine += goods.getBarcode();
 		}
-
 		return combine;
 	}
-
 }

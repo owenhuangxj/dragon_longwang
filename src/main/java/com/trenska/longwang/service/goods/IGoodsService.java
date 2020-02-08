@@ -22,7 +22,7 @@ import java.util.Map;
  */
 public interface IGoodsService extends IService<Goods> {
 
-	ResponseModel saveGoods(Goods goods, HttpServletRequest request);
+	ResponseModel saveGoods(Goods goods);
 
 	ResponseModel removeGoodsById(Integer goodsId);
 

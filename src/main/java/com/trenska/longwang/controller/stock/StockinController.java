@@ -38,28 +38,27 @@ public class StockinController {
 	@PostMapping("/add")
 	@CheckDuplicateSubmit
 	@ApiOperation("商品入库")
-	public ResponseModel stockin(@Valid @RequestBody @ApiParam Stock stock, HttpServletRequest request) {
+	public ResponseModel stockin(@Valid @RequestBody @ApiParam Stock stock) {
 		// 入库
-
-		return stockinService.stockin(stock, request);
+		return stockinService.stockin(stock);
 	}
 
 	@CheckDuplicateSubmit
 	@PutMapping("/change")
 	@ApiOperation("修改入库单")
-	public ResponseModel changeStockin(@Valid @RequestBody @ApiParam Stock stock , HttpServletRequest request) throws IOException {
+	public ResponseModel changeStockin(@Valid @RequestBody @ApiParam Stock stock) throws IOException {
 		validStock(stock);
-		return stockinService.changeStockin(stock, request);
+		return stockinService.changeStockin(stock);
 	}
 
 	@CheckDuplicateSubmit
 	@PutMapping("/cancel/{stockNo}")
 	@ApiOperation("作废入库单")
-	public ResponseModel cancelStockin(@PathVariable("stockNo") String stockNo, HttpServletRequest request) {
+	public ResponseModel cancelStockin(@PathVariable("stockNo") String stockNo) {
 		if (stockNo == null) {
 			return ResponseModel.getInstance().succ(false).msg("无效的入库单");
 		}
-		return stockinService.cancelStockin(stockNo, request);
+		return stockinService.cancelStockin(stockNo);
 	}
 
 	public void validStock(Stock stock) throws IOException {

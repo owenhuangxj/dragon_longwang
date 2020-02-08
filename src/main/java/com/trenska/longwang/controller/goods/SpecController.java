@@ -153,7 +153,5 @@ public class SpecController {
 			msg = "规格已经存在,不需要重新创建";
 		}
 		return ResponseModel.getInstance().succ(false).msg(msg).data(data);
-
 	}
-
 }

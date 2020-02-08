@@ -132,11 +132,11 @@ public class CustomerController {
 			@ApiImplicitParam(name = "current", value = "当前页", paramType = "path", required = true, dataType = "int"),
 			@ApiImplicitParam(name = "size", value = "每页记录数", paramType = "path", required = true, dataType = "int")
 	})
-	public PageHelper<Customer> listCustomerPage(@PathVariable("current") Integer current, @PathVariable("size") Integer size, HttpServletRequest request) {
+	public PageHelper<Customer> listCustomerPage(@PathVariable("current") Integer current, @PathVariable("size") Integer size) {
 		PageHelper page = PageHelper.getInstance();
 		page.setCurrent(current);
 		page.setSize(size);
-		Page<Customer> pageInfo = customerService.getCustomerPage(PageUtils.getPageParam(page), request);
+		Page<Customer> pageInfo = customerService.getCustomerPage(PageUtils.getPageParam(page));
 		return PageHelper.getInstance().pageData(pageInfo);
 	}
 
@@ -167,7 +167,6 @@ public class CustomerController {
 			@ApiImplicitParam(name = "size", value = "每页记录数", paramType = "path", required = true, dataType = "int")
 	})
 	public PageHelper<Customer> listCustomerConditionPage(
-			HttpServletRequest request,
 			@RequestParam(value = "empId", required = false) Integer empId,
 			@RequestParam(value = "custName", required = false) String custName,
 			@RequestParam(value = "areaGrpId", required = false) Integer areaGrpId,
@@ -184,7 +183,7 @@ public class CustomerController {
 		params.put("areaGrpId", areaGrpId);
 		params.put("custTypeId", custTypeId);
 		params.put("priceGrpId", priceGrpId);
-		Page<Customer> pageInfo = customerService.getCustomerPageSelective(params, PageUtils.getPageParam(pageHelper), request);
+		Page<Customer> pageInfo = customerService.getCustomerPageSelective(params, PageUtils.getPageParam(pageHelper));
 		return PageHelper.getInstance().pageData(pageInfo);
 	}
 
@@ -277,7 +276,6 @@ public class CustomerController {
 			@ApiImplicitParam(name = "priceGrpName", value = "价格分组", paramType = "query", dataType = "int")
 	})
 	public ResponseEntity<byte[]> exportCustomerInfo(
-			HttpServletRequest request,
 			@RequestParam(value = "empId", required = false) Integer empId,
 			@RequestParam(value = "empName", required = false) String empName,
 			@RequestParam(value = "areaGrpId", required = false) Integer areaGrpId,
@@ -292,7 +290,7 @@ public class CustomerController {
 		params.put("areaGrpId", areaGrpId);
 		params.put("priceGrpId", priceGrpId);
 		params.put("custTypeId", custTypeId);
-		List<CustomerInfoModel> records = customerService.getCustomerInfoSelective(params, request);
+		List<CustomerInfoModel> records = customerService.getCustomerInfoSelective(params);
 		////////////////////////////////////////////// 处理列标题 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 		Map<String, String> title = new LinkedHashMap<>();
 		title.put("custNo", "客户编号");

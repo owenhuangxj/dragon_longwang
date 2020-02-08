@@ -5,11 +5,9 @@ package com.trenska.longwang.util;
  * 创建人:Owen
  */
 public class NumberUtil {
-
 	public static boolean isIntegerUsable(Integer value){
 		return value != null && value > 0;
 	}
-
 	public static boolean isLongUsable(Long value){
 		return value != null && value > 0;
 	}

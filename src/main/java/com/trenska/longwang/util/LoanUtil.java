@@ -40,8 +40,6 @@ public class LoanUtil {
 			int serialNumber = BillsUtil.getSerialNumberOfBillNo(Optional.of(loanNoOfMaxId)) + 1;
 			loanNo = BillsUtil.makeBillNo(Constant.TZD_PREFIX,serialNumber);
 		}
-
 		return loanNo;
 	}
-
 }

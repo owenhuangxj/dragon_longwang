@@ -33,9 +33,9 @@ public interface IReceiptService extends IService<Receipt> {
 
     ResponseModel cancelPayReceiptById(Long receiptId);
 
-	Page<AccountCheckingModel> getAccountChecking(Map<String, Object> params, Page page, HttpServletRequest request);
+	Page<AccountCheckingModel> getAccountChecking(Map<String, Object> params, Page page);
 
-	AccountCheckingSummationModel getAccountCheckingSummation(Map<String, Object> params, HttpServletRequest request);
+	AccountCheckingSummationModel getAccountCheckingSummation(Map<String, Object> params);
 
 	Page<DealDetail> getDealDetail(Map<String, Object> params, Page page);
 
@@ -43,7 +43,7 @@ public interface IReceiptService extends IService<Receipt> {
 
 	DealDetailSummarizing getDealDetailSummarizingForDecrease(Map<String,Object> params);
 
-	Page<Map<String, List<Map<String,String>>>> getReceiptStatics(Map<String,Object> params, Page page ,HttpServletRequest request);
+	Page<Map<String, List<Map<String,String>>>> getReceiptStatics(Map<String,Object> params, Page page);
 
 	List<Integer> getLastSurplusCustIds(Map<String,Object> params);
 

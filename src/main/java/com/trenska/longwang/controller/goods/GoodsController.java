@@ -86,7 +86,7 @@ public class GoodsController {
 		if (goods == null) {
 			ResponseModel.getInstance().succ(false).msg("无效商品，请完善商品信息");
 		}
-		return goodsService.saveGoods(goods, request);
+		return goodsService.saveGoods(goods);
 	}
 
 	@CheckDuplicateSubmit

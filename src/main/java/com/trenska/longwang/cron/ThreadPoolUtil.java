@@ -1,8 +1,5 @@
 package com.trenska.longwang.cron;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import org.ehcache.impl.internal.util.ThreadFactoryUtil;
-
 import java.util.concurrent.*;
 
 /**

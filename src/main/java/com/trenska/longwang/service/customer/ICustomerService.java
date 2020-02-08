@@ -18,9 +18,9 @@ import java.util.Set;
  * 创建人:Owen
  */
 public interface ICustomerService extends IService<Customer> {
-	Page<Customer> getCustomerPage(Page page,HttpServletRequest request);
+	Page<Customer> getCustomerPage(Page page);
 
-	Page<Customer> getCustomerPageSelective(Map<String,Object> params, Page page , HttpServletRequest request);
+	Page<Customer> getCustomerPageSelective(Map<String,Object> params, Page page);
 
 	ResponseModel addCustomer(Customer customer);
 
@@ -34,7 +34,7 @@ public interface ICustomerService extends IService<Customer> {
 
 	ResponseModel deleteCustomerByIds(Collection<Integer> custIds);
 
-	List<CustomerInfoModel> getCustomerInfoSelective(Map<String, Object> params, HttpServletRequest request);
+	List<CustomerInfoModel> getCustomerInfoSelective(Map<String, Object> params);
 
 	Set<Integer> getCustIdsOfSalesman(Integer salesmanId);
 }

@@ -34,11 +34,11 @@ public class LoanController {
 
 	@PostMapping(value = "/add")
 	@ApiOperation("新建调账单")
-	public ResponseModel addLoan(@RequestBody @ApiParam Loan loan, HttpServletRequest request) {
+	public ResponseModel addLoan(@RequestBody @ApiParam Loan loan) {
 		if(ObjectUtils.isEmpty(loan)){
 			return ResponseModel.getInstance().succ(false).msg("无效的调帐单");
 		}
-		return loanService.addLoan(loan ,request);
+		return loanService.addLoan(loan);
 	}
 
 	@PutMapping(value = "/invalid/{loanId}")
@@ -77,5 +77,4 @@ public class LoanController {
 		Page<Loan> pageInfo = loanService.getLoanPageSelective(page,params);
 		return PageHelper.getInstance().pageData(pageInfo);
 	}
-
 }

@@ -39,11 +39,11 @@ public class SalesReturnController {
 	@PostMapping("/add")
 	@CheckDuplicateSubmit
 	@ApiOperation("添加退货单")
-	public ResponseModel addSalesReturn(@RequestBody Indent indent, HttpServletRequest request){
+	public ResponseModel addSalesReturn(@RequestBody Indent indent){
 		if(null == indent){
 			return ResponseModel.getInstance().succ(false).msg("无此退货单.");
 		}
-		return indentService.saveSalesReturn(indent,request);
+		return indentService.saveSalesReturn(indent);
 	}
 
 	/**
@@ -57,14 +57,14 @@ public class SalesReturnController {
 			@ApiImplicitParam(name = "indentId", value = "退货单id", paramType = "body", dataType = "string")
 	})
 	@ApiOperation("作废退货单")
-	public ResponseModel invalid(@PathVariable("indentId") Integer indentId ,HttpServletRequest request) {
+	public ResponseModel invalid(@PathVariable("indentId") Integer indentId) {
 		Indent indent = indentService.getById(indentId);
 		if(indent == null ) {
 			return ResponseModel.getInstance().succ(false).msg("不存在该退货单信息");
 		}else if(!IndentStat.FINISHED.getName().equals(indent.getStat())){
 			return ResponseModel.getInstance().succ(false).msg("已完成的退货单才能作废");
 		}
-		return indentService.invalidSalseReturn(indent,request);
+		return indentService.invalidSalseReturn(indent);
 	}
 
 	@CheckDuplicateSubmit

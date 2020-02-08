@@ -59,7 +59,6 @@ public class CustomerUtil {
 	public static boolean subtractCustomerDebt(Integer custId, String oldDebt , BigDecimal amount){
 		String newDebt = new BigDecimal(oldDebt).subtract(amount).toString();
 		return new Customer(custId,newDebt).updateById();
-
 	}
 
 	/**
@@ -152,27 +151,12 @@ public class CustomerUtil {
 		return custIds;
 	}
 
-
-
-
 	/**
 	 * 获取账户的数据权限 -> 账号所能访问的客户信息，以客户id集合的方式返回
-	 * @param request
-	 * @param areaGrpService
-	 * @return
-	 */
-	public static Set<Integer> getCurrentUserDataAuth(HttpServletRequest request , IAreaGrpService areaGrpService){
-		Integer empIdInToken = SysUtil.getEmpId();
-		return CustomerUtil.getCustIdsByEmpId(empIdInToken, areaGrpService);
-	}
-
-	/**
-	 * 获取账户的数据权限 -> 账号所能访问的客户信息，以客户id集合的方式返回
-	 * @param request
 	 * @param areaGrpMapper
 	 * @return
 	 */
-	public static Set<Integer> getCurrentUserDataAuth(HttpServletRequest request , AreaGrpMapper areaGrpMapper){
+	public static Set<Integer> getCurrentUserDataAuth(AreaGrpMapper areaGrpMapper){
 
 		Integer empIdInToken = SysUtil.getEmpId();
 

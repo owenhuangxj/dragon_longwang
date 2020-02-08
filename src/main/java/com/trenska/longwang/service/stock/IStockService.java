@@ -30,7 +30,7 @@ public interface IStockService extends IService<Stock> {
 
 	Map<String,Object>  prinAndPdf(Long stockId);
 
-	Page<GoodsStockSummarizingModel> getGoodsStockSummarizing(Map<String, Object> params, Page page, HttpServletRequest request);
+	Page<GoodsStockSummarizingModel> getGoodsStockSummarizing(Map<String, Object> params, Page page);
 
 	GoodsStockSummationModel getGoodsStockSummartion(Map<String, Object> params);
 

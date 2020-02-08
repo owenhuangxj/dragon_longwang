@@ -90,7 +90,7 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
 
 	@Override
 	@Transactional
-	public ResponseModel saveGoods(Goods goods, HttpServletRequest request) {
+	public ResponseModel saveGoods(Goods goods) {
 
 		if (StringUtils.isEmpty(goods.getFrtCatName())){
 			goods.setFrtCatName("无分类");

@@ -19,7 +19,7 @@ import java.util.Map;
  */
 public interface ILoanService extends IService<Loan> {
 
-	ResponseModel addLoan(Loan loan, HttpServletRequest request);
+	ResponseModel addLoan(Loan loan);
 
 	Page<Loan> getLoanPageSelective(Page page, Map<String, Object> params);
 

@@ -154,6 +154,5 @@ public class PaywayController {
 						.eq(Payway::getType, type)
 		);
 		return null != pay;
-
 	}
 }
