@@ -84,20 +84,20 @@ public class ReceiptController {
 
 	@PostMapping("/receipt/add")
 	@ApiOperation("新建收款单")
-	public ResponseModel addReceipt(@ApiParam(name = "receipt", value = "收款单", required = true) @RequestBody Receipt receipt, HttpServletRequest request) {
+	public ResponseModel addReceipt(@ApiParam(name = "receipt", value = "收款单", required = true) @RequestBody Receipt receipt) {
 		if (receipt == null){
 			return ResponseModel.getInstance().succ(false).msg("收款单不能为空！");
 		}
-		return receiptService.saveReceipt(receipt, request);
+		return receiptService.saveReceipt(receipt);
 	}
 
 	@PostMapping("/pay/add")
 	@ApiOperation("新建付款单")
-	public ResponseModel addPayReceipt(@ApiParam(name = "pay", value = "付款单", required = true) @RequestBody Receipt pay, HttpServletRequest request) {
+	public ResponseModel addPayReceipt(@ApiParam(name = "pay", value = "付款单", required = true) @RequestBody Receipt pay) {
 		if (pay == null){
 			return ResponseModel.getInstance().succ(false).msg("付款单不能为空！");
 		}
-		return receiptService.savePayReceipt(pay, request);
+		return receiptService.savePayReceipt(pay);
 	}
 
 	@PostMapping("/receipt/check/amount")

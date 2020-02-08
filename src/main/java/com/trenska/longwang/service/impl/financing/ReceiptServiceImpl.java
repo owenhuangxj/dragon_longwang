@@ -105,8 +105,21 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 	 */
 	@Override
 	@Transactional
-	public ResponseModel saveReceipt(Receipt receipt, HttpServletRequest request) {
-		return ReceiptUtil.saveReceipt(receipt, request, receiptMapper, Constant.SKD_CHINESE, Constant.SK_CHINESE);
+	public ResponseModel saveReceipt(Receipt receipt) {
+		return ReceiptUtil.saveReceipt(receipt, receiptMapper, Constant.SKD_CHINESE, Constant.SK_CHINESE);
+	}
+
+	/**
+	 * 新建付款单
+	 * 客户欠款减少
+	 *
+	 * @param pay
+	 * @return
+	 */
+	@Override
+	@Transactional
+	public ResponseModel savePayReceipt(Receipt pay) {
+		return ReceiptUtil.saveReceipt(pay, receiptMapper, Constant.FKD_CHINESE, Constant.FK_CHINESE);
 	}
 
 	/**
@@ -137,21 +150,6 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 		receiptAmount = receiptAmount.setScale(retain, RoundingMode.HALF_UP);
 		receipt.setReceiptAmount(receiptAmount.toString());
 		return receipt;
-	}
-
-	/**
-	 * 新建付款单
-	 * 客户欠款减少
-	 *
-	 * @param pay
-	 * @return
-	 */
-	@Override
-	@Transactional
-	public ResponseModel savePayReceipt(Receipt pay, HttpServletRequest request) {
-		String createTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
-		pay.setCreateTime(createTime);
-		return ReceiptUtil.saveReceipt(pay, request, receiptMapper, Constant.FKD_CHINESE, Constant.FK_CHINESE);
 	}
 
 	/**

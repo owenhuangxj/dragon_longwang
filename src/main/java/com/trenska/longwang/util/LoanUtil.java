@@ -26,18 +26,18 @@ public class LoanUtil {
 		String dateOfMaxLoanId = "";
 
 		if (StringUtils.isNotEmpty(loanNoOfMaxId)){
-			dateOfMaxLoanId = BillsUtil.getDate(loanNoOfMaxId);
+			dateOfMaxLoanId = BillsUtil.getDateOfBillNo(Optional.of(loanNoOfMaxId));
 		}
 
 		String lastLoanNo = loanMapper.getLastLoanNo();
-		String loanNo = "";
+		String loanNo;
 
 		boolean isLastLoanNoEmpty = StringUtils.isEmpty(lastLoanNo);
 
 		if (isLastLoanNoEmpty || !todayDate.equals(dateOfMaxLoanId) ){
 			loanNo = BillsUtil.makeBillNo(Constant.TZD_PREFIX,1);
 		}else {
-			int serialNumber = BillsUtil.getSerialNumber(Optional.of(loanNoOfMaxId)) + 1;
+			int serialNumber = BillsUtil.getSerialNumberOfBillNo(Optional.of(loanNoOfMaxId)) + 1;
 			loanNo = BillsUtil.makeBillNo(Constant.TZD_PREFIX,serialNumber);
 		}
 

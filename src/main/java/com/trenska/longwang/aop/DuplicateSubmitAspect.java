@@ -34,7 +34,7 @@ public class DuplicateSubmitAspect {
 	public static final List<String> UPDATE_METHODS = Arrays.asList(RequestMethod.POST.name(),
 			RequestMethod.DELETE.name(), RequestMethod.PUT.name());
 	private static final Cache<String, Object> CACHES = CacheBuilder.newBuilder()
-			.maximumSize(1000)// 最大缓存 100 个
+			.maximumSize(1000)// 最大缓存 1000 个
 			.expireAfterWrite(2, TimeUnit.SECONDS)// 设置缓存过期时间,单位:秒
 			.build();
 

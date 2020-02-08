@@ -1185,17 +1185,13 @@
         <if test="shipmanId != null">
             , t_stock ts
         </if>
-        <if test="custName != null and custName != ''">
             , t_customer tc
-        </if>
         where ti.stat in ('已出库','已完成')
         and ti.indent_no = tid.indent_no
         <if test="shipmanId != null">
             and ts.busi_no = ti.indent_no
         </if>
-        <if test="custName != null and custName != ''">
             and tc.cust_id = ti.cust_id
-        </if>
         <trim prefixOverrides="and" prefix="and">
             <if test="areaGrpId != null">
                 and ti.cust_id in (
@@ -1260,9 +1256,7 @@
         <if test="shipmanId != null">
             , t_stock ts
         </if>
-        <if test="custName != null and custName != ''">
             , t_customer tc
-        </if>
         where tg.main_unit_id = tu.unit_id
         and ti.stat in ('已出库','已完成')
         and ti.indent_type = '订货单'
@@ -1289,9 +1283,7 @@
                 and ts.busi_no = ti.indent_no
                 and ts.shipman_id = #{shipmanId}
             </if>
-            <if test="custName != null and custName != ''">
                 and tc.cust_id = ti.cust_id
-            </if>
             <if test="areaGrpId != null">
                 and ti.cust_id in (
                     select tc.cust_id from t_customer tc
@@ -1736,15 +1728,11 @@
             ifnull(sum( case when ti.indent_type = '订货单' then tid.num else -tid.num end),0) as salesNum,
             tg.goods_no as goodsNo , tg.goods_name as goodsName , tg.brand_name as brandName , tg.frt_cat_name as catName
             from t_indent_detail tid , t_indent ti , t_goods tg
-            <if test="custName != null and custName != ''">
                 , t_customer tc
-            </if>
             where ti.stat in ('已出库','已完成')
             and ti.indent_no = tid.indent_no
             and tid.goods_id = tg.goods_id
-            <if test="custName != null and custName != ''">
                 and ti.cust_id = tc.cust_id
-            </if>
             <trim prefixOverrides="and" prefix="and">
                 <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
                     and ti.sales_time between #{beginTime} and #{endTime}
@@ -1803,15 +1791,11 @@
         ifnull(sum( case when ti.indent_type = '订货单' then tid.discount_amount else -tid.discount_amount end ),0) as discountAmntSum,
         ifnull(sum( case when ti.indent_type = '订货单' then tid.num * tid.multi else -tid.num * tid.multi end),0) as salesNumSum
         from t_indent_detail tid , t_indent ti , t_goods tg
-        <if test="custName != null and custName != ''">
             , t_customer tc
-        </if>
         where ti.stat in ('已出库','已完成')
         and ti.indent_no = tid.indent_no
         and tid.goods_id = tg.goods_id
-        <if test="custName != null and custName != ''">
             and ti.cust_id = tc.cust_id
-        </if>
         <trim prefixOverrides="and" prefix="and">
             <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
                 and ti.sales_time between #{beginTime} and #{endTime}
@@ -1898,18 +1882,20 @@
     <!--订单统计合计部分-->
     <select id="selectIndentStatisticsSummation" resultType="com.trenska.longwang.model.report.IndentStatisticsSummationModel">
         SELECT
-               IFNULL(COUNT(CASE WHEN ti.indent_type = '订货单' THEN ti.indent_type END), 0)      AS orderNumSum,
-               IFNULL(COUNT(CASE WHEN ti.indent_type = '退货单' THEN ti.indent_type END), 0)      AS returnNumSum,
-               IFNULL(SUM(IF(ti.indent_type = '订货单', cast(ti.odr_amnt as decimal(13,4)), 0)), 0) AS orderAmntSum,
-               IFNULL(SUM(IF(ti.indent_type = '退货单', cast(ti.odr_amnt as decimal(13,4)), 0)), 0) AS returnAmntSum,
-               IFNULL(COUNT(DISTINCT CASE WHEN ti.indent_type = '订货单' THEN ti.cust_id END), 0) AS orderCustNumSum,
-               IFNULL(COUNT(DISTINCT CASE WHEN ti.indent_type = '退货单' THEN ti.cust_id END), 0) AS returnCustNumSum,
-               IFNULL(SUM(cast(ti.odr_amnt as decimal(13,4))-cast(ti.received_amnt as decimal(13,4))-cast(ti.payed_amnt as decimal(13,4)) ), 0) AS owedAmnt
-        FROM t_indent ti
+               IFNULL(COUNT(DISTINCT CASE WHEN ti.indent_type = '订货单' THEN ti.indent_no END), 0) AS orderNumSum,
+               IFNULL(COUNT(DISTINCT CASE WHEN ti.indent_type = '退货单' THEN ti.indent_no END), 0) AS returnNumSum,
+               IFNULL(SUM(IF(ti.indent_type = '订货单', (tid.amount+tid.discount_amount), 0)), 0)  AS orderAmntSum,
+               IFNULL(SUM(IF(ti.indent_type = '退货单', (tid.amount+tid.discount_amount), 0)), 0)  AS returnAmntSum,
+               IFNULL(COUNT(DISTINCT CASE WHEN ti.indent_type = '订货单' THEN ti.cust_id END), 0)  AS orderCustNumSum,
+               IFNULL(COUNT(DISTINCT CASE WHEN ti.indent_type = '退货单' THEN ti.cust_id END), 0)  AS returnCustNumSum,
+               IFNULL(SUM(ti.odr_amnt-ti.received_amnt-ti.payed_amnt), 0) AS owedAmnt
+        FROM t_indent ti , t_indent_detail tid , t_customer tc
         <if test="brandName != null and brandName != ''">
-            ,t_goods tg , t_indent_detail tid
+            ,t_goods tg
         </if>
         WHERE ti.stat IN ('已出库','已完成')
+        AND ti.indent_no = tid.indent_no
+        AND ti.cust_id = tc.cust_id
         <if test="salesmanId != null">
             and ti.salesman_id = #{salesmanId}
         </if>
@@ -1922,27 +1908,27 @@
             )
         </if>
         <if test="brandName != null and brandName != ''">
-            tg.goods_id = tid.goods_id
-            ti.indent_no = tid.indent_no
-            tg.brand_name = #{brandName}
+            and tg.goods_id = tid.goods_id
+            and tg.brand_name = #{brandName}
         </if>
         AND ti.sales_time BETWEEN #{beginTime} AND #{endTime}
     </select>
 
     <select id="selectIndentStatistics" resultType="com.trenska.longwang.model.report.IndentStatisticsModel">
         SELECT DATE_FORMAT(ti.sales_time, '%Y-%m-%d')                                                 AS statisticsTime,
-               IFNULL(COUNT(CASE WHEN ti.indent_type = '订货单' THEN ti.indent_type END), 0)          AS orderNum,
-               IFNULL(COUNT(CASE WHEN ti.indent_type = '退货单' THEN ti.indent_type END), 0)          AS returnNum,
-               IFNULL(SUM(IF(ti.indent_type = '订货单', cast(ti.odr_amnt as decimal(13,4)), 0)), 0)   AS orderAmnt,
-               IFNULL(SUM(IF(ti.indent_type = '退货单', cast(ti.odr_amnt as decimal(13,4)), 0)), 0)   AS returnAmnt,
+               IFNULL(COUNT(DISTINCT CASE WHEN ti.indent_type = '订货单' THEN ti.indent_no END), 0)   AS orderNum,
+               IFNULL(COUNT(DISTINCT CASE WHEN ti.indent_type = '退货单' THEN ti.indent_no END), 0) AS returnNum,
+               IFNULL(SUM(IF(ti.indent_type = '订货单', tid.amount+tid.discount_amount, 0)), 0)   AS orderAmnt,
+               IFNULL(SUM(IF(ti.indent_type = '退货单', tid.amount+tid.discount_amount, 0)), 0)   AS returnAmnt,
                IFNULL(COUNT(DISTINCT CASE WHEN ti.indent_type = '订货单' THEN ti.cust_id END), 0)     AS orderCustNum,
                IFNULL(COUNT(DISTINCT CASE WHEN ti.indent_type = '退货单' THEN ti.cust_id END), 0)     AS returnCustNum
-        FROM t_indent ti
+        FROM t_indent ti , t_indent_detail tid , t_customer tc
         <if test="brandName != null and brandName != ''">
-            ,t_goods tg , t_indent_detail tid
+            ,t_goods tg
         </if>
         WHERE ti.stat IN ('已出库','已完成')
-
+        AND ti.indent_no = tid.indent_no
+        AND ti.cust_id = tc.cust_id
         <if test="salesmanId != null">
             and ti.salesman_id = #{salesmanId}
         </if>
@@ -1956,7 +1942,6 @@
         </if>
         <if test="brandName != null and brandName != ''">
             tg.goods_id = tid.goods_id
-            ti.indent_no = tid.indent_no
             tg.brand_name = #{brandName}
         </if>
         AND ti.sales_time BETWEEN #{beginTime} AND #{endTime}
@@ -1966,27 +1951,27 @@
     <select id="selectIndentStatisticsCount" resultType="java.lang.Integer">
         SELECT  count(statisticsTime) FROM(
             SELECT DATE_FORMAT(ti.sales_time, '%Y-%m-%d') AS statisticsTime
-            FROM t_indent ti
+            FROM t_indent ti, t_indent_detail tid, t_customer tc
             <if test="brandName != null and brandName != ''">
-                ,t_goods tg , t_indent_detail tid
+                ,t_goods tg
             </if>
             WHERE ti.stat IN ('已出库','已完成')
-
-            <if test="salesmanId != null">
+            AND ti.indent_no = tid.indent_no
+            AND ti.cust_id = tc.cust_id
+        <if test="salesmanId != null">
                 and ti.salesman_id = #{salesmanId}
             </if>
             <if test="areaGrpId != null">
                 and ti.cust_id in (
                 select cust_id from t_customer
                 where area_grp_id in (
-                select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                  select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
                 )
                 )
             </if>
             <if test="brandName != null and brandName != ''">
-                tg.goods_id = tid.goods_id
-                ti.indent_no = tid.indent_no
-                tg.brand_name = #{brandName}
+                and tg.goods_id = tid.goods_id
+                and tg.brand_name = #{brandName}
             </if>
             AND ti.sales_time BETWEEN #{beginTime} AND #{endTime}
             GROUP BY DATE_FORMAT(ti.sales_time, '%Y-%m-%d')
@@ -2143,19 +2128,17 @@
         select  ts.shipman_id as shipmanId, se.emp_name as shipman ,sum(ti.discount_total) as discountTotal,
                 sum(ti.sum + ti.gift_sum) as num, sum(ti.odr_amnt) as salesAmnt,sum(ti.indent_total) as indentTotal
         from t_indent ti, t_stock ts, sys_emp se
-        <if test="custName != null and custName != ''">
             , t_customer tc
-        </if>
         where ts.stat = 1
         and ti.stat in ('已出库','已完成')
         and ts.busi_no = ti.indent_no
         and ts.shipman_id = se.emp_id
+        and ts.cust_id = tc.cust_id
         <trim prefixOverrides="and" prefix="and">
             <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
                 and ts.stock_time between #{beginTime} and #{endTime}
             </if>
             <if test="custName != null and custName != ''">
-                and ts.cust_id = tc.cust_id
                 and tc.cust_name like concat('%',#{custName},'%')
             </if>
             <if test="shipmanId != null">
@@ -2168,19 +2151,17 @@
     <select id="selectGoodsDeliveryStaticsSummarizing" resultType="com.trenska.longwang.model.report.CommonSummation">
         select sum(ti.sum + ti.gift_sum) as salesNumSum, sum(ti.discount_total) as discountAmntSum, sum(ti.odr_amnt) as salesAmntSum,sum(ti.indent_total) as indentTotalSum
         from t_indent ti, t_stock ts, sys_emp se
-        <if test="custName != null and custName != ''">
             , t_customer tc
-        </if>
         where ts.stat = 1
         and ti.stat in ('已出库','已完成')
         and ts.busi_no = ti.indent_no
         and ts.shipman_id = se.emp_id
+        and ts.cust_id = tc.cust_id
         <trim prefixOverrides="and" prefix="and">
             <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
                 and ts.stock_time between #{beginTime} and #{endTime}
             </if>
             <if test="custName != null and custName != ''">
-                and ts.cust_id = tc.cust_id
                 and tc.cust_name like concat('%',#{custName},'%')
             </if>
             <if test="shipmanId != null">
@@ -2191,20 +2172,18 @@
     <select id="selectGoodsDeliveryDetailsStaticsSummarizing" resultType="com.trenska.longwang.model.report.DeliveryStaticsModel">
         select se.emp_name as shipman , sum(ti.sum + ti.gift_sum) as num,sum(ti.discount_total) as discountTotal , sum(ti.odr_amnt) as salesAmnt,sum(ti.indent_total) as indentTotal
         from t_indent ti, t_stock ts , sys_emp se
-        <if test="custName != null and custName != ''">
             , t_customer tc
-        </if>
         where ts.stat = 1
         and ti.stat in ('已出库','已完成')
         and ts.busi_no = ti.indent_no
         and ts.shipman_id = se.emp_id
         and ts.shipman_id = #{shipmanId}
+        and ts.cust_id = tc.cust_id
         <trim prefixOverrides="and" prefix="and">
             <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
                 and ts.stock_time between #{beginTime} and #{endTime}
             </if>
             <if test="custName != null and custName != ''">
-                and ts.cust_id = tc.cust_id
                 and tc.cust_name like concat('%',#{custName},'%')
             </if>
         </trim>

@@ -52,16 +52,16 @@ public class StockUtil {
 					 * 处理流水号的问题
 					 * 如果库存表中还没有任何记录，则需要生成第一个单号 或者 如果有记录，需要比较最后一条记录的日期是否是当天，如果不是则流水号需要从1开始
 					 */
-					String todayDate = TimeUtil.getCurrentTime(Constant.BILL_TIME_FORMAT);
+					String currentDate = TimeUtil.getCurrentTime(Constant.BILL_TIME_FORMAT);
 
 					boolean isStockNoOfMaxIdEmpty = StringUtils.isEmpty(stockNoOfMaxId);
 
-					if (isStockNoOfMaxIdEmpty || !todayDate.equals(BillsUtil.getDate(stockNoOfMaxId))) {
+					if (isStockNoOfMaxIdEmpty || !currentDate.equals(BillsUtil.getDateOfBillNo(Optional.of(stockNoOfMaxId)))) {
 						return BillsUtil.makeBillNo(prefix, 1);
 					} else {
 						// 如果有记录并且最后一条记录的日期是当天，则流水号为最大值 + 1
 						// 首先获取最后一条库存的单号
-						Integer num = BillsUtil.getSerialNumber(Optional.of(stockNoOfMaxId)) + 1;
+						int num = BillsUtil.getSerialNumberOfBillNo(Optional.of(stockNoOfMaxId)) + 1;
 						// 通过最后一条的库存单号生成新的库存单号
 						return BillsUtil.makeBillNo(prefix, num);
 					}
@@ -224,10 +224,10 @@ public class StockUtil {
 			int totalStockoutNumForOneGood = 0;
 			List<StockMadedate> stockMadeDates = stockoutDetail.getStockoutMadedates();
 			if (CollectionUtils.isEmpty(stockMadeDates)) {
-				return ResponseModel.getInstance().succ(false).msg("请选择批次.");
+				return ResponseModel.getInstance().succ(false).msg("请选择批次！");
 			}
 			Integer goodsId = stockoutDetail.getGoodsId();
-			synchronized (new Integer(goodsId)) {
+			synchronized (goodsId) {
 				Goods dbGoods = goodsMapper.selectGoodsByGoodsId(goodsId);
 				// 批次纬度
 				for (StockMadedate stockMadedate : stockMadeDates) {

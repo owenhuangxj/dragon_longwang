@@ -23,13 +23,13 @@ public interface IReceiptService extends IService<Receipt> {
 
     Page<Receipt> getReceiptPageSelective(Map<String,Object> params, Page page);
 
-    ResponseModel saveReceipt(Receipt receipt,HttpServletRequest request);
+    ResponseModel saveReceipt(Receipt receipt);
 
     ResponseModel cancelReceipt(Receipt receipt, HttpServletRequest request);
 
     Receipt getReceiptById(Long receiptId);
 
-    ResponseModel savePayReceipt(Receipt pay,HttpServletRequest request);
+    ResponseModel savePayReceipt(Receipt pay);
 
     ResponseModel cancelPayReceiptById(Long receiptId);
 

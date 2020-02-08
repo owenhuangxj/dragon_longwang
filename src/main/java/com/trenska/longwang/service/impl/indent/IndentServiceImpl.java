@@ -565,6 +565,13 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		if (dbIndent == null) {
 			return ResponseModel.getInstance().succ(false).msg("无效的订单信息，不能出库！");
 		}
+
+		synchronized (indentNo){
+			String stat = dbIndent.getStat();
+			if (IndentStat.FINISHED.getName().equals(stat) || IndentStat.STOCKOUTED.getName().equals(stat)) {
+				return ResponseModel.getInstance().succ(false).msg("订单" + stat + "，不能出库！");
+			}
+		}
 		ResponseModel responseModel = CustomerUtil.checkDebtLimit(dbIndent.getIndentNo(), dbIndent.getCustId());
 		if (!responseModel.getSucc()) {
 			return responseModel;
@@ -693,7 +700,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 				String currentTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
 				updatingIndent.setSalesTime(currentTime); // 设置销售时间为订单完成出库时间
 				dealDetailTime = currentTime;
-			}else {
+			} else {
 				dealDetailTime = dbIndent.getSalesTime();
 			}
 			DealDetailUtil.saveDealDetail(custId, nameNo, dealDetailTime, Constant.PLUS.concat(amount.toString()),
@@ -1087,7 +1094,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 */
 	@Override
 	public ResponseModel addOrUpdateIou(Long indentId, String iouAmnt, String iouTime, String iouRemarks) {
-		String msg = "欠条新建成功 ";
+		String msg = "欠条新建成功！";
 		Indent dbIndent = this.getById(indentId);
 
 		if (null == dbIndent) {
@@ -1099,10 +1106,10 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		Boolean auditStat = dbIndent.getAuditStat();
 
 		if (true == auditStat) {
-			return ResponseModel.getInstance().succ(false).msg("订单已财审，不能操作欠条");
+			return ResponseModel.getInstance().succ(false).msg("订单已财审，不能操作欠条！");
 		}
 		if (IndentStat.FINISHED.getName().equals(stat)) {
-			return ResponseModel.getInstance().succ(false).msg("订单已完成，不能操作欠条");
+			return ResponseModel.getInstance().succ(false).msg("订单已完成，不能操作欠条！");
 		}
 
 		// 已收款
@@ -1120,12 +1127,13 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		Indent updatingIndent = new Indent();
 
 		/**
-		 * 如果欠条金额+收款金额+付款金额 >= 应收金额
+		 * 如果欠条金额+已收金额+已付金额 >= 应收金额
 		 * 	1.设置是否可以财务审核状态为true->表示可以进行财务审核了
 		 * 	2.已经交账
 		 */
-
-		if (indentTotal.compareTo(receivedAmnt.add(payedAmnt).add(newIouAmnt)) <= 0) {
+		BigDecimal addedAmount = receivedAmnt.add(payedAmnt).add(newIouAmnt);
+		boolean isAuditable = indentTotal.compareTo(addedAmount) <= 0;
+		if (isAuditable) {
 			updatingIndent.setAuditable(true);
 			updatingIndent.setIouStat(true);
 		}
@@ -1140,9 +1148,8 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		updatingIndent.setIouAmnt(iouAmnt);
 		updatingIndent.updateById();
 		if (StringUtils.isNotEmpty(dbIndent.getIndentTime())) {
-			msg = "欠条更新成功";
+			msg = "欠条更新成功！";
 		}
-
 		return ResponseModel.getInstance().succ(true).msg(msg);
 	}
 
@@ -1212,7 +1219,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		receipt.setChargemanId(empId);
 		receipt.setEmpId(empId);
 		receipt.setPayway(payway);
-		receiptService.savePayReceipt(receipt, request);
+		receiptService.savePayReceipt(receipt);
 
 		return ResponseModel.getInstance().succ(true).msg("订货单付款成功");
 	}
@@ -1238,7 +1245,6 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			return ResponseModel.getInstance().succ(false).msg("未交账的订货单不可以进行财务审核");
 		}
 		dbIndent.setAuditStat(true);
-
 
 		boolean successful = IndentUtil.handleIndentStat(dbIndent);
 
@@ -1557,7 +1563,6 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		discountTotal = discountTotal.setScale(retain, RoundingMode.HALF_UP);
 		deliveryStaticsModel.setDiscountTotal(discountTotal.toString());
 
-
 		return deliveryStaticsModel;
 	}
 
@@ -1778,13 +1783,13 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		SysEmp emp = empService.getById(dbIndent.getEmpId());
 		Customer dbCustomer = customerService.getById(dbIndent.getCustId());
 		Integer areaGrpId = dbCustomer.getAreaGrpId();
-		if(NumberUtil.isIntegerUsable(areaGrpId)){
+		if (NumberUtil.isIntegerUsable(areaGrpId)) {
 			AreaGrp dbAreaGrp = areaGrpMapper.selectOne(
-				new LambdaQueryWrapper<AreaGrp>()
-					.eq(AreaGrp::getAreaGrpId,areaGrpId)
+					new LambdaQueryWrapper<AreaGrp>()
+							.eq(AreaGrp::getAreaGrpId, areaGrpId)
 			);
-			if (dbAreaGrp != null){
-				params.put("areaGrp",dbAreaGrp.getAreaGrpName());
+			if (dbAreaGrp != null) {
+				params.put("areaGrp", dbAreaGrp.getAreaGrpName());
 			}
 		}
 		params.put("custName", "");
@@ -2210,7 +2215,6 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			record.setSalesAmnt(salesAmnt.toString());
 			record.setIndentTotal(indentTotal.toString());
 			record.setDiscountAmount(discountAmount.toString());
-
 		}
 
 		int total = super.baseMapper.selectCustSalesDetailCountSelective(params);

@@ -167,6 +167,10 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, Stock> implements
 				record.setInitStock(initStock);
 			}
 
+			BigDecimal salesOut = new BigDecimal(record.getSalesOut());
+			BigDecimal otherOut = new BigDecimal(record.getOtherOut());
+			BigDecimal breakage = new BigDecimal(record.getBreakage());
+
 			// 期末库存由期初和所有库存类型的库存计算得到
 			String overStock =
 					new BigDecimal(record.getInitStock())
@@ -174,11 +178,20 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, Stock> implements
 							.add(new BigDecimal(record.getOtherIn()))
 							.add(new BigDecimal(record.getReturnsIn()))
 							.add(new BigDecimal(record.getOverflow()))
-							.add(new BigDecimal(record.getSalesOut()))
-							.add(new BigDecimal(record.getOtherOut()))
-							.add(new BigDecimal(record.getBreakage()))
+							.add(salesOut)
+							.add(otherOut)
+							.add(breakage)
 							.toString();
 			record.setOverStock(overStock);
+			if (salesOut.compareTo(BigDecimal.ZERO) != 0) {
+				record.setSalesOut(salesOut.negate().toString());
+			}
+			if (otherOut.compareTo(BigDecimal.ZERO) != 0) {
+				record.setOtherOut(otherOut.negate().toString());
+			}
+			if (breakage.compareTo(BigDecimal.ZERO) != 0) {
+				record.setBreakage(breakage.negate().toString());
+			}
 		}
 
 		int total = super.baseMapper.selectGoodsStockSummarizingCount(params);
@@ -236,6 +249,15 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, Stock> implements
 			overflowSum = overflowSum.add(new BigDecimal(record.getOverflow()));
 			breakageSum = breakageSum.add(new BigDecimal(record.getBreakage()));
 			overStockSum = overStockSum.add(new BigDecimal(overStock));
+		}
+		if (salesOutSum.compareTo(BigDecimal.ZERO) != 0) {
+			salesOutSum = salesOutSum.negate();
+		}
+		if (otherOutSum.compareTo(BigDecimal.ZERO) != 0) {
+			otherOutSum = otherInSum.negate();
+		}
+		if (breakageSum.compareTo(BigDecimal.ZERO) != 0) {
+			breakageSum = breakageSum.negate();
 		}
 		goodsStockSummation.setInitStockSum(initStockSum.toString());
 		goodsStockSummation.setMakeInSum(makeInSum.toString());

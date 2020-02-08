@@ -225,6 +225,7 @@ public class IndentController {
 			@ApiImplicitParam(name = "indent", value = "订货单", paramType = "body", dataType = "Indent")
 	})
 	@ApiOperation("订货单出库")
+	@CheckDuplicateSubmit
 	public ResponseModel stockoutIndent(@RequestBody Indent indent, HttpServletRequest request) {
 		if (indent == null) {
 			return ResponseModel.getInstance().succ(false).msg("不存在该订货单信息，不能出库！");
@@ -305,27 +306,29 @@ public class IndentController {
 			@ApiImplicitParam(name = "receipt", value = "收款单", paramType = "body", dataType = "Receipt")
 	})
 	@ApiOperation("订货单收款")
-	public ResponseModel chargeIndent(@RequestBody @ApiParam Receipt receipt, HttpServletRequest request) {
+	@CheckDuplicateSubmit
+	public ResponseModel chargeIndent(@RequestBody @ApiParam Receipt receipt) {
 		if (receipt == null) {
-			return ResponseModel.getInstance().succ(false).msg("无效的收款单");
+			return ResponseModel.getInstance().succ(false).msg("无效的收款单！");
 		}
 		if (StringUtils.isEmpty(receipt.getBusiNo())) {
-			return ResponseModel.getInstance().succ(false).msg("无效的订货单");
+			return ResponseModel.getInstance().succ(false).msg("无效的订货单！");
 		}
-		return ReceiptUtil.saveReceipt(receipt, request, receiptMapper, Constant.DHD_CHINESE, Constant.SK_CHINESE);
+		return ReceiptUtil.saveReceipt(receipt, receiptMapper, Constant.DHD_CHINESE, Constant.SK_CHINESE);
 	}
 
 	/********************************************** 订单付款一次多个付款 **********************************************/
 	@PostMapping("/pay")
 	@ApiOperation("订货单付款")
-	public ResponseModel multiPayIndent(@ApiParam(name = "pay", value = "付款单", type = "Receipt") @RequestBody Receipt pay, HttpServletRequest request) {
-		if (Objects.isNull(pay)) {
-			return ResponseModel.getInstance().succ(false).msg("无效的付款单");
+	@CheckDuplicateSubmit
+	public ResponseModel payIndent(@ApiParam(name = "pay", value = "付款单", type = "Receipt") @RequestBody Receipt pay) {
+		if (pay == null) {
+			return ResponseModel.getInstance().succ(false).msg("无效的付款单！");
 		}
 		if (StringUtils.isEmpty(pay.getBusiNo())) {
-			return ResponseModel.getInstance().succ(false).msg("无效的订货单");
+			return ResponseModel.getInstance().succ(false).msg("无效的订货单！");
 		}
-		return ReceiptUtil.saveReceipt(pay, request, receiptMapper, Constant.DHD_CHINESE, Constant.FK_CHINESE);
+		return ReceiptUtil.saveReceipt(pay, receiptMapper, Constant.DHD_CHINESE, Constant.FK_CHINESE);
 	}
 
 	/**
@@ -339,6 +342,7 @@ public class IndentController {
 			@ApiImplicitParam(name = "indentId", value = "订货单编号", paramType = "body", dataType = "string")
 	})
 	@ApiOperation("作废订货单")
+	@CheckDuplicateSubmit
 	public ResponseModel invalid(@PathVariable("indentId") Long indentId, HttpServletRequest request) {
 		if (!NumberUtil.isLongUsable(indentId)) {
 			return ResponseModel.getInstance().succ(false).msg("不存在该订货单信息");
@@ -397,6 +401,7 @@ public class IndentController {
 			@ApiImplicitParam(name = "indentDetails", value = "订货单详情", paramType = "body", dataType = "list")
 	})
 	@ApiOperation("核定修改订货单")
+	@CheckDuplicateSubmit
 	public ResponseModel changeIndent(@RequestBody Indent indent, HttpServletRequest request) {
 		if (indent == null) {
 			return ResponseModel.getInstance().succ(false).msg("无效的订单信息!");
@@ -477,6 +482,7 @@ public class IndentController {
 			@ApiImplicitParam(name = "indentId", value = "订货单id", paramType = "path", dataType = "long")
 	})
 	@ApiOperation("删除订货单")
+	@CheckDuplicateSubmit
 	public ResponseModel deleteIndentById(@ApiParam(name = "indentId", required = true) @PathVariable("indentId") Long indentId) {
 		if (!NumberUtil.isLongUsable(indentId)) {
 			return ResponseModel.getInstance().succ(false).msg("删除订货单失败 : 不存在此订货单");
@@ -486,6 +492,7 @@ public class IndentController {
 
 	@DeleteMapping("/delete/batch")
 	@ApiOperation("批量删除订货单")
+	@CheckDuplicateSubmit
 	public ResponseModel batchDeleteIndentByIds(@ApiParam(name = "indentIds", value = "需要批量删除的订货单编号集合/数组", required = true) @RequestParam(value = "indentIds") Collection<Long> indentIds) {
 		if (indentIds == null || indentIds.isEmpty()) {
 			return ResponseModel.getInstance().succ(false).msg("删除订货单失败 : 不存在此订货单");
@@ -514,6 +521,7 @@ public class IndentController {
 			@ApiImplicitParam(name = "iouTime", value = "回款时间", paramType = "query", dataType = "string"),
 			@ApiImplicitParam(name = "iouRemarks", value = "备注", paramType = "query", dataType = "string")
 	})
+	@CheckDuplicateSubmit
 	public ResponseModel addOrUpdateIou(@PathVariable("indentId") Long indentId, String iouAmnt, String iouTime, String iouRemarks) {
 		if (NumberUtil.isLongNotUsable(indentId)) {
 			return ResponseModel.getInstance().succ(false).msg(Constant.INVALID_INDENT).data(null);
@@ -527,6 +535,7 @@ public class IndentController {
 			@ApiImplicitParam(name = "indentId", value = "订货单id", paramType = "path", dataType = "long"),
 			@ApiImplicitParam(name = "iouAmnt", value = "欠条金额", paramType = "path", dataType = "string")
 	})
+	@CheckDuplicateSubmit
 	public ResponseModel addIou(@PathVariable("indentId") Long indentId, @PathVariable("iouAmnt") String iouAmnt) {
 		return indentService.addIou(indentId, iouAmnt);
 	}
@@ -629,14 +638,12 @@ public class IndentController {
 				htmlStr = PDFUtil.freemarkerRender(params, templatePath + File.separator + "xsdd/xsd.ftl");
 			}
 
-
 			WebPrintModel wm = PrintSingleton.INSTNACE.getInstance().retOk(htmlStr, "24.1", "13");
 
 			return ResponseModel.getInstance().succ(true).data(wm);
 		} catch (Exception e) {
 			return ResponseModel.getInstance().succ(false).msg(e.getMessage());
 		}
-
 	}
 
 	/**

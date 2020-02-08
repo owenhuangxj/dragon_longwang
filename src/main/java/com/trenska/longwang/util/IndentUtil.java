@@ -29,12 +29,16 @@ public class IndentUtil {
 		// 查询订货单表中的最后一条记录
 		Indent indent = indentMapper.selectRecordOfMaxId(indentType);
 
-		String indentNo = "";
-		if(indent == null || (indent != null && !new SimpleDateFormat("yyyyMMdd").format(new Date()).equals(BillsUtil.getDate(indent.getIndentNo())))){
+		String indentNo;
+		String currentDate = new SimpleDateFormat(Constant.BILL_TIME_FORMAT).format(new Date());
+		boolean isTowDateEquals =
+				currentDate.equals(BillsUtil.getDateOfBillNo(Optional.of(indent.getIndentNo())));
+
+		if(indent == null || (indent != null && !isTowDateEquals)){
 			indentNo = BillsUtil.makeBillNo(prefix,1);
 		}else{
 			indentNo = indent.getIndentNo();
-			Integer num = BillsUtil.getSerialNumber(Optional.of(indentNo)) ;
+			Integer num = BillsUtil.getSerialNumberOfBillNo(Optional.of(indentNo)) ;
 			indentNo = BillsUtil.makeBillNo(prefix,num + 1);
 		}
 		return indentNo;
@@ -492,6 +496,4 @@ public class IndentUtil {
 			indentDetail.insert();
 		});
 	}
-
-
 }

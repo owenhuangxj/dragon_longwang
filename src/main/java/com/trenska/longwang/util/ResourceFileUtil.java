@@ -13,7 +13,6 @@ import java.io.FileNotFoundException;
  */
 public class ResourceFileUtil {
 
-
     /**
      * 获取资源文件
      *
@@ -70,5 +69,4 @@ public class ResourceFileUtil {
     public static String getFileName(String relativePath) throws FileNotFoundException {
         return getFile(relativePath).getName();
     }
-
 }
