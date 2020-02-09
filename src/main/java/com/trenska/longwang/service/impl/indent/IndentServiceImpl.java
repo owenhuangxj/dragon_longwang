@@ -572,7 +572,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 				return ResponseModel.getInstance().succ(false).msg("订单" + stat + "，不能出库！");
 			}
 		}
-		ResponseModel responseModel = CustomerUtil.checkDebtLimit(dbIndent.getIndentNo(), dbIndent.getCustId());
+		ResponseModel responseModel = CustomerUtil.checkDebtLimit(indentNo, custId);
 		if (!responseModel.getSucc()) {
 			return responseModel;
 		}

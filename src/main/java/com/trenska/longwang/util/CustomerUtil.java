@@ -185,7 +185,7 @@ public class CustomerUtil {
 		/**如果创建客户时没有设置debtLimit，客户就没有欠款额度的限制*/
 		boolean hasNotSetLimit = Constant.NO_DEBT_LIMIT_LABEL.equals(customer.getDebtLimit());
 		if(hasNotSetLimit){
-			return ResponseModel.getInstance().succ(true).msg("没有设置客户欠款额度,无限额度");
+			return ResponseModel.getInstance().succ(true).msg("没有设置客户欠款额度,无限额度！");
 		}
 		Indent dbIndent = new Indent().selectOne(
 				new LambdaQueryWrapper<Indent>()
