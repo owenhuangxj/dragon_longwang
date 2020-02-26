@@ -84,7 +84,7 @@ public class Goods extends Model<Goods> {
 	 * 冗余的产品品牌名称，减少多表查询和方便实体类的设计，但是在品牌名称修改时需要级联操作
 	 */
 	@ApiModelProperty("产品品牌名称")
-	private String brandName="无品牌";
+	private String brandName;
 
 	/**
 	 * 冗余的商品分类一级名称，减少多表查询和实体类的设计，但是在分类名称修改时需要级联操作

@@ -56,7 +56,9 @@
         and ti.indent_no = tid.indent_no
         and ti.stat in ('已出库','已完成')
         <trim prefixOverrides="and" prefix="and">
-            <if test="(frtCatName != null and frtCatName != '') or (scdCatName != null and scdCatName != '')">
+            <if test="(frtCatName != null and frtCatName != '')
+            or (scdCatName != null and scdCatName != '')
+            or (brandName != null and brandName !='')">
                 and tg.goods_id = tid.goods_id
                 <if test="frtCatName != null and frtCatName != ''">
                     and tg.frt_cat_name = #{frtCatName}
@@ -130,7 +132,9 @@
     <select id="selectSingleGoodsIndentDetailCount" resultType="int">
         select count(1)
         from t_indent_detail tid, t_indent ti,t_customer tc
-        <if test="(frtCatName != null and frtCatName != '') or (scdCatName != null and scdCatName != '')">
+        <if test="(frtCatName != null and frtCatName != '')
+        or (scdCatName != null and scdCatName != '')
+        or (brandName != null and brandName !='')">
             ,t_goods tg
         </if>
         <if test="specPropId != null">
@@ -145,7 +149,8 @@
         and ti.indent_type = '订货单'
         and ti.stat in ('已出库','已完成')
         <trim prefixOverrides="and" prefix="and">
-            <if test="(frtCatName != null and frtCatName != '') or (scdCatName != null and scdCatName != '')">
+            <if test="(frtCatName != null and frtCatName != '')
+            or (scdCatName != null and scdCatName != '')">
                 and tg.goods_id = tid.goods_id
                 <if test="frtCatName != null and frtCatName != ''">
                     and tg.frt_cat_name = #{frtCatName}
@@ -172,7 +177,8 @@
                     )
                 )
             </if>
-            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+            <if test="beginTime != null and beginTime != ''
+            and endTime != null and endTime != ''">
                 and ti.indent_time between #{beginTime} and #{endTime}
             </if>
             <if test="custId != null">

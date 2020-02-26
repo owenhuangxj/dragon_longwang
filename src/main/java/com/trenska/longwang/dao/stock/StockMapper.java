@@ -66,9 +66,11 @@ public interface StockMapper extends BaseMapper<Stock> {
 
 	int selectGoodsStockSummarizingCount(Map<String, Object> params);
 
-	List<GoodsStockSummarizingModel> selectGoodsStockSummarizing(Map<String, Object> params);
+	GoodsStockSummationModel selectGoodsStockSummation(Map<String, Object> params);
 	List<GoodsStockSummarizingModel> selectGoodsStockSummarizing(Map<String, Object> params, Pagination page);
+
 	GoodsStockinSummationModel selectGoodsStockinSummation(Map<String, Object> params);
+
 	List<GoodsStockinStatisticsModel> selectGoodsStockinStatistic(Map<String, Object> params, Pagination page);
 
 	List<Integer> selectGoodsStockinStatisticsCount(Map<String, Object> params);
@@ -76,12 +78,12 @@ public interface StockMapper extends BaseMapper<Stock> {
 	@Select("select stock_no from t_stock where busi_no = #{busiNo}")
 	Set<String> selectStockNoByBusiNo(String busiNo);
 
-	String selectGoodsBeginningStockBefore(Map<String, Object> params);
-
-	String selectGoodsBeginningStockBetween(Map<String, Object> params);
-
-	String selectGoodsBeginningStockOfInitialization(Map<String,Object> params);
+	String selectInitStockSum(Map<String,Object> params);
 
 	Stock selectByStockNo(String stockNo);
+
+	String selectQckcStock(int goodsId);
+
+	String selectGoodsInitStock(Map<String, Object> params);
 }
 

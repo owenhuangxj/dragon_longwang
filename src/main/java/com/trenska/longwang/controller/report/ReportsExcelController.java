@@ -161,6 +161,8 @@ public class ReportsExcelController {
 			@ApiImplicitParam(name = "custName", value = "客户名称", dataType = "string", paramType = "query"),
 			@ApiImplicitParam(name = "salesman", value = "业务员名称", dataType = "string", paramType = "query"),
 			@ApiImplicitParam(name = "salesmanId", value = "业务员id", dataType = "int", paramType = "query"),
+			@ApiImplicitParam(name = "shipman", value = "送货人名称", dataType = "string", paramType = "query"),
+			@ApiImplicitParam(name = "shipmanId", value = "送货人id", dataType = "int", paramType = "query"),
 			@ApiImplicitParam(name = "frtCatName", value = "一级分类名称", dataType = "string", paramType = "query"),
 			@ApiImplicitParam(name = "scdCatName", value = "二级分类名称", dataType = "string", paramType = "query"),
 			@ApiImplicitParam(name = "brandId", value = "品牌id", dataType = "int", paramType = "query"),
@@ -179,6 +181,8 @@ public class ReportsExcelController {
 			@RequestParam(required = false, value = "beginTime") String beginTime,
 			@RequestParam(required = false, name = "frtCatName") String frtCatName,
 			@RequestParam(required = false, name = "scdCatName") String scdCatName,
+			@RequestParam(required = false, name = "shipman") String shipman,
+			@RequestParam(required = false, name = "shipmanId") Integer shipmanId,
 			@RequestParam(required = false, name = "salesman") String salesman,
 			@RequestParam(required = false, name = "salesmanId") Integer salesmanId,
 			@RequestParam(required = false, name = "areaGrpId") Integer areaGrpId,
@@ -206,6 +210,10 @@ public class ReportsExcelController {
 
 		if (StringUtils.isNotEmpty(salesman)) {
 			query.put("业务员", salesman);
+		}
+
+		if (StringUtils.isNotEmpty(shipman)) {
+			query.put("送货人", shipman);
 		}
 
 		if (StringUtils.isNotEmpty(frtCatName)) {
@@ -243,6 +251,7 @@ public class ReportsExcelController {
 		params.put("beginTime", beginTime);
 		params.put("brandName", brandName);
 		params.put("salesmanId", salesmanId);
+		params.put("shipmanId", shipmanId);
 		params.put("frtCatName", frtCatName);
 		params.put("scdCatName", scdCatName);
 		params.put("goodsScope", goodsScope);
@@ -1020,7 +1029,7 @@ public class ReportsExcelController {
 		params.put("scdCatName", scdCatName);
 		Page<GoodsStockSummarizingModel> pageInfo = stockService.getGoodsStockSummarizing(params, page);
 
-		GoodsStockSummationModel goodsStockSummartion = stockService.getGoodsStockSummartion(params);
+		GoodsStockSummationModel goodsStockSummartion = stockService.getGoodsStockSummation(params);
 
 		////////////////////////////////////////////// 处理列标题 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 		Map<String, String> title = new LinkedHashMap<>();

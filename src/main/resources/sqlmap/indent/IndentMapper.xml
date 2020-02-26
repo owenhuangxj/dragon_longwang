@@ -356,12 +356,19 @@
         ifnull(sum( case when ti.indent_type = '订货单' then tid.amount else -tid.amount end ) ,0) as receivableAmntSum,
         ifnull(sum( case when ti.indent_type = '订货单' then tid.discount_amount else -tid.discount_amount end ),0) as salesDiscountSum
         from t_customer tc , t_indent ti , t_indent_detail tid , t_goods tg , t_unit tu
+        <if test="shipmanId != null">
+            ,t_stock ts
+        </if>
         where tc.cust_id = ti.cust_id
         and ti.indent_no = tid.indent_no
         and tid.unit_id = tu.unit_id
         and tid.goods_id = tg.goods_id
         and tg.main_unit_id = tu.unit_id
         and ti.stat in ('已出库','已完成')
+        <if test="shipmanId != null">
+            and ts.busi_no = ti.indent_no
+            and ts.stat = 1
+        </if>
         <if test="custIds != null and custIds.size() > 0">
             <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
                 #{custId}
@@ -393,6 +400,9 @@
             <if test="remarks != null and remarks != ''">
                 and tg.remarks like concat('%',#{remarks},'%')
             </if>
+            <if test="shipmanId != null">
+                and ts.shipman_id = #{shipmanId}
+            </if>
         </trim>
         <choose>
             <when test="goodsScope != null and goodsScope == -1">
@@ -420,12 +430,19 @@
                 ifnull(sum( case when ti.indent_type = '订货单' then tid.amount else -tid.amount end),0)/ifnull(sum(
                 case when ti.indent_type = '订货单' then tid.multi * tid.num else -tid.multi * tid.num end),1) as avgPrice
         from t_customer tc , t_indent ti , t_indent_detail tid , t_goods tg , t_unit tu
+        <if test="shipmanId != null">
+            ,t_stock ts
+        </if>
         where tc.cust_id = ti.cust_id
         and ti.indent_no = tid.indent_no
         and tid.unit_id = tu.unit_id
         and tid.goods_id = tg.goods_id
         and tg.main_unit_id = tu.unit_id
         and ti.stat in ('已出库','已完成')
+        <if test="shipmanId != null">
+            and ts.busi_no = ti.indent_no
+            and ts.stat = 1
+        </if>
         <if test="custIds != null and custIds.size() > 0">
             <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
                 #{custId}
@@ -456,7 +473,10 @@
             </if>
             <if test="remarks != null and remarks != ''">
                 and instr(tg.remarks,#{remarks}) > 0
-             </if>
+            </if>
+            <if test="shipmanId != null">
+                and ts.shipman_id = #{shipmanId}
+            </if>
         </trim>
         <choose>
             <when test="goodsScope != null and goodsScope == -1">
@@ -491,12 +511,19 @@
         select count(custId) from(
         select tc.cust_id as custId
         from t_customer tc , t_indent ti , t_indent_detail tid , t_goods tg , t_unit tu
+        <if test="shipmanId != null">
+          ,t_stock ts
+        </if>
         where tc.cust_id = ti.cust_id
         and ti.indent_no = tid.indent_no
         and tid.unit_id = tu.unit_id
         and tid.goods_id = tg.goods_id
         and tg.main_unit_id = tu.unit_id
         and ti.stat in ('已出库','已完成')
+        <if test="shipmanId != null">
+            and ts.busi_no = ti.indent_no
+            and ts.stat = 1
+        </if>
         <if test="custIds != null and custIds.size() > 0">
             <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
                 #{custId}
@@ -527,6 +554,9 @@
             </if>
             <if test="remarks != null and remarks != ''">
                 and instr(tg.remarks,#{remarks}) > 0
+            </if>
+            <if test="shipmanId != null">
+                and ts.shipman_id = #{shipmanId}
             </if>
         </trim>
         <choose>
@@ -1613,8 +1643,8 @@
     <!-- 商品销售明细统计=>最外层数据只有一条-->
     <select id="selectSingleGoodsSalesDetail" resultMap="SingleGoodsSalesDetailResultMap">
         select tg.goods_id as goodsId,tg.goods_name as goodsName,ifnull(tg.goods_no,"") as goodsNo,
-               tg.main_unit_id as unitId,sum(case when ti.indent_type = '订货单'
-               then tid.num else -tid.num end ) as salesNumSum,
+               tg.main_unit_id as unitId,
+               sum(case when ti.indent_type = '订货单' then tid.num else -tid.num end ) as salesNumSum,
                sum(case when ti.indent_type = '订货单' then (tid.amount  + tid.discount_amount)
                else -(tid.amount +tid.discount_amount) end ) as salesAmntSum
         from t_goods tg,t_unit tu,t_indent_detail tid, t_indent ti

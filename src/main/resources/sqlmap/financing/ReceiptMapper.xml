@@ -203,48 +203,37 @@
         tc.cust_no AS custNo,
         tc.cust_name AS custName,
         abs(
-        ifnull(
-        sum(
-        if(
-        tdd.oper = '增加欠款'
-        or substring(tdd.name_no,1,3) = '订货单'
-        or
-        (substring(tdd.name_no,1,3) = '调账单'and tdd.oper = '调账增加'),
-        cast(tdd.amount as decimal(9,2)),
-        0
-        )
-        )
-        ,0
-        )
+          ifnull(
+            sum(
+              if(  tdd.oper = '增加欠款'
+                   or substring(tdd.name_no,1,3) = '订货单'
+                   or (substring(tdd.name_no,1,3) = '调账单'and tdd.oper = '调账增加'),
+                cast(tdd.amount as decimal(9,2)),0
+              )
+            )
+            ,0
+          )
         ) as salesAmount,
         abs(
-        ifnull(
-        sum(
-        if(
-        substring(tdd.name_no,1,3) = '收款单' ,
-        cast(tdd.amount as decimal(9,2)),
-        0
-        )
-        ) ,
-        0
-        )
+          ifnull(
+            sum(
+              if(substring(tdd.name_no,1,3) = '收款单' ,cast(tdd.amount as decimal(9,2)),0)
+            )
+            ,0
+          )
         ) as receivedAmount,
-
         abs(
-        ifnull(
-        sum(
-        if(
-        substring(tdd.name_no,1,3) = '付款单'
-        or
-        substring(tdd.name_no,1,3) = '退货单'
-        or
-        (substring(tdd.name_no,1,3) = '调账单' and substring(tdd.oper,1,4) = '调账减少'),
-        cast(tdd.amount as decimal(9,2)),
-        0
-        )
-        ),
-        0
-        )
+          ifnull(
+            sum(
+              if(  substring(tdd.name_no,1,3) = '付款单'
+                   or substring(tdd.name_no,1,3) = '退货单'
+                   or(substring(tdd.name_no,1,3) = '调账单' and substring(tdd.oper,1,4) = '调账减少'),
+                cast(tdd.amount as decimal(9,2))
+              ,0
+              )
+            )
+            ,0
+          )
         ) as payedAmount
         FROM(
         select * from t_customer

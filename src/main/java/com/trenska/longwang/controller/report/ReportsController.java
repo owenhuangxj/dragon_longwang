@@ -1,25 +1,20 @@
 package com.trenska.longwang.controller.report;
 
 import com.baomidou.mybatisplus.plugins.Page;
-import com.trenska.longwang.controller.sys.SysUserController;
 import com.trenska.longwang.dao.customer.AreaGrpMapper;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.sys.SysEmp;
-import com.trenska.longwang.model.finaning.AccountCheckingModel;
 import com.trenska.longwang.model.report.*;
 import com.trenska.longwang.service.customer.ICustomerService;
 import com.trenska.longwang.service.financing.IReceiptService;
 import com.trenska.longwang.service.indent.IIndentService;
 import com.trenska.longwang.service.stock.IStockService;
-import com.trenska.longwang.util.NumberUtil;
 import com.trenska.longwang.util.PageUtils;
-import com.trenska.longwang.util.SysUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.shiro.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +26,6 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * 2019/5/18
@@ -74,6 +68,7 @@ public class ReportsController {
 			@ApiImplicitParam(name = "areaGrpId", value = "区域id", dataType = "int", paramType = "query"),
 			@ApiImplicitParam(name = "brandName", value = "品牌", dataType = "string", paramType = "query"),
 			@ApiImplicitParam(name = "salesmanId", value = "所属员工id", dataType = "int", paramType = "query"),
+			@ApiImplicitParam(name = "shipmanId", value = "送货人id", dataType = "int", paramType = "query"),
 			@ApiImplicitParam(name = "goodsScope", value = "正品/赠品/所有", dataType = "int", paramType = "query"),
 			@ApiImplicitParam(name = "frtCatName", value = "商品一级分类", paramType = "body", dataType = "string"),
 			@ApiImplicitParam(name = "scdCatName", value = "商品二级分类", paramType = "body", dataType = "string")
@@ -87,6 +82,7 @@ public class ReportsController {
 			@RequestParam(required = false, name = "areaGrpId") Integer areaGrpId,
 			@RequestParam(required = false, name = "frtCatName") String frtCatName,
 			@RequestParam(required = false, name = "scdCatName") String scdCatName,
+			@RequestParam(required = false, name = "shipmanId") Integer shipmanId,
 			@RequestParam(required = false, name = "salesmanId") Integer salesmanId,
 			@RequestParam(required = false, name = "goodsScope") Integer goodsScope,
 			@PathVariable(value = "current") Integer current, @PathVariable(value = "size") Integer size
@@ -100,6 +96,7 @@ public class ReportsController {
 		params.put("areaGrpId", areaGrpId);
 		params.put("beginTime", beginTime);
 		params.put("goodsScope", goodsScope);
+		params.put("shipmanId", shipmanId);
 		params.put("salesmanId", salesmanId);
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
 		Page<CustSalesBillModel> pageInfo = indentService.getCustSales(params, page);
@@ -116,6 +113,7 @@ public class ReportsController {
 			@ApiImplicitParam(name = "goodsScope", value = "正品/赠品/所有", dataType = "int", paramType = "query"),
 			@ApiImplicitParam(name = "custId", value = "客户id", dataType = "int", paramType = "query"),
 			@ApiImplicitParam(name = "custName", value = "客户名称", dataType = "string", paramType = "query"),
+			@ApiImplicitParam(name = "shipmanId", value = "送货人id", dataType = "int", paramType = "query"),
 			@ApiImplicitParam(name = "salesmanId", value = "业务员id", dataType = "int", paramType = "query"),
 			@ApiImplicitParam(name = "brandName", value = "品牌", dataType = "string", paramType = "query"),
 			@ApiImplicitParam(name = "remarks", value = "商品备注", dataType = "string", paramType = "query"),
@@ -132,6 +130,7 @@ public class ReportsController {
 			@RequestParam(required = false, name = "beginTime") String beginTime,
 			@RequestParam(required = false, name = "areaGrpId") Integer areaGrpId,
 			@RequestParam(required = false, name = "goodsScope") Integer goodsScope,
+			@RequestParam(required = false, name = "shipmanId") Integer shipmanId,
 			@RequestParam(required = false, name = "salesmanId") Integer salesmanId,
 			@RequestParam(required = false, name = "frtCatName") String frtCatName,
 			@RequestParam(required = false, name = "scdCatName") String scdCatName,
@@ -148,12 +147,14 @@ public class ReportsController {
 		params.put("frtCatName", frtCatName);
 		params.put("scdCatName", scdCatName);
 		params.put("goodsScope", goodsScope);
+		params.put("shipmanId", shipmanId);
 		params.put("salesmanId", salesmanId);
 		SysEmp sysEmp = (SysEmp) SecurityUtils.getSubject().getPrincipal();
 
 		System.out.println("sysEmp : " + sysEmp);
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
 		Page<CustSalesSummarizingModel> pageInfo = indentService.getCustSalesSummarizing(params, page);
+
 		CustSalesSummationModel summarizing = indentService.getCustSalesSummation(params);
 		return PageHelper.getInstance().pageData(pageInfo).summarizing(summarizing);
 	}
@@ -589,8 +590,16 @@ public class ReportsController {
 		params.put("frtCatName", frtCatName);
 		params.put("scdCatName", scdCatName);
 		params.put("specPropId", specPropId);
+		long start = System.currentTimeMillis();
 		Page<GoodsStockSummarizingModel> pageInfo = stockService.getGoodsStockSummarizing(params, page);
-		GoodsStockSummationModel summarizing = stockService.getGoodsStockSummartion(params);
+		if (pageInfo == null){
+			return null;
+		}
+		long end = System.currentTimeMillis();
+		log.info("get page records spend {} seconds in ReportsController.",(end-start)/1000);
+		GoodsStockSummationModel summarizing = stockService.getGoodsStockSummation(params);
+		log.info("get summation info spend {} seconds in ReportsController.",
+				(System.currentTimeMillis() - end)/1000);
 		return PageHelper.getInstance().pageData(pageInfo).summarizing(summarizing);
 	}
 
@@ -627,6 +636,9 @@ public class ReportsController {
 		params.put("scdCatName", scdCatName);
 		params.put("frtCatName", frtCatName);
 		Page<GoodsStockinStatisticsModel> pageInfo = stockService.getGoodsStockinStatistics(params, page);
+		if (pageInfo == null){
+			return null;
+		}
 		GoodsStockinSummationModel summarizing = stockService.getGoodsStockinSummation(params);
 		return PageHelper.getInstance().pageData(pageInfo).summarizing(summarizing);
 	}

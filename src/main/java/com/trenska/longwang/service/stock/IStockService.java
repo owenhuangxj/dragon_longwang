@@ -32,7 +32,7 @@ public interface IStockService extends IService<Stock> {
 
 	Page<GoodsStockSummarizingModel> getGoodsStockSummarizing(Map<String, Object> params, Page page);
 
-	GoodsStockSummationModel getGoodsStockSummartion(Map<String, Object> params);
+	GoodsStockSummationModel getGoodsStockSummation(Map<String, Object> params);
 
 	Page<GoodsStockinStatisticsModel> getGoodsStockinStatistics(Map<String, Object> params, Page page);
 

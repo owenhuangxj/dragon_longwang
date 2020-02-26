@@ -1,6 +1,6 @@
 spring:
   profiles:
-    active: pro
+    active: ali
     include: druid
   mvc:
     static-path-pattern: /static/**

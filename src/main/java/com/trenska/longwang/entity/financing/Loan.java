@@ -51,7 +51,7 @@ public class Loan extends Model<Loan> {
     private String loanTime;
 
     @ApiModelProperty("状态")
-    private boolean stat = true;
+    private boolean stat;
 
     @ApiModelProperty("说明")
     private String remarks;

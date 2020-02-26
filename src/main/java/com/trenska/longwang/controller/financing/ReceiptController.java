@@ -271,7 +271,6 @@ public class ReceiptController {
 		// 保证数据库无数据时返回的各统计为 0
 		AccountCheckingSummationModel summarizing = dbSummation != null ? dbSummation : new AccountCheckingSummationModel();
 
-
 		return PageHelper.getInstance().pageData(pageInfo).summarizing(summarizing);
 	}
 
