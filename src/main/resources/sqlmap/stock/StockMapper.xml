@@ -537,8 +537,7 @@
 
     <select id="selectInitStockSum" resultType="java.lang.String">
         select ifnull(sum(tsd.stock) ,"0")from t_stock_details tsd,
-        (select max(tsdin1.id) as id
-        from t_stock_details tsdin1,
+        (select max(tsdin1.id) as id from t_stock_details tsdin1,
         (select tg.goods_id from t_goods tg
             <if test="specPropId != null">
                 ,t_goods_spec as tgs
@@ -566,8 +565,7 @@
         and tsdin1.goods_id = tgin.goods_id
         group by tsdin1.goods_id
         union
-        select id
-        from t_stock_details tsdin2
+        select id from t_stock_details tsdin2
         <if test="(brandName != null and brandName != '')
                 or (combine != null and combine != '')
                 or (frtCatName != null and frtCatName != '')
@@ -579,6 +577,13 @@
             ,t_goods_spec as tgs
         </if>
         where tsdin2.oper_type = '期初入库' and tsdin2.stock_time between #{beginTime} and #{endTime}
+        <if test="(brandName != null and brandName != '')
+                or (combine != null and combine != '')
+                or (frtCatName != null and frtCatName != '')
+                or (scdCatName != null and scdCatName != '')
+                or (specPropId != null)">
+            and tg.goods_id = tsdin2.goods_id
+        </if>
         <trim prefix="and" prefixOverrides="and">
             <if test="brandName != null and brandName != ''">
                 and tg.brand_name = #{brandName}
