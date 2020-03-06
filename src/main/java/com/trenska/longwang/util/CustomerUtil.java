@@ -161,10 +161,8 @@ public class CustomerUtil {
 		Integer empIdInToken = SysUtil.getEmpId();
 
 		if(NumberUtil.isIntegerNotUsable(empIdInToken)) {
-			ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-			HttpServletResponse response = requestAttributes.getResponse();
 			try {
-				ResponseUtil.accessDenied(response,Constant.ACCESS_TIMEOUT,Constant.ACCESS_TIMEOUT_MSG);
+				ResponseUtil.accessDenied(Constant.ACCESS_TIMEOUT,Constant.ACCESS_TIMEOUT_MSG,Constant.ACCESS_TIMEOUT_MSG);
 				return new HashSet<>();
 			} catch (IOException e) {
 				e.printStackTrace();

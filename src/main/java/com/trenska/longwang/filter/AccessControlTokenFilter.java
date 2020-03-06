@@ -51,14 +51,13 @@ public class AccessControlTokenFilter extends AccessControlFilter {
 		String tokenInHeader = req.getHeader(Constant.TOKEN_NAME);
 		// 如果无令牌
 		if (StringUtils.isEmpty(tokenInHeader)) {
-			HttpServletResponse response = (HttpServletResponse) resp;
-			ResponseUtil.accessDenied(response, Constant.TOKEN_MISSING, Constant.TOKEN_MISSING_MSG);
+			ResponseUtil.accessDenied(Constant.TOKEN_MISSING,Constant.TOKEN_MISSING_MSG,Constant.TOKEN_MISSING_MSG);
+			return false;
 		}
 		String tokenInRedis = SysUtil.getTokenInRedis(Optional.of(tokenInHeader));
 		// 如果令牌超时
 		if (StringUtils.isEmpty(tokenInRedis)) {
-			HttpServletResponse response = (HttpServletResponse) resp;
-			ResponseUtil.accessDenied(response, Constant.ACCESS_TIMEOUT, Constant.ACCESS_TIMEOUT_MSG);
+			ResponseUtil.accessDenied(Constant.ACCESS_TIMEOUT,Constant.ACCESS_TIMEOUT_MSG,Constant.ACCESS_TIMEOUT_MSG);
 		}
 		/**
 		 * 如果Header里面的token和Redis里面的token都不为null则允许访问资源

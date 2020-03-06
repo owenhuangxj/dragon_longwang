@@ -15,10 +15,7 @@ import com.trenska.longwang.exception.AccountDuplicatedException;
 import com.trenska.longwang.model.sys.LoginResultModel;
 import com.trenska.longwang.model.sys.ResponseModel;
 import com.trenska.longwang.service.sys.ISysEmpService;
-import com.trenska.longwang.util.ObjectCopier;
-import com.trenska.longwang.util.PageUtils;
-import com.trenska.longwang.util.SysUtil;
-import com.trenska.longwang.util.TimeUtil;
+import com.trenska.longwang.util.*;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -38,7 +35,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.util.*;
@@ -57,6 +53,9 @@ public class SysUserController {
 
 	@Value("${spring.redis.token-timeout}")
 	private Integer tokenTimeout;
+
+	@Value("${jasypt.encryptor.password}")
+	private String password;
 
 	@Resource(name = Constant.REDIS_TEMPLATE_NAME)
 	private RedisTemplate redisTemplate;
@@ -115,7 +114,7 @@ public class SysUserController {
 		}
 		// 将配置存入redis中,时间与token的失效时间相同
 		jsonRedisTemplate.opsForValue().set(Constant.SYS_CONFIG_IDENTIFIER.concat(String.valueOf(empId)),
-				sysConfig,tokenTimeout,TimeUnit.MILLISECONDS);
+				sysConfig, tokenTimeout, TimeUnit.MILLISECONDS);
 
 		/**
 		 * 更新客户的登陆ip,最后一次登陆时间，总登陆次数
@@ -134,7 +133,7 @@ public class SysUserController {
 		// 复制SysEmp给响应模型，包括角色和权限
 		ObjectCopier.copyProperties(dbSysEmp, loginResultModel);
 		loginResultModel.setSuccess(true);
-		loginResultModel.setToken(token);
+		loginResultModel.setToken(JasyptUtil.encypt(password,token));
 		// 将系统配置SysConfig 存入登陆响应模型中
 		loginResultModel.setSysConfig(sysConfig);
 		loginResultModel.setSessionId(token);

@@ -566,7 +566,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			return ResponseModel.getInstance().succ(false).msg("无效的订单信息，不能出库！");
 		}
 
-		synchronized (indentNo){
+		synchronized (indentNo) {
 			String stat = dbIndent.getStat();
 			if (IndentStat.FINISHED.getName().equals(stat) || IndentStat.STOCKOUTED.getName().equals(stat)) {
 				return ResponseModel.getInstance().succ(false).msg("订单" + stat + "，不能出库！");
@@ -1953,10 +1953,20 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		for (IndentDetail detail : indentDetails) {
 			Map<String, Object> dt = new HashMap<>();
-			Goods goods = goodsService.getById(Long.valueOf(detail.getGoodsId()));
+			Goods goods = goodsService.getGoodsByGoodsId(detail.getGoodsId());
 			dt.put("gcode", goods.getGoodsNo()); //编号
 			dt.put("gname", goods.getGoodsName());//名称
-			dt.put("guige", goods.getGoodsName());//规格
+			Collection<GoodsSpec> goodsSpecs = goods.getGoodsSpecs();
+			StringBuilder specStr = new StringBuilder();
+			if (CollectionUtils.isNotEmpty(goodsSpecs)) {
+				goodsSpecs.forEach(spec -> specStr.append(spec.getPropName()).append(","));
+			}
+			if (StringUtils.isNotEmpty(specStr.toString()) && StringUtils.contains(specStr.toString(), ",")) {
+				String subSpecStr = StringUtils.substring(specStr.toString(), 0, specStr.lastIndexOf(","));
+				dt.put("guige", subSpecStr);//规格
+			} else {
+				dt.put("guige", "");//规格
+			}
 			dt.put("unit", detail.getUnitName());//单位
 			dt.put("num", detail.getNum());//数量
 			dt.put("price", detail.getPrice());//单价

@@ -37,11 +37,9 @@ public class DataAuthAspect {
 
 	@Before("@annotation(dataAuthority)")
 	public void before(JoinPoint joinPoint, DataAuthVerification dataAuthority) throws IOException {
-		ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
 		Integer empIdInToken = SysUtil.getEmpId();
 		if (NumberUtil.isIntegerNotUsable(empIdInToken)) {
-			HttpServletResponse response = requestAttributes.getResponse();
-			ResponseUtil.accessDenied(response, Constant.ACCESS_TIMEOUT, Constant.ACCESS_TIMEOUT_MSG);
+			ResponseUtil.accessDenied(Constant.ACCESS_TIMEOUT,Constant.ACCESS_TIMEOUT_MSG,Constant.ACCESS_TIMEOUT_MSG);
 			return;
 		}
 
@@ -66,8 +64,7 @@ public class DataAuthAspect {
 						.select(EmpAreaGrp::getAreaGrpId)
 		);
 		if (CollectionUtils.isEmpty(empAreaGrps)) {
-			HttpServletResponse response = requestAttributes.getResponse();
-			ResponseUtil.accessDenied(response, Constant.ACCESS_FORBIDDEN, Constant.NO_ACCESS_PERMISSION_MSG);
+			ResponseUtil.accessDenied(Constant.ACCESS_TIMEOUT,Constant.NO_ACCESS_PERMISSION_MSG,Constant.NO_ACCESS_PERMISSION_MSG);
 			return;
 		}
 

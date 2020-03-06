@@ -216,43 +216,42 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, Stock> implements
 	public GoodsStockSummationModel getGoodsStockSummation(Map<String, Object> params) {
 		GoodsStockSummationModel goodsStockSummation =
 				super.baseMapper.selectGoodsStockSummation(params);
-		if (goodsStockSummation == null) {
-			return new GoodsStockSummationModel();
-		}
-		BigDecimal initStockSum =
-				new BigDecimal(super.baseMapper.selectInitStockSum(params)).setScale(Constant.ZERO);
-		BigDecimal makeInSum = new BigDecimal(goodsStockSummation.getMakeInSum()).setScale(Constant.ZERO);
-		BigDecimal purchaseInSum = new BigDecimal(goodsStockSummation.getPurchaseInSum()).setScale(Constant.ZERO);
-		BigDecimal returnsInSum = new BigDecimal(goodsStockSummation.getReturnsInSum()).setScale(Constant.ZERO);
-		BigDecimal returnsOutSum = new BigDecimal(goodsStockSummation.getReturnsOutSum()).setScale(Constant.ZERO);
-		BigDecimal salesOutSum = new BigDecimal(goodsStockSummation.getSalesOutSum()).setScale(Constant.ZERO);
-		BigDecimal otherInSum = new BigDecimal(goodsStockSummation.getOtherInSum()).setScale(Constant.ZERO);
-		BigDecimal otherOutSum = new BigDecimal(goodsStockSummation.getOtherOutSum()).setScale(Constant.ZERO);
-		BigDecimal overflowSum = new BigDecimal(goodsStockSummation.getOverflowSum()).setScale(Constant.ZERO);
-		BigDecimal breakageSum = new BigDecimal(goodsStockSummation.getBreakageSum()).setScale(Constant.ZERO);
-		BigDecimal overStockSum = initStockSum.add(makeInSum).add(purchaseInSum).add(returnsInSum).add(returnsOutSum)
-				.add(salesOutSum).add(otherInSum).add(otherOutSum).add(overflowSum).add(breakageSum).setScale(Constant.ZERO);
+		if (goodsStockSummation != null) {
+			BigDecimal initStockSum =
+					new BigDecimal(super.baseMapper.selectInitStockSum(params)).setScale(Constant.ZERO);
+			BigDecimal makeInSum = new BigDecimal(goodsStockSummation.getMakeInSum()).setScale(Constant.ZERO);
+			BigDecimal purchaseInSum = new BigDecimal(goodsStockSummation.getPurchaseInSum()).setScale(Constant.ZERO);
+			BigDecimal returnsInSum = new BigDecimal(goodsStockSummation.getReturnsInSum()).setScale(Constant.ZERO);
+			BigDecimal returnsOutSum = new BigDecimal(goodsStockSummation.getReturnsOutSum()).setScale(Constant.ZERO);
+			BigDecimal salesOutSum = new BigDecimal(goodsStockSummation.getSalesOutSum()).setScale(Constant.ZERO);
+			BigDecimal otherInSum = new BigDecimal(goodsStockSummation.getOtherInSum()).setScale(Constant.ZERO);
+			BigDecimal otherOutSum = new BigDecimal(goodsStockSummation.getOtherOutSum()).setScale(Constant.ZERO);
+			BigDecimal overflowSum = new BigDecimal(goodsStockSummation.getOverflowSum()).setScale(Constant.ZERO);
+			BigDecimal breakageSum = new BigDecimal(goodsStockSummation.getBreakageSum()).setScale(Constant.ZERO);
+			BigDecimal overStockSum = initStockSum.add(makeInSum).add(purchaseInSum).add(returnsInSum).add(returnsOutSum)
+					.add(salesOutSum).add(otherInSum).add(otherOutSum).add(overflowSum).add(breakageSum).setScale(Constant.ZERO);
 
-		if (salesOutSum.compareTo(BigDecimal.ZERO) != 0) {
-			salesOutSum = salesOutSum.negate();
+			if (salesOutSum.compareTo(BigDecimal.ZERO) != 0) {
+				salesOutSum = salesOutSum.negate();
+			}
+			if (otherOutSum.compareTo(BigDecimal.ZERO) != 0) {
+				otherOutSum = otherOutSum.negate();
+			}
+			if (breakageSum.compareTo(BigDecimal.ZERO) != 0) {
+				breakageSum = breakageSum.negate();
+			}
+			goodsStockSummation.setInitStockSum(initStockSum.toString());
+			goodsStockSummation.setMakeInSum(makeInSum.toString());
+			goodsStockSummation.setPurchaseInSum(purchaseInSum.toString());
+			goodsStockSummation.setReturnsInSum(returnsInSum.toString());
+			goodsStockSummation.setReturnsOutSum(returnsOutSum.toString());
+			goodsStockSummation.setSalesOutSum(salesOutSum.toString());
+			goodsStockSummation.setOtherInSum(otherInSum.toString());
+			goodsStockSummation.setOtherOutSum(otherOutSum.toString());
+			goodsStockSummation.setOverflowSum(overflowSum.toString());
+			goodsStockSummation.setBreakageSum(breakageSum.toString());
+			goodsStockSummation.setOverStockSum(overStockSum.toString());
 		}
-		if (otherOutSum.compareTo(BigDecimal.ZERO) != 0) {
-			otherOutSum = otherOutSum.negate();
-		}
-		if (breakageSum.compareTo(BigDecimal.ZERO) != 0) {
-			breakageSum = breakageSum.negate();
-		}
-		goodsStockSummation.setInitStockSum(initStockSum.toString());
-		goodsStockSummation.setMakeInSum(makeInSum.toString());
-		goodsStockSummation.setPurchaseInSum(purchaseInSum.toString());
-		goodsStockSummation.setReturnsInSum(returnsInSum.toString());
-		goodsStockSummation.setReturnsOutSum(returnsOutSum.toString());
-		goodsStockSummation.setSalesOutSum(salesOutSum.toString());
-		goodsStockSummation.setOtherInSum(otherInSum.toString());
-		goodsStockSummation.setOtherOutSum(otherOutSum.toString());
-		goodsStockSummation.setOverflowSum(overflowSum.toString());
-		goodsStockSummation.setBreakageSum(breakageSum.toString());
-		goodsStockSummation.setOverStockSum(overStockSum.toString());
 		return goodsStockSummation;
 	}
 

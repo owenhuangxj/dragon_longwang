@@ -36,21 +36,4 @@ public class ResponseUtil {
 
 		writer.close();
 	}
-
-	public static void accessDenied(HttpServletResponse response , int statusCode , String msg) throws IOException {
-
-		response.setStatus(statusCode);
-
-		response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-
-		response.setContentType("application/json;charset=utf-8");
-
-		PrintWriter writer = response.getWriter();
-
-		writer.write(JSON.toJSONString(ResponseModel.getInstance().succ(false).data(null).msg(msg)));
-
-		writer.flush();
-
-		writer.close();
-	}
 }

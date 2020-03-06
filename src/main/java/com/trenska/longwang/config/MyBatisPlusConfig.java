@@ -47,7 +47,7 @@ public class MyBatisPlusConfig {
      * properties.setProperty("format", "true"); 格式化sql语句
      */
     @Bean
-//    @Profile("dev")
+    @Profile("dev")
     public PerformanceInterceptor performanceInterceptor() {
         PerformanceInterceptor performanceInterceptor = new PerformanceInterceptor();
         Properties properties = new Properties();

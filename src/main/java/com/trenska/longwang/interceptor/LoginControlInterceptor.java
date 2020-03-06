@@ -1,10 +1,13 @@
 package com.trenska.longwang.interceptor;
 
 import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.util.CryptographyUtil;
+import com.trenska.longwang.util.JasyptUtil;
 import com.trenska.longwang.util.ResponseUtil;
 import com.trenska.longwang.util.SysUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -19,6 +22,7 @@ import java.util.Optional;
  */
 @Slf4j
 public class LoginControlInterceptor implements HandlerInterceptor {
+
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
 		String requestURI = request.getRequestURI();
@@ -31,10 +35,12 @@ public class LoginControlInterceptor implements HandlerInterceptor {
 
 		String tokenInHeader = request.getHeader(Constant.TOKEN_NAME);
 
+		tokenInHeader = JasyptUtil.decrypt("dragon-erp",tokenInHeader);
+
 		String tokenInRedis = SysUtil.getTokenInRedis(Optional.of(tokenInHeader));
 
 		if (StringUtils.isEmpty(tokenInRedis)) {
-			ResponseUtil.accessDenied(Constant.ACCESS_TIMEOUT, Constant.LOGIN_TIMEOUT, "com.trenska.longwang.timeout");
+			ResponseUtil.accessDenied(Constant.ACCESS_TIMEOUT, Constant.ACCESS_TIMEOUT_MSG, "com.trenska.longwang.timeout");
 			return false;
 		} else {
 			if (!tokenInHeader.equals(tokenInRedis)) {

@@ -1,6 +1,5 @@
 package com.trenska.longwang.controller;
 
-import org.apache.commons.codec.StringEncoder;
 import org.jasypt.encryption.StringEncryptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;

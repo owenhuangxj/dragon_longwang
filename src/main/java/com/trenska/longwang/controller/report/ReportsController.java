@@ -592,9 +592,6 @@ public class ReportsController {
 		params.put("specPropId", specPropId);
 		long start = System.currentTimeMillis();
 		Page<GoodsStockSummarizingModel> pageInfo = stockService.getGoodsStockSummarizing(params, page);
-		if (pageInfo == null){
-			return null;
-		}
 		long end = System.currentTimeMillis();
 		log.info("get page records spend {} seconds in ReportsController.",(end-start)/1000);
 		GoodsStockSummationModel summarizing = stockService.getGoodsStockSummation(params);
@@ -636,9 +633,6 @@ public class ReportsController {
 		params.put("scdCatName", scdCatName);
 		params.put("frtCatName", frtCatName);
 		Page<GoodsStockinStatisticsModel> pageInfo = stockService.getGoodsStockinStatistics(params, page);
-		if (pageInfo == null){
-			return null;
-		}
 		GoodsStockinSummationModel summarizing = stockService.getGoodsStockinSummation(params);
 		return PageHelper.getInstance().pageData(pageInfo).summarizing(summarizing);
 	}

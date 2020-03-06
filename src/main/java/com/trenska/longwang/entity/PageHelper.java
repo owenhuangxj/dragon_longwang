@@ -6,6 +6,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -22,11 +23,11 @@ public class PageHelper<T> {
 	@ApiModelProperty(value = "当前页", required = true)
 	private Integer current = 1;
 	@ApiModelProperty("记录总条数")
-	private Integer total;
+	private Integer total = 0;
 	@ApiModelProperty("页数")
-	private Integer pages;
+	private Integer pages = 0;
 	@ApiModelProperty("分页返回的数据")
-	private List<T> records;
+	private List<T> records = new ArrayList<>();
 
 	private Object summarizing;
 
@@ -67,11 +68,13 @@ public class PageHelper<T> {
 	}
 
 	public PageHelper pageData(Page pageInfo) {
-		this.setTotal(pageInfo.getTotal())
-			.setReturnCurrent(pageInfo.getCurrent())
-			.setPages(pageInfo.getPages())
-			.setReturnSize(pageInfo.getSize())
-			.setRecords(pageInfo.getRecords());
+		if (pageInfo != null) {
+			this.setTotal(pageInfo.getTotal())
+					.setReturnCurrent(pageInfo.getCurrent())
+					.setPages(pageInfo.getPages())
+					.setReturnSize(pageInfo.getSize())
+					.setRecords(pageInfo.getRecords());
+		}
 		return this;
 	}
 
@@ -79,5 +82,4 @@ public class PageHelper<T> {
 		this.summarizing = summarizing;
 		return this;
 	}
-
 }
