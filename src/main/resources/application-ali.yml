@@ -14,6 +14,7 @@ spring:
 #    password: JKgry6o7hOXAgpwtHlMx/cBtsfKmTpGK
   redis:
     host: localhost
+#    host: 192.168.31.61
     password: xxlw
     port: 6379
     ##redis统一timeout 缓存有效期，毫秒

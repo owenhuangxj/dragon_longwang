@@ -18,7 +18,7 @@ public interface ActiveMapper extends BaseMapper<Active> {
 
 	int selectCountSelective(Active active);
 
-	boolean updateActiveStat();
+	boolean invalidateActives();
 
 	List<Active> selectActivePageSelective(Active active, Pagination page);
 

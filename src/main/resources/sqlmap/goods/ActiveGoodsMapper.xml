@@ -14,6 +14,11 @@
     <sql id="Base_Column_List">
         tag.id, tag.active_id, tag.goods_id, tag.gift_id
     </sql>
+    <delete id="deleteInvalidateActives">
+        delete from t_active_goods where active_id in (
+          select active_id from t_active where stat = 0
+        )
+    </delete>
 
     <select id="selectActivesByGoodsId" resultType="com.trenska.longwang.entity.goods.ActiveGoods">
         select tag.id, tag.active_id, tag.goods_id, tag.gift_id

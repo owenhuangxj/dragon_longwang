@@ -93,9 +93,9 @@ public class CategoryController {
 	@CheckDuplicateSubmit
 	@PutMapping("/update")
 	@ApiImplicitParams({
+			@ApiImplicitParam(name = "stat", paramType = "body", dataType = "boolean"),
 			@ApiImplicitParam(name = "catId", paramType = "body", required = true, dataType = "int"),
-			@ApiImplicitParam(name = "catName", paramType = "body", required = true, dataType = "string"),
-			@ApiImplicitParam(name = "stat", paramType = "body", dataType = "boolean")
+			@ApiImplicitParam(name = "catName", paramType = "body", required = true, dataType = "string")
 	})
 	@ApiOperation("修改商品分类")
 	public ResponseModel updateCategory(@Valid @RequestBody Category category) {
@@ -117,9 +117,9 @@ public class CategoryController {
 	})
 	@ApiOperation("根据上级分类id获取获取下级商品分类，如果要获取一级商品分类，catId属性设置为 0，<b>进入商品分类时调用此接口，即设置catId为 0 可对一级商品分类进行分页</b>")
 	public PageHelper<Category> listSubCategory(
-			@PathVariable("current") Integer current,
 			@PathVariable("size") Integer size,
 			@PathVariable("catId") Integer catId,
+			@PathVariable("current") Integer current,
 			@RequestParam(value = "stat",required = false) Boolean stat
 	) {
 		Page<Category> pageInfo = categoryService.getSubCategoryPageByCatId(PageUtils.getPageParam(new PageHelper(current,size)),catId,stat);
@@ -130,8 +130,8 @@ public class CategoryController {
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "current", value = "当前页", paramType = "path", dataType = "int"),
 			@ApiImplicitParam(name = "size", value = "每页记录数", paramType = "path",dataType = "int"),
-			@ApiImplicitParam(name = "catName", value = "商品分类名称", paramType = "query",dataType = "string"),
-			@ApiImplicitParam(name = "stat", value = "商品分类状态", paramType = "query",dataType = "boolean")
+			@ApiImplicitParam(name = "stat", value = "商品分类状态", paramType = "query",dataType = "boolean"),
+			@ApiImplicitParam(name = "catName", value = "商品分类名称", paramType = "query",dataType = "string")
 	})
 	@ApiOperation("通用分页")
 	public PageHelper<Category> listCategoryPageSelective(@PathVariable("current") Integer current, @PathVariable("size") Integer size, @RequestParam(value = "catName",required = false) String catName, @RequestParam(value = "stat",required = false) Boolean stat) {

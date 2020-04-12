@@ -1,7 +1,7 @@
 package com.trenska.longwang.controller.indent;
 
 import com.trenska.longwang.annotation.CheckDuplicateSubmit;
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.entity.indent.Indent;
 import com.trenska.longwang.enums.IndentStat;
 import com.trenska.longwang.model.sys.ResponseModel;
@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
 
 /**
@@ -77,7 +76,7 @@ public class SalesReturnController {
 		if(!NumberUtil.isLongUsable(indentId)){
 			return ResponseModel.getInstance().succ(false).msg("删除退货单失败 : 不存在此退货单");
 		}
-		return indentService.removeIndentById(indentId,Constant.THD_CHINESE);
+		return indentService.removeIndentById(indentId, DragonConstant.THD_CHINESE);
 	}
 
 	@CheckDuplicateSubmit
@@ -87,6 +86,6 @@ public class SalesReturnController {
 		if(indentIds == null || indentIds.isEmpty()){
 			return ResponseModel.getInstance().succ(false).msg("删除退货单失败 : 包含不存在的退货单");
 		}
-		return indentService.removeIndentByIds(indentIds, Constant.THD_CHINESE);
+		return indentService.removeIndentByIds(indentIds, DragonConstant.THD_CHINESE);
 	}
 }

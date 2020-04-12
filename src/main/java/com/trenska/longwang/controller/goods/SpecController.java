@@ -81,9 +81,9 @@ public class SpecController {
 	@CheckDuplicateSubmit
 	@PutMapping("/update")
 	@ApiImplicitParams({
+			@ApiImplicitParam(name = "stat", paramType = "body", dataType = "boolean"),
 			@ApiImplicitParam(name = "specId", paramType = "body", required = true, dataType = "int"),
-			@ApiImplicitParam(name = "specName", paramType = "body", required = true, dataType = "string"),
-			@ApiImplicitParam(name = "stat", paramType = "body", dataType = "boolean")
+			@ApiImplicitParam(name = "specName", paramType = "body", required = true, dataType = "string")
 	})
 	@ApiOperation("修改商品规格")
 	public ResponseModel updateSpec(@Valid @RequestBody Spec spec) {
@@ -110,8 +110,8 @@ public class SpecController {
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "current", value = "当前页", paramType = "path", dataType = "int"),
 			@ApiImplicitParam(name = "size", value = "每页记录数", paramType = "path",dataType = "int"),
-			@ApiImplicitParam(name = "specName", value = "商品规格名称", paramType = "query",dataType = "string"),
-			@ApiImplicitParam(name = "stat", value = "商品规格状态", paramType = "query",dataType = "boolean")
+			@ApiImplicitParam(name = "stat", value = "商品规格状态", paramType = "query",dataType = "boolean"),
+			@ApiImplicitParam(name = "specName", value = "商品规格名称", paramType = "query",dataType = "string")
 	})
 	@ApiOperation("通用分页")
 	public PageHelper<Spec> listSpecPageSelective(

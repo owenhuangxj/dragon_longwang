@@ -8,7 +8,7 @@ import com.alibaba.excel.read.metadata.ReadSheet;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.annotation.CheckDuplicateSubmit;
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.goods.Goods;
 import com.trenska.longwang.entity.goods.GoodsSpec;
@@ -161,10 +161,10 @@ public class GoodsController {
 	@CheckDuplicateSubmit
 	@PutMapping("/spec/update")
 	@ApiImplicitParams({
-			@ApiImplicitParam(name = "goodsId", paramType = "body", required = true, dataType = "int"),
-			@ApiImplicitParam(name = "specId", paramType = "body", required = true, dataType = "int"),
-			@ApiImplicitParam(name = "specPropId", paramType = "body", required = true, dataType = "int"),
 			@ApiImplicitParam(name = "specName", paramType = "body", dataType = "string"),
+			@ApiImplicitParam(name = "specId", paramType = "body", required = true, dataType = "int"),
+			@ApiImplicitParam(name = "goodsId", paramType = "body", required = true, dataType = "int"),
+			@ApiImplicitParam(name = "specPropId", paramType = "body", required = true, dataType = "int"),
 			@ApiImplicitParam(name = "propName", paramType = "body", required = true, dataType = "string")
 	})
 	@ApiOperation("修改商品规格")
@@ -211,19 +211,20 @@ public class GoodsController {
 
 	@GetMapping("/list/page/search/{current}/{size}")
 	@ApiImplicitParams({
-			@ApiImplicitParam(name = "current", value = "当前页", required = true, paramType = "path", dataType = "int"),
-			@ApiImplicitParam(name = "size", value = "每页记录数", required = true, paramType = "path", dataType = "int"),
+			@ApiImplicitParam(name = "stat", value = "商品状态", paramType = "query", dataType = "boolean"),
+			@ApiImplicitParam(name = "minOdrQtt", value = "最小起订量", paramType = "query", dataType = "int"),
+			@ApiImplicitParam(name = "brandName", value = "品牌名称", paramType = "query", dataType = "string"),
+			@ApiImplicitParam(name = "propName", value = "商品单规格值", paramType = "query", dataType = "string"),
 			@ApiImplicitParam(name = "combine", value = "商品名称/编号/条码", paramType = "query", dataType = "string"),
 			@ApiImplicitParam(name = "frtCatName", value = "商品一级分类名称", paramType = "query", dataType = "string"),
 			@ApiImplicitParam(name = "scdCatName", value = "商品二级分类名称", paramType = "query", dataType = "string"),
-			@ApiImplicitParam(name = "brandName", value = "品牌名称", paramType = "query", dataType = "string"),
-			@ApiImplicitParam(name = "propName", value = "商品单规格值", paramType = "query", dataType = "string"),
-			@ApiImplicitParam(name = "stat", value = "商品状态", paramType = "query", dataType = "boolean"),
-			@ApiImplicitParam(name = "minOdrQtt", value = "最小起订量", paramType = "query", dataType = "int")
+			@ApiImplicitParam(name = "current", value = "当前页", required = true, paramType = "path", dataType = "int"),
+			@ApiImplicitParam(name = "size", value = "每页记录数", required = true, paramType = "path", dataType = "int")
 	})
 	@ApiOperation("查询")
 	public PageHelper<Goods> listGoodsPageQueryParamSelective(
-			@PathVariable("current") Integer current, @PathVariable("size") Integer size,
+			@PathVariable("size") Integer size,
+			@PathVariable("current") Integer current,
 			@RequestParam(required = false, name = "stat") Boolean stat,
 			@RequestParam(required = false, name = "combine") String combine,
 			@RequestParam(required = false, name = "propName") String propName,
@@ -260,15 +261,15 @@ public class GoodsController {
 
 	@GetMapping("/excel/page/search/{current}/{size}")
 	@ApiImplicitParams({
-			@ApiImplicitParam(name = "current", value = "当前页", required = true, paramType = "path", dataType = "int"),
-			@ApiImplicitParam(name = "size", value = "每页记录数", required = true, paramType = "path", dataType = "int"),
+			@ApiImplicitParam(name = "stat", value = "商品状态", paramType = "query", dataType = "boolean"),
+			@ApiImplicitParam(name = "minOdrQtt", value = "最小起订量", paramType = "query", dataType = "int"),
+			@ApiImplicitParam(name = "brandName", value = "品牌名称", paramType = "query", dataType = "string"),
+			@ApiImplicitParam(name = "propName", value = "商品单规格值", paramType = "query", dataType = "string"),
 			@ApiImplicitParam(name = "combine", value = "商品名称/编号/条码", paramType = "query", dataType = "string"),
 			@ApiImplicitParam(name = "frtCatName", value = "商品一级分类名称", paramType = "query", dataType = "string"),
 			@ApiImplicitParam(name = "scdCatName", value = "商品二级分类名称", paramType = "query", dataType = "string"),
-			@ApiImplicitParam(name = "brandName", value = "品牌名称", paramType = "query", dataType = "string"),
-			@ApiImplicitParam(name = "propName", value = "商品单规格值", paramType = "query", dataType = "string"),
-			@ApiImplicitParam(name = "stat", value = "商品状态", paramType = "query", dataType = "boolean"),
-			@ApiImplicitParam(name = "minOdrQtt", value = "最小起订量", paramType = "query", dataType = "int")
+			@ApiImplicitParam(name = "current", value = "当前页", required = true, paramType = "path", dataType = "int"),
+			@ApiImplicitParam(name = "size", value = "每页记录数", required = true, paramType = "path", dataType = "int")
 	})
 	@ApiOperation("excel导出")
 	public ResponseEntity<byte[]> emportExcelGoodsPage(
@@ -312,9 +313,9 @@ public class GoodsController {
 		}
 		if (ObjectUtils.isNotEmpty(stat)) {
 			if (stat) {
-				query.put("状态", Constant.ON_SALE);
+				query.put("状态", DragonConstant.ON_SALE);
 			} else {
-				query.put("状态", Constant.OFF_SALE);
+				query.put("状态", DragonConstant.OFF_SALE);
 			}
 		}
 		if (NumberUtil.isIntegerUsable(minOdrQtt)) {
@@ -323,22 +324,22 @@ public class GoodsController {
 
 		Map<String, String> title = new LinkedHashMap<>();
 
-		title.put("goodsNo", "商品编号");
-		title.put("goodsName", "商品名称");
-		title.put("brandName", "品牌");
-		title.put("frtCatName", "分类");
-		title.put("propName", "规格");
-		title.put("mainUnit", "单位");
-		title.put("price", "销售单价");
-		title.put("avbStock", "可用库存");
-		title.put("stock", "系统库存");
 		title.put("status", "状态");
+		title.put("mainUnit", "单位");
+		title.put("propName", "规格");
+		title.put("brandName", "品牌");
+		title.put("price", "销售单价");
+		title.put("stock", "系统库存");
+		title.put("frtCatName", "分类");
+		title.put("goodsNo", "商品编号");
+		title.put("avbStock", "可用库存");
+		title.put("goodsName", "商品名称");
 
 		List<GoodsExportModel> contents = pageInfo.getRecords();
 
 		HSSFWorkbook wb = ExcelUtil.getHSSFWorkbook("商品信息", false, null, query, title, contents, null);
 		HttpHeaders headers = new HttpHeaders();
-		headers.setContentDispositionFormData("attachment", new String("商品信息.xls".getBytes(Constant.srcEncoding), Constant.destEncoding));
+		headers.setContentDispositionFormData("attachment", new String("商品信息.xls".getBytes(DragonConstant.srcEncoding), DragonConstant.destEncoding));
 		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -427,9 +428,7 @@ public class GoodsController {
 	) {
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
 		Page<String> pageInfo = goodsService.getGoodsNamesPage(page);
-
 		return PageHelper.getInstance().pageData(pageInfo);
-
 	}
 
 	@PostMapping(value = "/excel/batch/import")

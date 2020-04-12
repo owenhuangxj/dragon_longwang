@@ -1,7 +1,7 @@
 package com.trenska.longwang.config;
 
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.context.ApplicationContextHolder;
 import org.apache.ibatis.cache.Cache;
 import org.springframework.data.redis.connection.RedisServerCommands;
@@ -23,7 +23,7 @@ public class RedisCacheMybatis  implements Cache, Serializable {
     // 缓存的id
     private String id;
 
-    @Resource(name = Constant.REDIS_JSON_TEMPLATE_NAME)
+    @Resource(name = DragonConstant.REDIS_JSON_TEMPLATE_NAME)
     private RedisTemplate<String,Object> redisJsonTemplate;
 
     @Override

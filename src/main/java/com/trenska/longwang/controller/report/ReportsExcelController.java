@@ -1,7 +1,7 @@
 package com.trenska.longwang.controller.report;
 
 import com.baomidou.mybatisplus.plugins.Page;
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.dao.customer.AreaGrpMapper;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.financing.DealDetail;
@@ -138,7 +138,7 @@ public class ReportsExcelController {
 //		wb.close();
 
 		HttpHeaders headers = new HttpHeaders();
-		headers.setContentDispositionFormData("attachment", new String("客户销售账本.xls".getBytes(Constant.srcEncoding), Constant.destEncoding));
+		headers.setContentDispositionFormData("attachment", new String("客户销售账本.xls".getBytes(DragonConstant.srcEncoding), DragonConstant.destEncoding));
 		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -278,7 +278,7 @@ public class ReportsExcelController {
 
 		HSSFWorkbook wb = ExcelUtil.getHSSFWorkbook("客户销售汇总", true, summarizing, query, title, contents, null);
 		HttpHeaders headers = new HttpHeaders();
-		headers.setContentDispositionFormData("attachment", new String("客户销售汇总.xls".getBytes(Constant.srcEncoding), Constant.destEncoding));
+		headers.setContentDispositionFormData("attachment", new String("客户销售汇总.xls".getBytes(DragonConstant.srcEncoding), DragonConstant.destEncoding));
 		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -376,7 +376,7 @@ public class ReportsExcelController {
 
 		HSSFWorkbook wb = ExcelUtil.getHSSFWorkbook("商品汇总", true, summarizing, query, title, contents, null);
 		HttpHeaders headers = new HttpHeaders();
-		headers.setContentDispositionFormData("attachment", new String("商品汇总.xls".getBytes(Constant.srcEncoding), Constant.destEncoding));
+		headers.setContentDispositionFormData("attachment", new String("商品汇总.xls".getBytes(DragonConstant.srcEncoding), DragonConstant.destEncoding));
 		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		wb.write(baos);
@@ -484,7 +484,7 @@ public class ReportsExcelController {
 
 		HSSFWorkbook wb = ExcelUtil.getHSSFWorkbook("订单汇总", true, summarizing, query, title, contents, null);
 		HttpHeaders headers = new HttpHeaders();
-		headers.setContentDispositionFormData("attachment", new String("订单汇总.xls".getBytes(Constant.srcEncoding), Constant.destEncoding));
+		headers.setContentDispositionFormData("attachment", new String("订单汇总.xls".getBytes(DragonConstant.srcEncoding), DragonConstant.destEncoding));
 		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -568,7 +568,7 @@ public class ReportsExcelController {
 
 		HSSFWorkbook wb = ExcelUtil.getHSSFWorkbook("客户销售排名", true, summarizing, query, title, contents, null);
 		HttpHeaders headers = new HttpHeaders();
-		headers.setContentDispositionFormData("attachment", new String("客户销售排名.xls".getBytes(Constant.srcEncoding), Constant.destEncoding));
+		headers.setContentDispositionFormData("attachment", new String("客户销售排名.xls".getBytes(DragonConstant.srcEncoding), DragonConstant.destEncoding));
 		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -719,7 +719,7 @@ public class ReportsExcelController {
 
 		HSSFWorkbook wb = ExcelUtil.getHSSFWorkbook("商品销售汇总", true, summarizing, query, title, pageInfo.getRecords(), null);
 		HttpHeaders headers = new HttpHeaders();
-		headers.setContentDispositionFormData("attachment", new String("商品销售汇总.xls".getBytes(Constant.srcEncoding), Constant.destEncoding));
+		headers.setContentDispositionFormData("attachment", new String("商品销售汇总.xls".getBytes(DragonConstant.srcEncoding), DragonConstant.destEncoding));
 		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		wb.write(baos);
@@ -981,7 +981,7 @@ public class ReportsExcelController {
 		List contents = pageInfo.getRecords();
 		HSSFWorkbook wb = ExcelUtil.getHSSFWorkbook("商品销售排名", true, summarizing, query, title, contents, null);
 		HttpHeaders headers = new HttpHeaders();
-		headers.setContentDispositionFormData("attachment", new String("商品销售排名.xls".getBytes(Constant.srcEncoding), Constant.destEncoding));
+		headers.setContentDispositionFormData("attachment", new String("商品销售排名.xls".getBytes(DragonConstant.srcEncoding), DragonConstant.destEncoding));
 		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -1091,7 +1091,7 @@ public class ReportsExcelController {
 		HSSFWorkbook wb = ExcelUtil.getHSSFWorkbook("进出库数量汇总", true, summarizing, query, title, records, null);
 		wb.write(baos);
 		HttpHeaders headers = new HttpHeaders();
-		headers.setContentDispositionFormData("attachment", new String("进出库数量汇总.xls".getBytes(Constant.srcEncoding), Constant.destEncoding));
+		headers.setContentDispositionFormData("attachment", new String("进出库数量汇总.xls".getBytes(DragonConstant.srcEncoding), DragonConstant.destEncoding));
 		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 		return new ResponseEntity<byte[]>(baos.toByteArray(), headers, HttpStatus.CREATED);
 	}
@@ -1179,7 +1179,7 @@ public class ReportsExcelController {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		wb.write(baos);
 		HttpHeaders headers = new HttpHeaders();
-		headers.setContentDispositionFormData("attachment", new String("商品入库报表.xls".getBytes(Constant.srcEncoding), Constant.destEncoding));
+		headers.setContentDispositionFormData("attachment", new String("商品入库报表.xls".getBytes(DragonConstant.srcEncoding), DragonConstant.destEncoding));
 		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 		return new ResponseEntity<byte[]>(baos.toByteArray(), headers, HttpStatus.CREATED);
 	}
@@ -1276,7 +1276,7 @@ public class ReportsExcelController {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		wb.write(baos);
 		HttpHeaders headers = new HttpHeaders();
-		headers.setContentDispositionFormData("attachment", new String("订单统计.xls".getBytes(Constant.srcEncoding), Constant.destEncoding));
+		headers.setContentDispositionFormData("attachment", new String("订单统计.xls".getBytes(DragonConstant.srcEncoding), DragonConstant.destEncoding));
 		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 		return new ResponseEntity<byte[]>(baos.toByteArray(), headers, HttpStatus.CREATED);
 	}
@@ -1376,7 +1376,7 @@ public class ReportsExcelController {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		wb.write(baos);
 		HttpHeaders headers = new HttpHeaders();
-		headers.setContentDispositionFormData("attachment", new String("客户对帐.xls".getBytes(Constant.srcEncoding), Constant.destEncoding));
+		headers.setContentDispositionFormData("attachment", new String("客户对帐.xls".getBytes(DragonConstant.srcEncoding), DragonConstant.destEncoding));
 		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 		return new ResponseEntity<byte[]>(baos.toByteArray(), headers, HttpStatus.CREATED);
 	}
@@ -1480,13 +1480,13 @@ public class ReportsExcelController {
 		List<DealDetail> records = pageInfo.getRecords();
 
 		records.forEach(dealDetail -> {
-			if (dealDetail.getAmount().startsWith(Constant.PLUS)) {
+			if (dealDetail.getAmount().startsWith(DragonConstant.PLUS)) {
 				contents.add(
 						new DealDetailModel(dealDetail.getTime().substring(0, 11), dealDetail.getAmount().substring(1), " ",
 								dealDetail.getNewDebt(), dealDetail.getOper(), dealDetail.getNameNo(),dealDetail.getPayway(),dealDetail.getRemarks(),dealDetail.getAuditRemarks())
 				);
 
-			} else if (dealDetail.getAmount().startsWith(Constant.MINUS)) {
+			} else if (dealDetail.getAmount().startsWith(DragonConstant.MINUS)) {
 				contents.add(
 						new DealDetailModel(dealDetail.getTime().substring(0, 11), " ", dealDetail.getAmount().substring(1),
 								dealDetail.getNewDebt(), dealDetail.getOper(), dealDetail.getNameNo(),dealDetail.getPayway(), dealDetail.getRemarks(),dealDetail.getAuditRemarks())
@@ -1515,7 +1515,7 @@ public class ReportsExcelController {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		wb.write(baos);
 		HttpHeaders headers = new HttpHeaders();
-		headers.setContentDispositionFormData("attachment", new String(custName.concat("-欠款明细.xls").getBytes(Constant.srcEncoding), Constant.destEncoding));
+		headers.setContentDispositionFormData("attachment", new String(custName.concat("-欠款明细.xls").getBytes(DragonConstant.srcEncoding), DragonConstant.destEncoding));
 		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 
 		return new ResponseEntity<byte[]>(baos.toByteArray(), headers, HttpStatus.CREATED);
@@ -1587,7 +1587,7 @@ public class ReportsExcelController {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		wb.write(baos);
 		HttpHeaders headers = new HttpHeaders();
-		headers.setContentDispositionFormData("attachment", new String("送货总账.xls".getBytes(Constant.srcEncoding), Constant.destEncoding));
+		headers.setContentDispositionFormData("attachment", new String("送货总账.xls".getBytes(DragonConstant.srcEncoding), DragonConstant.destEncoding));
 		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 		return new ResponseEntity<byte[]>(baos.toByteArray(), headers, HttpStatus.CREATED);
 	}
@@ -1659,7 +1659,7 @@ public class ReportsExcelController {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		wb.write(baos);
 		HttpHeaders headers = new HttpHeaders();
-		headers.setContentDispositionFormData("attachment", new String("送货明细.xls".getBytes(Constant.srcEncoding), Constant.destEncoding));
+		headers.setContentDispositionFormData("attachment", new String("送货明细.xls".getBytes(DragonConstant.srcEncoding), DragonConstant.destEncoding));
 		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 		return new ResponseEntity<byte[]>(baos.toByteArray(), headers, HttpStatus.CREATED);
 	}

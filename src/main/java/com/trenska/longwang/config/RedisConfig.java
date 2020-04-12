@@ -3,7 +3,7 @@ package com.trenska.longwang.config;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -21,8 +21,6 @@ import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.integration.redis.util.RedisLockRegistry;
 
-import java.io.File;
-import java.io.IOException;
 import java.time.Duration;
 @SuppressWarnings("all")
 @Slf4j
@@ -45,8 +43,8 @@ public class RedisConfig extends CachingConfigurerSupport {
 	 * 	@Bean的autowireCandidate属性设置是否将该Bean作为其它Bean依赖注入的对象，默认为true,
 	 * 	如果有其它与此类型相同的Bean在容器中时，为了不影响该类型Bean的自动注入，设置此属性为false
 	 */
-	@ConditionalOnMissingBean(name = Constant.REDIS_TEMPLATE_NAME)
-	@Bean(name = Constant.REDIS_TEMPLATE_NAME, autowireCandidate = false)
+	@ConditionalOnMissingBean(name = DragonConstant.REDIS_TEMPLATE_NAME)
+	@Bean(name = DragonConstant.REDIS_TEMPLATE_NAME, autowireCandidate = false)
 	public RedisTemplate<String, String> redisTemplateIfMiss(RedisConnectionFactory redisConnectionFactory) {
 		RedisTemplate<String, String> redisTemplate = new RedisTemplate<>();
 		redisTemplate.setConnectionFactory(redisConnectionFactory);
@@ -60,8 +58,8 @@ public class RedisConfig extends CachingConfigurerSupport {
 	 * 配置操作JSON格式数据的RedisTemplate:
 	 * 	将对象转成json字符串存储在redis中时使用此Redis模板
 	 */
-	@ConditionalOnMissingBean(name = Constant.REDIS_JSON_TEMPLATE_NAME)
-	@Bean(name = Constant.REDIS_JSON_TEMPLATE_NAME)
+	@ConditionalOnMissingBean(name = DragonConstant.REDIS_JSON_TEMPLATE_NAME)
+	@Bean(name = DragonConstant.REDIS_JSON_TEMPLATE_NAME)
 	public RedisTemplate<String, Object> redisJsonTemplate(RedisConnectionFactory redisConnectionFactory) {
 		RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
 		redisTemplate.setConnectionFactory(redisConnectionFactory);
@@ -110,12 +108,12 @@ public class RedisConfig extends CachingConfigurerSupport {
 			String proxyName = clazz.getSuperclass().getName();
 			String className = method.getDeclaringClass().getName();
 			sb.append(className);
-			sb.append(Constant.SPLITTER);
+			sb.append(DragonConstant.SPLITTER);
 			String methodName = method.getName();
 			sb.append(methodName);
 			for (Object param : params) {
 				// 由于参数可能不同, hashCode肯定不一样, 缓存的key也需要不一样
-				sb.append(Constant.SPLITTER);
+				sb.append(DragonConstant.SPLITTER);
 				sb.append(param);
 			}
 			String key = sb.toString();

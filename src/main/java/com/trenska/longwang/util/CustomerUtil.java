@@ -1,18 +1,14 @@
 package com.trenska.longwang.util;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.dao.customer.AreaGrpMapper;
 import com.trenska.longwang.entity.customer.Customer;
 import com.trenska.longwang.entity.indent.Indent;
 import com.trenska.longwang.entity.sys.EmpAreaGrp;
 import com.trenska.longwang.model.sys.ResponseModel;
 import com.trenska.longwang.service.customer.IAreaGrpService;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
@@ -158,11 +154,11 @@ public class CustomerUtil {
 	 */
 	public static Set<Integer> getCurrentUserDataAuth(AreaGrpMapper areaGrpMapper){
 
-		Integer empIdInToken = SysUtil.getEmpId();
+		Integer empIdInToken = SysUtil.getEmpIdInToken();
 
 		if(NumberUtil.isIntegerNotUsable(empIdInToken)) {
 			try {
-				ResponseUtil.accessDenied(Constant.ACCESS_TIMEOUT,Constant.ACCESS_TIMEOUT_MSG,Constant.ACCESS_TIMEOUT_MSG);
+				ResponseUtil.accessDenied(DragonConstant.ACCESS_TIMEOUT, DragonConstant.ACCESS_TIMEOUT_MSG, DragonConstant.ACCESS_TIMEOUT_MSG);
 				return new HashSet<>();
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -177,11 +173,11 @@ public class CustomerUtil {
 	public static ResponseModel checkDebtLimit(String indentNo, int custId){
 		Customer customer = new Customer(custId).selectById();
 		if (customer == null) {
-			return ResponseModel.getInstance().succ(false).msg(Constant.CUSTOMER_NOT_EXISTS_MSG);
+			return ResponseModel.getInstance().succ(false).msg(DragonConstant.CUSTOMER_NOT_EXISTS_MSG);
 		}
 
 		/**如果创建客户时没有设置debtLimit，客户就没有欠款额度的限制*/
-		boolean hasNotSetLimit = Constant.NO_DEBT_LIMIT_LABEL.equals(customer.getDebtLimit());
+		boolean hasNotSetLimit = DragonConstant.NO_DEBT_LIMIT_LABEL.equals(customer.getDebtLimit());
 		if(hasNotSetLimit){
 			return ResponseModel.getInstance().succ(true).msg("没有设置客户欠款额度,无限额度！");
 		}
@@ -195,7 +191,7 @@ public class CustomerUtil {
 						.compareTo(new BigDecimal(customer.getDebtLimit())) >= 0;
 
 		if (isOutOfLimit) {
-			return ResponseModel.getInstance().succ(false).msg(Constant.CUSTOMER_OUT_OF_DEBT_MSG);
+			return ResponseModel.getInstance().succ(false).msg(DragonConstant.CUSTOMER_OUT_OF_DEBT_MSG);
 		}
 		return ResponseModel.getInstance().succ(true);
 	}

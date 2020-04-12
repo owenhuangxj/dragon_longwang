@@ -3,7 +3,7 @@ package com.trenska.longwang.controller.sys;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.annotation.CheckDuplicateSubmit;
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.sys.*;
 import com.trenska.longwang.model.sys.PermModel;
@@ -58,7 +58,7 @@ public class SysRoleController {
 				return ResponseModel.getInstance().succ(false).msg("角色已经存在.");
 			}
 		}
-		role.setRoleCreated(TimeUtil.getCurrentTime(Constant.TIME_FORMAT));
+		role.setRoleCreated(TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT));
 		roleService.save(role);
 		return ResponseModel.getInstance().succ(true).msg("角色添加成功.");
 	}
@@ -102,7 +102,7 @@ public class SysRoleController {
 			return ResponseModel.getInstance().succ(false).msg("角色id不能为空.");
 		}
 
-		role.setRoleUpdated(TimeUtil.getCurrentTime(Constant.TIME_FORMAT));
+		role.setRoleUpdated(TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT));
 		roleService.updateById(role);
 
 		return ResponseModel.getInstance().succ(true).msg("更新角色成功.");

@@ -1,6 +1,6 @@
 package com.trenska.longwang.util;
 
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.constraints.NotNull;
@@ -35,7 +35,7 @@ public class StringUtil {
 	}
 
 	public static String makeNameNo(String name, String no) {
-		return name.concat(Constant.MINUS).concat(no);
+		return name.concat(DragonConstant.MINUS).concat(no);
 	}
 
 	/**

@@ -13,4 +13,6 @@ import java.util.List;
 public interface ActiveGoodsMapper extends BaseMapper<ActiveGoods> {
 
 	List<ActiveGoods> selectActivesByGoodsId(Integer goodsId);
+
+	int deleteInvalidateActives();
 }

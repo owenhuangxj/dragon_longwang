@@ -3,7 +3,7 @@ package com.trenska.longwang.service.impl.stock;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.plugins.Page;
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.dao.stock.StockMapper;
 import com.trenska.longwang.entity.goods.Goods;
 import com.trenska.longwang.entity.goods.Unit;
@@ -21,7 +21,6 @@ import com.trenska.longwang.service.stock.IStockDetailService;
 import com.trenska.longwang.service.stock.IStockService;
 import com.trenska.longwang.service.sys.ISysEmpService;
 import com.trenska.longwang.util.RMBUtil;
-import com.trenska.longwang.util.SysConfigUtil;
 import com.trenska.longwang.util.SysUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -160,28 +159,28 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, Stock> implements
 		for (GoodsStockSummarizingModel record : records) {
 			// 判断期初库存是否为空(数据库默认值为0)，如果为空，表示时间段之前没有库存操作，需要获取时间段内最小时间的库存
 			String initStock = record.getInitStock();
-			if (StringUtils.isEmpty(initStock) || Constant.ZERO_STR.equals(initStock)) {
+			if (StringUtils.isEmpty(initStock) || DragonConstant.ZERO_STR.equals(initStock)) {
 				int goodsId = record.getGoodsId();
 				initStock = super.baseMapper.selectQckcStock(goodsId);
 				if (StringUtils.isEmpty(initStock)) {
-					initStock = Constant.ZERO_STR;
+					initStock = DragonConstant.ZERO_STR;
 				}
 				record.setInitStock(initStock);
 			}
-			BigDecimal makeIn = new BigDecimal(record.getMakeIn()).setScale(Constant.ZERO);
-			BigDecimal purcharseIn = new BigDecimal(record.getPurchaseIn()).setScale(Constant.ZERO);
-			BigDecimal otherIn = new BigDecimal(record.getOtherIn()).setScale(Constant.ZERO);
-			BigDecimal otherOut = new BigDecimal(record.getOtherOut()).setScale(Constant.ZERO);
-			BigDecimal returnin = new BigDecimal(record.getReturnsIn()).setScale(Constant.ZERO);
-			BigDecimal returnOut = new BigDecimal(record.getReturnsOut()).setScale(Constant.ZERO);
-			BigDecimal salesOut = new BigDecimal(record.getSalesOut()).setScale(Constant.ZERO);
-			BigDecimal overFlow = new BigDecimal(record.getOverflow()).setScale(Constant.ZERO);
-			BigDecimal breakage = new BigDecimal(record.getBreakage()).setScale(Constant.ZERO);
+			BigDecimal makeIn = new BigDecimal(record.getMakeIn()).setScale(DragonConstant.ZERO);
+			BigDecimal purcharseIn = new BigDecimal(record.getPurchaseIn()).setScale(DragonConstant.ZERO);
+			BigDecimal otherIn = new BigDecimal(record.getOtherIn()).setScale(DragonConstant.ZERO);
+			BigDecimal otherOut = new BigDecimal(record.getOtherOut()).setScale(DragonConstant.ZERO);
+			BigDecimal returnin = new BigDecimal(record.getReturnsIn()).setScale(DragonConstant.ZERO);
+			BigDecimal returnOut = new BigDecimal(record.getReturnsOut()).setScale(DragonConstant.ZERO);
+			BigDecimal salesOut = new BigDecimal(record.getSalesOut()).setScale(DragonConstant.ZERO);
+			BigDecimal overFlow = new BigDecimal(record.getOverflow()).setScale(DragonConstant.ZERO);
+			BigDecimal breakage = new BigDecimal(record.getBreakage()).setScale(DragonConstant.ZERO);
 
 			// 期末库存由期初和所有库存类型的库存计算得到
 			BigDecimal overStock = new BigDecimal(record.getInitStock())
 					.add(makeIn).add(otherIn).add(returnin).add(overFlow)
-					.add(salesOut).add(otherOut).add(breakage).setScale(Constant.ZERO);
+					.add(salesOut).add(otherOut).add(breakage).setScale(DragonConstant.ZERO);
 			if (salesOut.compareTo(BigDecimal.ZERO) != 0) {
 				salesOut = salesOut.negate();
 			}
@@ -218,18 +217,18 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, Stock> implements
 				super.baseMapper.selectGoodsStockSummation(params);
 		if (goodsStockSummation != null) {
 			BigDecimal initStockSum =
-					new BigDecimal(super.baseMapper.selectInitStockSum(params)).setScale(Constant.ZERO);
-			BigDecimal makeInSum = new BigDecimal(goodsStockSummation.getMakeInSum()).setScale(Constant.ZERO);
-			BigDecimal purchaseInSum = new BigDecimal(goodsStockSummation.getPurchaseInSum()).setScale(Constant.ZERO);
-			BigDecimal returnsInSum = new BigDecimal(goodsStockSummation.getReturnsInSum()).setScale(Constant.ZERO);
-			BigDecimal returnsOutSum = new BigDecimal(goodsStockSummation.getReturnsOutSum()).setScale(Constant.ZERO);
-			BigDecimal salesOutSum = new BigDecimal(goodsStockSummation.getSalesOutSum()).setScale(Constant.ZERO);
-			BigDecimal otherInSum = new BigDecimal(goodsStockSummation.getOtherInSum()).setScale(Constant.ZERO);
-			BigDecimal otherOutSum = new BigDecimal(goodsStockSummation.getOtherOutSum()).setScale(Constant.ZERO);
-			BigDecimal overflowSum = new BigDecimal(goodsStockSummation.getOverflowSum()).setScale(Constant.ZERO);
-			BigDecimal breakageSum = new BigDecimal(goodsStockSummation.getBreakageSum()).setScale(Constant.ZERO);
+					new BigDecimal(super.baseMapper.selectInitStockSum(params)).setScale(DragonConstant.ZERO);
+			BigDecimal makeInSum = new BigDecimal(goodsStockSummation.getMakeInSum()).setScale(DragonConstant.ZERO);
+			BigDecimal purchaseInSum = new BigDecimal(goodsStockSummation.getPurchaseInSum()).setScale(DragonConstant.ZERO);
+			BigDecimal returnsInSum = new BigDecimal(goodsStockSummation.getReturnsInSum()).setScale(DragonConstant.ZERO);
+			BigDecimal returnsOutSum = new BigDecimal(goodsStockSummation.getReturnsOutSum()).setScale(DragonConstant.ZERO);
+			BigDecimal salesOutSum = new BigDecimal(goodsStockSummation.getSalesOutSum()).setScale(DragonConstant.ZERO);
+			BigDecimal otherInSum = new BigDecimal(goodsStockSummation.getOtherInSum()).setScale(DragonConstant.ZERO);
+			BigDecimal otherOutSum = new BigDecimal(goodsStockSummation.getOtherOutSum()).setScale(DragonConstant.ZERO);
+			BigDecimal overflowSum = new BigDecimal(goodsStockSummation.getOverflowSum()).setScale(DragonConstant.ZERO);
+			BigDecimal breakageSum = new BigDecimal(goodsStockSummation.getBreakageSum()).setScale(DragonConstant.ZERO);
 			BigDecimal overStockSum = initStockSum.add(makeInSum).add(purchaseInSum).add(returnsInSum).add(returnsOutSum)
-					.add(salesOutSum).add(otherInSum).add(otherOutSum).add(overflowSum).add(breakageSum).setScale(Constant.ZERO);
+					.add(salesOutSum).add(otherInSum).add(otherOutSum).add(overflowSum).add(breakageSum).setScale(DragonConstant.ZERO);
 
 			if (salesOutSum.compareTo(BigDecimal.ZERO) != 0) {
 				salesOutSum = salesOutSum.negate();
@@ -261,7 +260,7 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, Stock> implements
 		if (CollectionUtils.isNotEmpty(records)) {
 			int sysConfigRetain = SysUtil.getSysConfigRetain();
 			for (GoodsStockinStatisticsModel record : records) {
-				String stockinNum = new BigDecimal(record.getStockinNum()).setScale(Constant.ZERO).toString();
+				String stockinNum = new BigDecimal(record.getStockinNum()).setScale(DragonConstant.ZERO).toString();
 				String avgPrice = new BigDecimal(record.getAvgPrice()).setScale(sysConfigRetain, RoundingMode.HALF_UP).toString();
 				String stockinAmnt = new BigDecimal(record.getStockinAmnt()).setScale(sysConfigRetain,
 						RoundingMode.HALF_UP).toString();
@@ -281,7 +280,7 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, Stock> implements
 		GoodsStockinSummationModel goodsStockinSummationModel = super.baseMapper.selectGoodsStockinSummation(params);
 		if (goodsStockinSummationModel != null) {
 			int sysConfigRetain = SysUtil.getSysConfigRetain();
-			String stockinNumSum = new BigDecimal(goodsStockinSummationModel.getStockinNumSum()).setScale(Constant.ZERO).toString();
+			String stockinNumSum = new BigDecimal(goodsStockinSummationModel.getStockinNumSum()).setScale(DragonConstant.ZERO).toString();
 			String sotkcinAmntSum =
 					new BigDecimal(goodsStockinSummationModel.getStockinAmntSum()).setScale(sysConfigRetain
 							, RoundingMode.HALF_UP).toString();

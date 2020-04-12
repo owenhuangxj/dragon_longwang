@@ -3,7 +3,7 @@ package com.trenska.longwang.aop;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.trenska.longwang.annotation.CheckDuplicateSubmit;
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.util.HttpUtil;
 import com.trenska.longwang.util.ResponseUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -12,10 +12,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Arrays;
@@ -62,7 +59,7 @@ public class DuplicateSubmitAspect {
 	private String makeDuplicateTokenKey(JoinPoint joinPoint) {
 		String methodName = joinPoint.getSignature().getName();
 		StringBuilder key = new StringBuilder(DUPLICATE_TOKEN_KEY);
-		key.append(Constant.SPLITTER).append(methodName);
+		key.append(DragonConstant.SPLITTER).append(methodName);
 		return key.toString();
 	}
 }

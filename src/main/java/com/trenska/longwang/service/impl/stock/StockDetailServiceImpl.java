@@ -3,9 +3,8 @@ package com.trenska.longwang.service.impl.stock;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.plugins.Page;
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.constant.WarningLevel;
-import com.trenska.longwang.context.ApplicationContextHolder;
 import com.trenska.longwang.dao.customer.CustomerMapper;
 import com.trenska.longwang.dao.goods.GoodsMapper;
 import com.trenska.longwang.dao.stock.GoodsStockMapper;
@@ -16,7 +15,6 @@ import com.trenska.longwang.entity.indent.StockMadedate;
 import com.trenska.longwang.entity.stock.GoodsStock;
 import com.trenska.longwang.entity.stock.Stock;
 import com.trenska.longwang.entity.stock.StockDetail;
-import com.trenska.longwang.entity.sys.SysConfig;
 import com.trenska.longwang.model.stock.StockWarningModel;
 import com.trenska.longwang.model.sys.ResponseModel;
 import com.trenska.longwang.service.stock.IGoodsStockService;
@@ -68,9 +66,9 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 	@Override
 	@Transactional
 	public ResponseModel stockin(Stock stock) {
-		Integer empIdInToken = SysUtil.getEmpId();
+		Integer empIdInToken = SysUtil.getEmpIdInToken();
 		if (Objects.isNull(empIdInToken)) {
-			return ResponseModel.getInstance().succ(false).msg(Constant.ACCESS_TIMEOUT_MSG).code(Constant.ACCESS_TIMEOUT);
+			return ResponseModel.getInstance().succ(false).msg(DragonConstant.ACCESS_TIMEOUT_MSG).code(DragonConstant.ACCESS_TIMEOUT);
 		}
 		stock.setEmpId(empIdInToken);
 		return StockUtil.stockin(stock, stockMapper, goodsMapper);
@@ -80,13 +78,13 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 	@Transactional
 	public ResponseModel stockout(Stock stock, HttpServletRequest request) {
 
-		Integer empIdInToken = SysUtil.getEmpId();
+		Integer empIdInToken = SysUtil.getEmpIdInToken();
 		if (NumberUtil.isIntegerNotUsable(empIdInToken)) {
-			return ResponseModel.getInstance().succ(false).msg(Constant.ACCESS_TIMEOUT_MSG).code(Constant.ACCESS_TIMEOUT);
+			return ResponseModel.getInstance().succ(false).msg(DragonConstant.ACCESS_TIMEOUT_MSG).code(DragonConstant.ACCESS_TIMEOUT);
 		}
 
-		String stockTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
-		String stockNo = StockUtil.getStockNo(stock.getPrefix(), Constant.CKD_CHINESE, stockMapper);
+		String stockTime = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
+		String stockNo = StockUtil.getStockNo(stock.getPrefix(), DragonConstant.CKD_CHINESE, stockMapper);
 		// 获取出库详情
 		stock.setStockNo(stockNo);
 		stock.setEmpId(empIdInToken);
@@ -202,9 +200,9 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 	@Transactional
 	public ResponseModel cancelStockin(String stockNo) {
 
-		Integer empIdInToken = SysUtil.getEmpId();
+		Integer empIdInToken = SysUtil.getEmpIdInToken();
 		if (Objects.isNull(empIdInToken)) {
-			return ResponseModel.getInstance().succ(false).msg(Constant.ACCESS_TIMEOUT_MSG).code(Constant.ACCESS_TIMEOUT);
+			return ResponseModel.getInstance().succ(false).msg(DragonConstant.ACCESS_TIMEOUT_MSG).code(DragonConstant.ACCESS_TIMEOUT);
 		}
 		String msg = "作废入库单成功";
 		boolean successful = true;
@@ -212,7 +210,7 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 		Stock dbStock = stockMapper.selectOne(
 				new LambdaQueryWrapper<Stock>()
 						.eq(Stock::getStockNo, stockNo)
-						.eq(Stock::getStockType, Constant.RKD_CHINESE)
+						.eq(Stock::getStockType, DragonConstant.RKD_CHINESE)
 		);
 		if (Objects.isNull(dbStock)) {
 			return ResponseModel.getInstance().succ(false).msg("无效的入库单");
@@ -222,13 +220,13 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 		}
 		// 1.作废入库单；2.保存入库单作废详情(作废入库单后，在库存明细中增加一条记录(变更类型:入库单(作废)，操作类型：与原类型一致))
 		stockMapper.updateById(new Stock(dbStock.getStockId(), false));// 作废入库单
-		String stockTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
+		String stockTime = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
 		// 获取商品入库详情
 		List<StockDetail> dbStockinDetails = stockDetailMapper.selectList(
 				new LambdaQueryWrapper<StockDetail>()
 						.eq(StockDetail::getStat, true)
 						.eq(StockDetail::getStockNo, stockNo)
-						.eq(StockDetail::getStockType, Constant.RKD_CHINESE)
+						.eq(StockDetail::getStockType, DragonConstant.RKD_CHINESE)
 		);
 		// 1.减少商品库存;2.作废入库详情3.保存一条入库单作废记录
 		for (StockDetail stockinDetail : dbStockinDetails) {
@@ -236,13 +234,13 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 			int history = stockinDetail.getHistory();// 商品历史入库数量
 			int stock = dbGoods.getStock() - history;
 			goodsMapper.updateById(new Goods(stockinDetail.getGoodsId(), dbGoods.getBrandName(), stock)); // 减少商品库存
-			stockDetailMapper.updateById(new StockDetail(stockinDetail.getDetailId(), false, Constant.RKDZF_CHINESE)); // 作废入库详情
+			stockDetailMapper.updateById(new StockDetail(stockinDetail.getDetailId(), false, DragonConstant.RKDZF_CHINESE)); // 作废入库详情
 
 			/************************************ 保存库存明细************************************/
 			stockinDetail.setNum(stock);
 			stockinDetail.setStock(stock);
 			stockinDetail.setEmpId(empIdInToken);
-			stockinDetail.setStockType(Constant.RKDZF_CHINESE);
+			stockinDetail.setStockType(DragonConstant.RKDZF_CHINESE);
 			StockDetailsUtil.dbLogStockDetail(stockinDetail);
 		}
 		return ResponseModel.getInstance().succ(successful).msg(msg);
@@ -299,19 +297,19 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 
 		Map<String, Object> params = new HashMap<>();
 		params.put("stockNo", stockNo);
-		params.put("stat", Constant.VALID);
-		params.put("stockType", Constant.RKD_CHINESE);
+		params.put("stat", DragonConstant.VALID);
+		params.put("stockType", DragonConstant.RKD_CHINESE);
 		List<StockDetail> dbStockDetailList = stockDetailMapper.selectByParams(params);
 		dbStockDetailList.forEach(stockDetail -> {
 			stockDetail.deleteById();
 			/* 标记为作废->StockDetailsUtil#dbLogStockDetail()方法根据stockType来判断库存是增还是减 */
-			stockDetail.setStockType(Constant.RKDZF_CHINESE);
+			stockDetail.setStockType(DragonConstant.RKDZF_CHINESE);
 			stockDetail.setStock(stockDetail.getStock() - stockDetail.getHistory());
 			StockDetailsUtil.dbLogStockDetail(stockDetail);
 			GoodsUtil.changeGoodsStock(stockDetail.getGoodsId(), -stockDetail.getHistory());
 		});
 
-		stock.setEmpId(SysUtil.getEmpId());
+		stock.setEmpId(SysUtil.getEmpIdInToken());
 
 		List<StockDetail> stockDetailList = getDistinctStockDetails(stock.getStockins());
 		stock.setStockId(dbStockin.getStockId());
@@ -331,7 +329,7 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 				Collectors.groupingBy(StockDetail::getGroupingbyKey, Collectors.summingLong(StockDetail::getStockNumber))
 			);
 		List<StockDetail> distinctGoodsIdAndMadedateList = map.keySet().stream().map(goodsIdAndMadedateKey -> {
-			String[] arr = goodsIdAndMadedateKey.split(Constant.SPLITTER);
+			String[] arr = goodsIdAndMadedateKey.split(DragonConstant.SPLITTER);
 			int goodsId = Integer.valueOf(arr[0]);
 			String madedate = arr[1];
 			StockDetail stockDetail = new StockDetail();
@@ -341,7 +339,7 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 			int num = map.get(goodsIdAndMadedateKey).intValue();
 			stockDetail.setHistory(num);
 			stockDetail.setNum(num);
-			stockDetail.setMulti(Constant.DEFAULT_MULTI);
+			stockDetail.setMulti(DragonConstant.DEFAULT_MULTI);
 			return stockDetail;
 		}).collect(Collectors.toList());
 

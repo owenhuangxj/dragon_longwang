@@ -2,7 +2,7 @@ package com.trenska.longwang.util;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.dao.goods.GoodsMapper;
 import com.trenska.longwang.dao.stock.StockMapper;
 import com.trenska.longwang.entity.goods.Goods;
@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -52,7 +51,7 @@ public class StockUtil {
 					 * 处理流水号的问题
 					 * 如果库存表中还没有任何记录，则需要生成第一个单号 或者 如果有记录，需要比较最后一条记录的日期是否是当天，如果不是则流水号需要从1开始
 					 */
-					String currentDate = TimeUtil.getCurrentTime(Constant.BILL_TIME_FORMAT);
+					String currentDate = TimeUtil.getCurrentTime(DragonConstant.BILL_TIME_FORMAT);
 
 					boolean isStockNoOfMaxIdEmpty = StringUtils.isEmpty(stockNoOfMaxId);
 
@@ -113,9 +112,9 @@ public class StockUtil {
 	 */
 
 	public static ResponseModel stockin(Stock stock, StockMapper stockMapper, GoodsMapper goodsMapper) {
-		String stockNo = StockUtil.getStockNo(stock.getPrefix(), Constant.RKD_CHINESE, stockMapper);
+		String stockNo = StockUtil.getStockNo(stock.getPrefix(), DragonConstant.RKD_CHINESE, stockMapper);
 		//入库时间
-		String stockTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
+		String stockTime = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
 		List<StockDetail> stockinDetailList = stock.getStockins();
 
 		for (StockDetail stockinDetail : stockinDetailList) {
@@ -135,7 +134,7 @@ public class StockUtil {
 			stockinDetail.setOperType(stock.getOperType());
 			stockinDetail.setStockTime(stockTime);
 			stockinDetail.setEmpId(stock.getEmpId());
-			stockinDetail.setStockType(Constant.RKD_CHINESE);
+			stockinDetail.setStockType(DragonConstant.RKD_CHINESE);
 
 			// 锁特定商品
 			synchronized (new Integer(stockinDetail.getGoodsId())) {
@@ -156,7 +155,7 @@ public class StockUtil {
 		synchronized (stockNo) {
 			stockMapper.insert(stock);
 		}
-		return ResponseModel.getInstance().succ(true).msg(Constant.STOCKIN_SUCC);
+		return ResponseModel.getInstance().succ(true).msg(DragonConstant.STOCKIN_SUCC);
 	}
 
 	/**
@@ -168,7 +167,7 @@ public class StockUtil {
 	public static ResponseModel changeStockin(Stock stock, List<StockDetail> stockDetailList, GoodsMapper goodsMapper) {
 
 		//入库时间
-		String stockTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
+		String stockTime = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
 
 		for (StockDetail stockDetail : stockDetailList) {
 			/**
@@ -185,7 +184,7 @@ public class StockUtil {
 			stockDetail.setBusiNo(stock.getBusiNo());
 			stockDetail.setStockNo(stock.getStockNo());
 			stockDetail.setOperType(stock.getOperType());
-			stockDetail.setStockType(Constant.RKD_CHINESE);
+			stockDetail.setStockType(DragonConstant.RKD_CHINESE);
 
 			/* 特定商品锁 */
 			synchronized (new Integer(stockDetail.getGoodsId())) {
@@ -203,7 +202,7 @@ public class StockUtil {
 		}
 		stock.setStockTime(stockTime);
 		stock.updateById();
-		return ResponseModel.getInstance().succ(true).msg(Constant.STOCKIN_SUCC);
+		return ResponseModel.getInstance().succ(true).msg(DragonConstant.STOCKIN_SUCC);
 	}
 
 	/**
@@ -255,7 +254,7 @@ public class StockUtil {
 			}
 		}
 		stock.insert();
-		return ResponseModel.getInstance().succ(true).msg(Constant.STOCKOUT_SUCC);
+		return ResponseModel.getInstance().succ(true).msg(DragonConstant.STOCKOUT_SUCC);
 	}
 
 
@@ -334,7 +333,7 @@ public class StockUtil {
 			// 1.增加商品库存;2.作废出库详情3.保存出库单作废记录
 			for (StockDetail stockoutDetail : stockoutDetails) {
 				Integer goodsId = stockoutDetail.getGoodsId();
-				String stockType = stockoutDetail.getStockType().concat(Constant.ZF);
+				String stockType = stockoutDetail.getStockType().concat(DragonConstant.ZF);
 				Goods dbGoods = new Goods().selectById(goodsId); // 获取商品信息，主要为了获取商品总库存
 				Integer history = stockoutDetail.getHistory();
 				int newStock = dbGoods.getStock() + history;
@@ -346,7 +345,7 @@ public class StockUtil {
 				stockDetail.updateById();
 
 				/************************************* 保存库存明细 ***********************************/
-				int empIdInToken = SysUtil.getEmpId();
+				int empIdInToken = SysUtil.getEmpIdInToken();
 				stockoutDetail.setStock(newStock);
 				stockoutDetail.setEmpId(empIdInToken);
 				stockoutDetail.setStockType(stockType);
@@ -395,9 +394,9 @@ public class StockUtil {
 	 * @return
 	 */
 	public static ResponseModel cancelStockin(List<Stock> stockins, String stockType) {
-		int empIdInToken = SysUtil.getEmpId();
+		int empIdInToken = SysUtil.getEmpIdInToken();
 		if (Objects.isNull(empIdInToken)) {
-			return ResponseModel.getInstance().succ(false).msg(Constant.ACCESS_TIMEOUT_MSG).code(Constant.ACCESS_TIMEOUT);
+			return ResponseModel.getInstance().succ(false).msg(DragonConstant.ACCESS_TIMEOUT_MSG).code(DragonConstant.ACCESS_TIMEOUT);
 		}
 		String msg = "作废入库单成功";
 		boolean successful = true;
@@ -471,8 +470,8 @@ public class StockUtil {
 
 				/************************************* 保存库存明细 ***********************************/
 				stockoutDetail.setStock(newStock);
-				stockoutDetail.setEmpId(SysUtil.getEmpId());
-				stockoutDetail.setStockType(stockoutDetail.getStockType().concat(Constant.ZF));
+				stockoutDetail.setEmpId(SysUtil.getEmpIdInToken());
+				stockoutDetail.setStockType(stockoutDetail.getStockType().concat(DragonConstant.ZF));
 				StockDetailsUtil.dbLogStockDetail(stockoutDetail); // 保存库存明细
 
 				/************************************* 还回商品库存 ***********************************/

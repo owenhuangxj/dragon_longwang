@@ -36,6 +36,10 @@ public class AreaGrp extends Model<AreaGrp> {
 	@ApiModelProperty("区域深度，一共三级，分别对应1、2、3. \n1：一级区域；2：二级区域；3：三级区域")
 	private Integer areaGrpDeep;
 
+	public AreaGrp(int areaGrpId){
+		this.areaGrpId = areaGrpId;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;

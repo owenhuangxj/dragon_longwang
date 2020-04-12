@@ -1,19 +1,12 @@
 package com.trenska.longwang.util;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.constant.WarningLevel;
-import com.trenska.longwang.context.ApplicationContextHolder;
 import com.trenska.longwang.entity.goods.Unit;
 import com.trenska.longwang.entity.stock.StockDetail;
 import com.trenska.longwang.entity.stock.StockDetails;
-import com.trenska.longwang.entity.sys.SysConfig;
 import com.trenska.longwang.model.sys.ResponseModel;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 /**
  * 2019/8/7
@@ -39,14 +32,14 @@ public class StockDetailsUtil {
 						.eq(Unit::getUnitId, unitId)
 		);
 		stockDetails.setUnitName(dbUnit.getUnitName());
-		String prefix = Constant.PLUS;
+		String prefix = DragonConstant.PLUS;
 		String stockType = stockDetail.getStockType();
-		if (Constant.RKDZF_CHINESE.equals(stockType) || Constant.CKD_CHINESE.equals(stockType)) {
-			prefix = Constant.MINUS;
+		if (DragonConstant.RKDZF_CHINESE.equals(stockType) || DragonConstant.CKD_CHINESE.equals(stockType)) {
+			prefix = DragonConstant.MINUS;
 		}
 		String history = prefix + stockDetail.getHistory();
 		stockDetails.setHistory(history);
-		String currentTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
+		String currentTime = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
 		stockDetails.setStockTime(currentTime);
 		stockDetails.setTimestamp(System.currentTimeMillis());
 		stockDetails.insert();

@@ -1,6 +1,6 @@
 package com.trenska.longwang.util;
 
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import java.text.SimpleDateFormat;
@@ -23,7 +23,7 @@ public class BillsUtil {
 	 * @param num   单据编号
 	 */
 	public static String makeBillNo(String title, int num) {
-		String datePart = new SimpleDateFormat(Constant.BILL_TIME_FORMAT).format(new Date());
+		String datePart = new SimpleDateFormat(DragonConstant.BILL_TIME_FORMAT).format(new Date());
 		String serialNumber = fillZero(num);
 		return title.concat(datePart).concat(serialNumber);
 	}

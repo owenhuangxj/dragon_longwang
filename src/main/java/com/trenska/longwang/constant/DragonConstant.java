@@ -4,7 +4,7 @@ package com.trenska.longwang.constant;
  * 2019/4/17
  * 创建人:Owen
  */
-public class Constant {
+public class DragonConstant {
 	/**
 	 * 登陆超时错误码
 	 */
@@ -92,4 +92,8 @@ public class Constant {
 	public static final String ZERO_STR = "0";
 	public static final int DEFAULT_CONFIG_NUMBER = 10000;
 	public static final int ZERO = 0;
+	/**
+	 * 资金的默认精度
+	 */
+	public static final String DFT_CURRENCY_PRECISION_STR = "0.00";
 }

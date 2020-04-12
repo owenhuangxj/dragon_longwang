@@ -3,7 +3,7 @@ package com.trenska.longwang.controller.customer;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.annotation.CheckDuplicateSubmit;
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.customer.Customer;
 import com.trenska.longwang.entity.sys.SysEmp;
@@ -28,7 +28,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -92,9 +91,9 @@ public class CustomerController {
 	@DeleteMapping("/delete/batch")
 	@ApiOperation(value = "批量删除客户")
 	@ApiImplicitParams({
-			@ApiImplicitParam(name = Constant.CUST_IDS_LABEL, value = "需要批量删除的客户id集合/数组", paramType = "query", required = true, dataType = "int")
+			@ApiImplicitParam(name = DragonConstant.CUST_IDS_LABEL, value = "需要批量删除的客户id集合/数组", paramType = "query", required = true, dataType = "int")
 	})
-	public ResponseModel batchDeletePriceGrp(@RequestParam(value = Constant.CUST_IDS_LABEL) Collection<Integer> custIds) {
+	public ResponseModel batchDeletePriceGrp(@RequestParam(value = DragonConstant.CUST_IDS_LABEL) Collection<Integer> custIds) {
 		if (null == custIds || (null != custIds && custIds.size() == 0)) {
 			return ResponseModel.getInstance().succ(false).msg("无效的客户信息");
 
@@ -106,17 +105,17 @@ public class CustomerController {
 	@CheckDuplicateSubmit
 	@ApiOperation(value = "修改客户信息")
 	@ApiImplicitParams({
-			@ApiImplicitParam(name = "custId", value = "客户id", paramType = "body", required = true, dataType = "int"),
-			@ApiImplicitParam(name = "custName", value = "客户名称", paramType = "body", required = true, dataType = "string"),
-			@ApiImplicitParam(name = "custId", value = "客户区域分组id", paramType = "body", dataType = "int"),
-			@ApiImplicitParam(name = "empId", value = "负责该客户的业务员id", paramType = "body", dataType = "int"),
-			@ApiImplicitParam(name = "priceGrpId", value = "客户价格分组Id", paramType = "body", dataType = "int"),
+			@ApiImplicitParam(name = "addr", value = "详细地址", paramType = "body", dataType = "string"),
 			@ApiImplicitParam(name = "linkman", value = "联系人", paramType = "body", dataType = "string"),
 			@ApiImplicitParam(name = "linkPhone", value = "联系电话", paramType = "body", dataType = "int"),
-			@ApiImplicitParam(name = "province", value = "地址省级部分", paramType = "body", dataType = "string"),
 			@ApiImplicitParam(name = "city", value = "地址市级部分", paramType = "body", dataType = "string"),
 			@ApiImplicitParam(name = "county", value = "地址县级部分", paramType = "body", dataType = "string"),
-			@ApiImplicitParam(name = "addr", value = "详细地址", paramType = "body", dataType = "string")
+			@ApiImplicitParam(name = "province", value = "地址省级部分", paramType = "body", dataType = "string"),
+			@ApiImplicitParam(name = "areaGrpId", value = "客户区域分组id", paramType = "body", dataType = "int"),
+			@ApiImplicitParam(name = "priceGrpId", value = "客户价格分组Id", paramType = "body", dataType = "int"),
+			@ApiImplicitParam(name = "empId", value = "负责该客户的业务员id", paramType = "body", dataType = "int"),
+			@ApiImplicitParam(name = "custId", value = "客户id", paramType = "body", required = true, dataType = "int"),
+			@ApiImplicitParam(name = "custName", value = "客户名称", paramType = "body", required = true, dataType = "string")
 	})
 	public ResponseModel updateCustomer(@RequestBody Customer customer) {
 		Subject subject = SecurityUtils.getSubject();
@@ -159,9 +158,9 @@ public class CustomerController {
 	@ApiOperation("多条件查询客户信息并分页")
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "empId", value = "业务员id", paramType = "query", dataType = "int"),
+			@ApiImplicitParam(name = "custName", value = "客户名称", paramType = "query", dataType = "string"),
 			@ApiImplicitParam(name = "areaGrpId", value = "区域分组id", paramType = "query", dataType = "int"),
 			@ApiImplicitParam(name = "priceGrpId", value = "价格分组id", paramType = "query", dataType = "int"),
-			@ApiImplicitParam(name = "custName", value = "客户名称", paramType = "query", dataType = "string"),
 			@ApiImplicitParam(name = "custTypeId", value = "客户类型id", paramType = "query", dataType = "int"),
 			@ApiImplicitParam(name = "current", value = "当前页", paramType = "path", required = true, dataType = "int"),
 			@ApiImplicitParam(name = "size", value = "每页记录数", paramType = "path", required = true, dataType = "int")
@@ -267,22 +266,22 @@ public class CustomerController {
 	@ApiOperation("导出客户信息")
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "empId", value = "业务员id", paramType = "query", dataType = "int"),
-			@ApiImplicitParam(name = "empName", value = "业务员名称", paramType = "query", dataType = "string"),
 			@ApiImplicitParam(name = "areaGrpId", value = "区域分组id", paramType = "query", dataType = "int"),
-			@ApiImplicitParam(name = "areaGrpName", value = "区域分组", paramType = "query", dataType = "string"),
+			@ApiImplicitParam(name = "empName", value = "业务员名称", paramType = "query", dataType = "string"),
 			@ApiImplicitParam(name = "custTypeId", value = "客户类型id", paramType = "query", dataType = "int"),
 			@ApiImplicitParam(name = "custTypeName", value = "客户类型", paramType = "query", dataType = "int"),
 			@ApiImplicitParam(name = "priceGrpId", value = "价格分组id", paramType = "query", dataType = "int"),
-			@ApiImplicitParam(name = "priceGrpName", value = "价格分组", paramType = "query", dataType = "int")
+			@ApiImplicitParam(name = "priceGrpName", value = "价格分组", paramType = "query", dataType = "int"),
+			@ApiImplicitParam(name = "areaGrpName", value = "区域分组", paramType = "query", dataType = "string")
 	})
 	public ResponseEntity<byte[]> exportCustomerInfo(
 			@RequestParam(value = "empId", required = false) Integer empId,
 			@RequestParam(value = "empName", required = false) String empName,
 			@RequestParam(value = "areaGrpId", required = false) Integer areaGrpId,
-			@RequestParam(value = "areaGrpName", required = false) String areaGrpName,
 			@RequestParam(value = "custTypeId", required = false) Integer custTypeId,
-			@RequestParam(value = "custTypeName", required = false) String custTypeName,
 			@RequestParam(value = "priceGrpId", required = false) Integer priceGrpId,
+			@RequestParam(value = "areaGrpName", required = false) String areaGrpName,
+			@RequestParam(value = "custTypeName", required = false) String custTypeName,
 			@RequestParam(value = "priceGrpName", required = false) String priceGrpName
 	) throws IOException, NoSuchFieldException, IllegalAccessException {
 		Map<String, Object> params = new HashMap<>();
@@ -293,16 +292,16 @@ public class CustomerController {
 		List<CustomerInfoModel> records = customerService.getCustomerInfoSelective(params);
 		////////////////////////////////////////////// 处理列标题 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 		Map<String, String> title = new LinkedHashMap<>();
+//		title.put("addr", "客户地址");
+		title.put("linkman", "联系人");
 		title.put("custNo", "客户编号");
-		title.put("custName", "客户名称");
-		title.put("priceGrp", "价格分组");
 		title.put("areaGrp", "归属区域");
 		title.put("empName", "所属员工");
+		title.put("priceGrp", "价格分组");
+		title.put("custName", "客户名称");
 		title.put("custType", "客户类型");
 //		title.put("debtLimit", "欠款额度");
-		title.put("linkman", "联系人");
 		title.put("linkPhone", "联系电话");
-//		title.put("addr", "客户地址");
 
 		////////////////////////////////////////////// 处理查询条件 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 		Map<String, Object> query = new LinkedHashMap<>();
@@ -324,7 +323,7 @@ public class CustomerController {
 		HSSFWorkbook wb = ExcelUtil.getHSSFWorkbook("客户信息", false, null, query, title, records, null);
 		wb.write(baos);
 		HttpHeaders headers = new HttpHeaders();
-		headers.setContentDispositionFormData("attachment", new String("客户信息.xls".getBytes(Constant.srcEncoding), Constant.destEncoding));
+		headers.setContentDispositionFormData("attachment", new String("客户信息.xls".getBytes(DragonConstant.srcEncoding), DragonConstant.destEncoding));
 		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 		return new ResponseEntity<byte[]>(baos.toByteArray(), headers, HttpStatus.CREATED);
 	}

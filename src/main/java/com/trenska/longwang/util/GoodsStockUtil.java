@@ -1,6 +1,6 @@
 package com.trenska.longwang.util;
 
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.entity.goods.Goods;
 import com.trenska.longwang.entity.stock.StockDetail;
 
@@ -26,7 +26,7 @@ public class GoodsStockUtil {
 		stockDetail.deleteById();
 		stockDetail.setEmpId(empId);
 		stockDetail.setStock(stock + history);
-		stockDetail.setStockType(stockDetail.getStockType().concat(Constant.ZF)); // 库存类型: 订货单(核改)
+		stockDetail.setStockType(stockDetail.getStockType().concat(DragonConstant.ZF)); // 库存类型: 订货单(核改)
 		StockDetailsUtil.dbLogStockDetail(stockDetail);
 	}
 }

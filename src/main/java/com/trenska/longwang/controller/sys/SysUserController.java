@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.annotation.ActionLog;
 import com.trenska.longwang.annotation.CheckDuplicateSubmit;
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.constant.LogType;
 import com.trenska.longwang.context.ApplicationContextHolder;
 import com.trenska.longwang.entity.PageHelper;
@@ -57,10 +57,10 @@ public class SysUserController {
 	@Value("${jasypt.encryptor.password}")
 	private String password;
 
-	@Resource(name = Constant.REDIS_TEMPLATE_NAME)
+	@Resource(name = DragonConstant.REDIS_TEMPLATE_NAME)
 	private RedisTemplate redisTemplate;
 
-	@Resource(name = Constant.REDIS_JSON_TEMPLATE_NAME)
+	@Resource(name = DragonConstant.REDIS_JSON_TEMPLATE_NAME)
 	private RedisTemplate<String, Object> jsonRedisTemplate;
 
 	@Autowired
@@ -84,27 +84,27 @@ public class SysUserController {
 		} catch (IncorrectCredentialsException ex) {
 			LoginResultModel loginResultModel = new LoginResultModel();
 			loginResultModel.setSuccess(false);
-			loginResultModel.setMsg(Constant.LOGIN_FAILURE_MSG);
+			loginResultModel.setMsg(DragonConstant.LOGIN_FAILURE_MSG);
 			return loginResultModel;
 		} catch (UnknownAccountException ex) {
 			LoginResultModel loginResultModel = new LoginResultModel();
 			loginResultModel.setSuccess(false);
-			loginResultModel.setMsg(Constant.LOGIN_FAILURE_MSG);
+			loginResultModel.setMsg(DragonConstant.LOGIN_FAILURE_MSG);
 			return loginResultModel;
 		}
 		// 从 shiro 中获取 SysEmp
 		SysEmp dbSysEmp = (SysEmp) subject.getPrincipal();
 
 		if (null == dbSysEmp) {
-			throw new AuthenticationException(Constant.LOGIN_FAILURE_MSG);
+			throw new AuthenticationException(DragonConstant.LOGIN_FAILURE_MSG);
 		}
 		// 账号ID
 		int empId = dbSysEmp.getEmpId();
 
 		// 组装token,格式-> uuid + :: + empId
-		String token = UUID.randomUUID().toString().concat(Constant.SPLITTER).concat(String.valueOf(empId));
+		String token = UUID.randomUUID().toString().concat(DragonConstant.SPLITTER).concat(String.valueOf(empId));
 		// 以 emp-id:: + empId 的方式所组成的key,uuid + :: + empId 为value的键值对存入redis中
-		redisTemplate.opsForValue().set(Constant.EMP_ID_IDENTIFIER.concat(String.valueOf(empId)),
+		redisTemplate.opsForValue().set(DragonConstant.EMP_ID_IDENTIFIER.concat(String.valueOf(empId)),
 				token, tokenTimeout, TimeUnit.MILLISECONDS);
 
 		// 获取登陆用户的系统配置,如果没有对应的记录则采用系统配置，系统配置的sysEmpId为10000
@@ -113,7 +113,7 @@ public class SysUserController {
 			sysConfig = ApplicationContextHolder.getBean(SysConfig.class);// 获取Spring容器中的系统配置
 		}
 		// 将配置存入redis中,时间与token的失效时间相同
-		jsonRedisTemplate.opsForValue().set(Constant.SYS_CONFIG_IDENTIFIER.concat(String.valueOf(empId)),
+		jsonRedisTemplate.opsForValue().set(DragonConstant.SYS_CONFIG_IDENTIFIER.concat(String.valueOf(empId)),
 				sysConfig, tokenTimeout, TimeUnit.MILLISECONDS);
 
 		/**
@@ -123,7 +123,7 @@ public class SysUserController {
 		 */
 		SysEmp updatingSysEmp = new SysEmp();
 		updatingSysEmp.setEmpId(dbSysEmp.getEmpId());
-		updatingSysEmp.setLastLoginTime(TimeUtil.getCurrentTime(Constant.TIME_FORMAT));
+		updatingSysEmp.setLastLoginTime(TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT));
 		updatingSysEmp.setLoginCts(dbSysEmp.getLoginCts() + 1);
 		updatingSysEmp.setLastLoginIp(SysUtil.assembleLastLoginIp());
 		updatingSysEmp.updateById();
@@ -237,7 +237,7 @@ public class SysUserController {
 		String salt = saltGenerator.nextBytes().toBase64();
 		String hashedPwd = new Sha256Hash(empPwd, salt, 1024).toBase64();
 
-		SysEmp sysEmp = new SysEmp(empId, hashedPwd, salt, TimeUtil.getCurrentTime(Constant.TIME_FORMAT));
+		SysEmp sysEmp = new SysEmp(empId, hashedPwd, salt, TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT));
 
 		userService.updateById(sysEmp);
 		return ResponseModel.getInstance().succ(true).msg("密码更新成功");
@@ -285,7 +285,7 @@ public class SysUserController {
 			return ResponseModel.getInstance().succ(false).msg("新密码与旧密码相同，不需要更新");
 		}
 
-		String currentTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
+		String currentTime = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
 		updatingSysEmp.setEmpId(empId);
 		if (!Objects.isNull(hashedPwd)) {
 			updatingSysEmp.setEmpPwd(hashedPwd);

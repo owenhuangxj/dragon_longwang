@@ -62,25 +62,27 @@
         <!--order by tdd.deal_time desc ,tdd.debt desc-->
     </select>
 
+    <!-- and tdd.deal_time between #{beginTime} and #{endTime} 取消 交易时间限制-->
     <select id="selectLastSurplusCustIds" resultType="java.lang.Integer">
         SELECT
         tc.cust_id AS custId
         from t_customer as tc,t_deal_detail as tdd
         where tdd.cust_id = tc.cust_id
-        and tdd.deal_time between #{beginTime} and #{endTime}
         <trim prefix="and" prefixOverrides="and">
-            <if test="custIds != null and custIds.size() > 0">
-                <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
-                    #{custId}
-                </foreach>
+            <if test="custId == null">
+                <if test="custIds != null and custIds.size() > 0">
+                    <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
+                        #{custId}
+                    </foreach>
+                </if>
             </if>
             <if test="areaGrpId != null">
                 and tc.area_grp_id in (
                   select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
                 )
             </if>
-            <if test="custName != null and custName != ''">
-                AND tc.cust_name LIKE concat('%',#{custName},'%')
+            <if test="custId != null and custId > 0">
+                AND tc.cust_id = #{custId}
             </if>
             <if test="priceGrpId != null and priceGrpId != 0">
                 AND tc.price_grp_id = #{priceGrpId}
@@ -110,9 +112,9 @@
 
     <!--同一时刻可能有多条欠款明细-->
     <select id="selectLastSurplusDebtBefore" resultMap="BaseResultMap">
-        select <include refid="Base_Column_List"/> from t_deal_detail tdd,t_customer tc
-        where tdd.deal_time =
-        (
+        select <include refid="Base_Column_List"/>
+        from t_deal_detail tdd,t_customer tc
+        where tdd.deal_time = (
           select max(deal_time)
           from t_deal_detail
           where cust_id = #{custId}
@@ -126,9 +128,6 @@
                   select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
                 )
             </if>
-            <if test="custName != null and custName != ''">
-                and tc.cust_name like concat('%',#{custName},'%')
-            </if>
             <if test="priceGrpId != null and priceGrpId != 0">
                 and tc.price_grp_id = #{priceGrpId}
             </if>
@@ -136,7 +135,6 @@
                 and tdd.oper = #{oper}
             </if>
         </trim>
-
 
     </select>
     <select id="selectLastSurplusDebtBetween" resultMap="BaseResultMap">

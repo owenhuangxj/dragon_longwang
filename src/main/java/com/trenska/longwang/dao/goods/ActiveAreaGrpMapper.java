@@ -10,4 +10,5 @@ import com.trenska.longwang.entity.goods.ActiveAreaGrp;
  */
 //@CacheNamespace(implementation = RedisCacheMybatis.class, eviction = RedisCacheMybatis.class)
 public interface ActiveAreaGrpMapper extends BaseMapper<ActiveAreaGrp> {
+	int deleteInvalidateActives();
 }

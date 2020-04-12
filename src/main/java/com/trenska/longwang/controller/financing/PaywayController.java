@@ -53,9 +53,9 @@ public class PaywayController {
 
 	@PostMapping(value = "/add")
 	@ApiImplicitParams({
+			@ApiImplicitParam(name = "pdesc", value = "收/付款描述", paramType = "query", dataType = "string"),
 			@ApiImplicitParam(name = "payway", value = "名称", required = true, paramType = "query", dataType = "string"),
-			@ApiImplicitParam(name = "type", value = "收款/付款", required = true, paramType = "query", dataType = "string"),
-			@ApiImplicitParam(name = "pdesc", value = "收/付款描述", paramType = "query", dataType = "string")
+			@ApiImplicitParam(name = "type", value = "收款/付款", required = true, paramType = "query", dataType = "string")
 	})
 	@ApiOperation("增加收/付款方式")
 	public ResponseModel addPayway(
@@ -79,23 +79,23 @@ public class PaywayController {
 
 	@PostMapping(value = "/update/{paywayId}")
 	@ApiImplicitParams({
+			@ApiImplicitParam(name = "pdesc", value = "描述", paramType = "query", dataType = "string"),
 			@ApiImplicitParam(name = "paywayId", value = "id", paramType = "path", dataType = "string"),
 			@ApiImplicitParam(name = "payway", value = "名称", paramType = "query", dataType = "string"),
-			@ApiImplicitParam(name = "type", value = "收/付款方式", paramType = "query", dataType = "string"),
-			@ApiImplicitParam(name = "pdesc", value = "描述", paramType = "query", dataType = "string")
+			@ApiImplicitParam(name = "type", value = "收/付款方式", paramType = "query", dataType = "string")
 	})
 	@ApiOperation("更新收/付款方式")
 	public ResponseModel updatePayway(
-			@PathVariable("paywayId") Integer paywayId,
-			@RequestParam(value = "payway") String payway,
 			@RequestParam(value = "type") String type,
-			@RequestParam(value = "pdesc") String pdesc) {
+			@PathVariable("paywayId") Integer paywayId,
+			@RequestParam(value = "pdesc") String pdesc,
+			@RequestParam(value = "payway") String payway
+	) {
 		if (checkPayway(payway, type)) {
 			return ResponseModel.getInstance().succ(false).msg( type.substring(0,2) + "方式重名");
 		}
 		paywayService.saveOrUpdate(new Payway(paywayId, payway, type, pdesc));
 		return ResponseModel.getInstance().succ(true).msg("修改" +  type.substring(0,2) + "方式成功");
-
 	}
 
 	@DeleteMapping(value = "/delete/{id}")
@@ -138,7 +138,6 @@ public class PaywayController {
 
 		return ResponseModel.getInstance().succ(!eixts).msg(eixts ? "已经存在" : "可以创建");
 	}
-
 
 	/**
 	 * 检查收款/付款单是否已经存在

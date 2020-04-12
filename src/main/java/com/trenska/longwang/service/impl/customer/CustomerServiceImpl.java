@@ -5,8 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.annotation.DataAuthVerification;
-import com.trenska.longwang.constant.Constant;
-import com.trenska.longwang.context.ApplicationContextHolder;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.dao.customer.AreaGrpMapper;
 import com.trenska.longwang.dao.customer.CustomerMapper;
 import com.trenska.longwang.dao.financing.DealDetailMapper;
@@ -17,7 +16,6 @@ import com.trenska.longwang.entity.customer.Customer;
 import com.trenska.longwang.entity.financing.Receipt;
 import com.trenska.longwang.entity.goods.GoodsCustSpecify;
 import com.trenska.longwang.entity.indent.Indent;
-import com.trenska.longwang.entity.sys.SysConfig;
 import com.trenska.longwang.enums.IndentStat;
 import com.trenska.longwang.model.report.CustomerInfoModel;
 import com.trenska.longwang.model.customer.GoodsActiveInfoModel;
@@ -30,7 +28,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -79,7 +76,7 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
 
 		if (CollectionUtils.isEmpty(custIds)) {
 			try {
-				ResponseUtil.accessDenied(Constant.ACCESS_TIMEOUT, Constant.ACCESS_TIMEOUT_MSG, "");
+				ResponseUtil.accessDenied(DragonConstant.ACCESS_TIMEOUT, DragonConstant.ACCESS_TIMEOUT_MSG, "");
 				page.setTotal(0);
 				page.setRecords(new ArrayList(0));
 				return page;
@@ -90,7 +87,7 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
 
 		Map<String, Object> params = new HashMap<>();
 
-		params.put(Constant.CUST_IDS_LABEL, custIds);
+		params.put(DragonConstant.CUST_IDS_LABEL, custIds);
 
 		List<Customer> customers = baseMapper.selectCustomerPage(page, params);
 
@@ -146,22 +143,22 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
 		}
 
 		if (StringUtils.isEmpty(customer.getDebtLimit())) {
-			customer.setDebtLimit(Constant.NO_DEBT_LIMIT_LABEL);
+			customer.setDebtLimit(DragonConstant.NO_DEBT_LIMIT_LABEL);
 		}
-		String time = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
+		String time = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
 		customer.setCreatedTime(time);
 		String initDebt = customer.getInitDebt();
 		customer.setDebt(initDebt);
 		String amount = "0.00";
 		if (new BigDecimal(initDebt).compareTo(BigDecimal.ZERO) > 0) {
-			if (!initDebt.startsWith(Constant.PLUS)) {
-				amount = Constant.PLUS.concat(initDebt);
+			if (!initDebt.startsWith(DragonConstant.PLUS)) {
+				amount = DragonConstant.PLUS.concat(initDebt);
 			}else{
 				amount = initDebt;
 			}
 		} else if (new BigDecimal(initDebt).compareTo(BigDecimal.ZERO) < 0) {
-			if (!initDebt.startsWith(Constant.MINUS)) {
-				amount = Constant.MINUS.concat(initDebt);
+			if (!initDebt.startsWith(DragonConstant.MINUS)) {
+				amount = DragonConstant.MINUS.concat(initDebt);
 			}else {
 				amount = initDebt;
 			}
@@ -171,7 +168,7 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
 
 		/********************* 插入一条期初欠款交易明细 , 无期初欠款欠款默认为0 *********************/
 		Integer custId = customer.getCustId();
-		DealDetailUtil.saveDealDetail(custId, "", time, amount, initDebt, Constant.QCQK_CHINESE, "", "");
+		DealDetailUtil.saveDealDetail(custId, "", time, amount, initDebt, DragonConstant.QCQK_CHINESE, "", "");
 
 		// 处理拥有所有数据权限的账号不能看到新建的客户信息的bug
 

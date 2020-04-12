@@ -261,7 +261,14 @@
         ) as tdd
         on tdd.cust_id = tc.cust_id
         GROUP BY tc.cust_id
-        ORDER BY tc.cust_no
+        ORDER BY abs(
+        ifnull(
+            sum(
+            if(substring(tdd.name_no,1,3) = '收款单' ,cast(tdd.amount as decimal(9,2)),0)
+            )
+            ,0
+            )
+        ) desc,tc.cust_no
     </select>
 
     <resultMap id="AccountCheckingModelMap" type="com.trenska.longwang.model.finaning.AccountCheckingModel" autoMapping="true">

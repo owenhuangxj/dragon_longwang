@@ -51,12 +51,4 @@ public class JasyptUtil {
 		config.setSaltGenerator(new RandomSaltGenerator());
 		return config;
 	}
-
-	public static void main(String[] args) {
-		System.out.println(-1 | -0);
-		System.out.println(1 << 3);
-		System.out.println(1 >> Integer.SIZE - 1);
-		System.out.println(1 << Integer.SIZE - 3);
-		System.out.println(-1 << 29);
-	}
 }

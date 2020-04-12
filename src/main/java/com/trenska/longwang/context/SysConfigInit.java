@@ -1,6 +1,6 @@
 package com.trenska.longwang.context;
 
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.entity.sys.SysConfig;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
@@ -26,9 +26,9 @@ public class SysConfigInit implements ApplicationContextAware, ApplicationListen
 	@Override
 	public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
 		/* ys_emp_id为10000的记录为系统默认配置*/
-		SysConfig sysConfig = new SysConfig().selectById(Constant.DEFAULT_CONFIG_NUMBER);
+		SysConfig sysConfig = new SysConfig().selectById(DragonConstant.DEFAULT_CONFIG_NUMBER);
 		DefaultListableBeanFactory beanFactory =
 				(DefaultListableBeanFactory) contextRefreshedEvent.getApplicationContext().getAutowireCapableBeanFactory();
-		beanFactory.registerSingleton(Constant.SYS_CONFIG_IDENTIFIER.concat(String.valueOf(Constant.DEFAULT_CONFIG_NUMBER)), sysConfig);
+		beanFactory.registerSingleton(DragonConstant.SYS_CONFIG_IDENTIFIER.concat(String.valueOf(DragonConstant.DEFAULT_CONFIG_NUMBER)), sysConfig);
 	}
 }

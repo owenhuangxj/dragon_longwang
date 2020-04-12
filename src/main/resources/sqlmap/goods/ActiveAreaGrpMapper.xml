@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.trenska.longwang.dao.goods.ActiveAreaGrpMapper">
+
+    <delete id="deleteInvalidateActives">
+        delete from t_active_area_grp where active_id in (
+            select active_id from t_active where stat = 0
+        )
+    </delete>
+</mapper>

@@ -1,7 +1,7 @@
 package com.trenska.longwang.util;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.dao.financing.ReceiptMapper;
 import com.trenska.longwang.entity.customer.Customer;
 import com.trenska.longwang.entity.financing.DealDetail;
@@ -39,7 +39,7 @@ public class ReceiptUtil {
 		 */
 		boolean isLastReceiptRecordNull = lastReceiptRecord == null;
 		//当前时间yyyyMMdd格式的日期字符串
-		String currentDateStr = new SimpleDateFormat(Constant.BILL_TIME_FORMAT).format(new Date());
+		String currentDateStr = new SimpleDateFormat(DragonConstant.BILL_TIME_FORMAT).format(new Date());
 		String dbReceiptNo;
 		boolean isTwoDateEquals = false;
 		if (!isLastReceiptRecordNull) {
@@ -77,13 +77,13 @@ public class ReceiptUtil {
 			insertingDealDetail.setCustId(custId);
 			String nameNo = StringUtil.makeNameNo(receipt.getType(), receipt.getReceiptNo());
 			insertingDealDetail.setNameNo(nameNo);
-			insertingDealDetail.setAmount(Constant.PLUS + amount.toString());
+			insertingDealDetail.setAmount(DragonConstant.PLUS + amount.toString());
 			insertingDealDetail.setNewDebt(increasingDebt.toString());
 			increasingDebt = increasingDebt.add(amount);
 			insertingDealDetail.setNewDebt(increasingDebt.toString());
-			insertingDealDetail.setOper(receipt.getAccountType().concat(Constant.ZF));
+			insertingDealDetail.setOper(receipt.getAccountType().concat(DragonConstant.ZF));
 			insertingDealDetail.setPayway(receipt.getPayway());
-			insertingDealDetail.setTime(TimeUtil.getCurrentTime(Constant.TIME_FORMAT));
+			insertingDealDetail.setTime(TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT));
 			insertingDealDetail.insert(); // 插入一条交易明细
 			new Receipt(receipt.getReceiptId(), false).updateById(); // 作废收款单
 		}
@@ -127,9 +127,9 @@ public class ReceiptUtil {
 		// 计算收/付款总额
 		for (ReceiptModel receiptModel : receipt.getReceiptSet()) {
 			BigDecimal receiptAmount = new BigDecimal(receiptModel.getReceiptAmount());
-			if (Constant.SK_CHINESE.equals(receiptType)) {
+			if (DragonConstant.SK_CHINESE.equals(receiptType)) {
 				currentReceived = currentReceived.add(receiptAmount);
-			} else if (Constant.FK_CHINESE.equals(receiptType)) {
+			} else if (DragonConstant.FK_CHINESE.equals(receiptType)) {
 				currentPayed = currentPayed.add(receiptAmount);
 			}
 		}
@@ -177,17 +177,17 @@ public class ReceiptUtil {
 		 */
 		// 收/付款单号
 		// 默认为收款单
-		String title = Constant.SK_TITLE;
-		if (Constant.FK_CHINESE.equals(receiptType)) {
-			title = Constant.FK_TITLE;
+		String title = DragonConstant.SK_TITLE;
+		if (DragonConstant.FK_CHINESE.equals(receiptType)) {
+			title = DragonConstant.FK_TITLE;
 		}
 		String receiptNo = ReceiptUtil.getReceiptNo(title, receiptType.concat("单"), receiptMapper);
 		int startNumber = BillsUtil.getSerialNumberOfBillNo(Optional.of(receiptNo));
 		// 收/付款时间
-		String currentTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
+		String currentTime = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
 		BigDecimal newDebt = oldDebt;
 		Set<ReceiptModel> receiptModels = receipt.getReceiptSet();
-		int empIdInToken = SysUtil.getEmpId();
+		int empIdInToken = SysUtil.getEmpIdInToken();
 		for (ReceiptModel receiptModel : receiptModels) {
 			String thisReceiptAmount = receiptModel.getReceiptAmount();
 			Receipt insertingReceipt = new Receipt();
@@ -205,7 +205,7 @@ public class ReceiptUtil {
 			insertingReceipt.insert(); // 保存收/付款记录
 			// 保存交易明细,客户欠款减少 加 - 前缀 ->每个收/付款单号都对应一个交易明细
 			String oper = receipt.getAccountType();
-			String amount = Constant.MINUS.concat(receiptModel.getReceiptAmount());
+			String amount = DragonConstant.MINUS.concat(receiptModel.getReceiptAmount());
 			String nameNo = StringUtil.makeNameNo(receipt.getType(), receiptNo);
 			String payway = receiptModel.getPayway();
 			String remarks = receipt.getReceiptRemarks();

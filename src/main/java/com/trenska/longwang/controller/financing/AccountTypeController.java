@@ -1,7 +1,7 @@
 package com.trenska.longwang.controller.financing;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.entity.financing.AccountType;
 import com.trenska.longwang.model.sys.ResponseModel;
 import com.trenska.longwang.service.financing.IAccountTypeService;
@@ -41,7 +41,7 @@ public class AccountTypeController {
 	public ResponseModel listReceiptAccountType() {
 		List<AccountType> list = accountTypeService.list(
 				new LambdaQueryWrapper<AccountType>()
-						.eq(AccountType::getType, Constant.SK_CHINESE)
+						.eq(AccountType::getType, DragonConstant.SK_CHINESE)
 		);
 		return ResponseModel.getInstance().succ(true).data(list);
 	}
@@ -51,7 +51,7 @@ public class AccountTypeController {
 	public ResponseModel listPayAccountType() {
 		List<AccountType> list = accountTypeService.list(
 				new LambdaQueryWrapper<AccountType>()
-						.eq(AccountType::getType, Constant.FK_CHINESE)
+						.eq(AccountType::getType, DragonConstant.FK_CHINESE)
 		);
 		return ResponseModel.getInstance().succ(true).data(list);
 	}
@@ -67,7 +67,7 @@ public class AccountTypeController {
 		AccountType accountType = accountTypeService.getOne(
 				new LambdaQueryWrapper<AccountType>()
 						.eq(AccountType::getTypeName,typeName)
-						.eq(AccountType::getType,Constant.SK_CHINESE)
+						.eq(AccountType::getType, DragonConstant.SK_CHINESE)
 		);
 		if(accountType != null){
 			return ResponseModel.getInstance().succ(false).msg("收款类型已经存在不能创建");
@@ -75,7 +75,7 @@ public class AccountTypeController {
 
 		AccountType rt = new AccountType();
 		rt.setTypeName(typeName);
-		rt.setType(Constant.SK_CHINESE);
+		rt.setType(DragonConstant.SK_CHINESE);
 		boolean save = accountTypeService.save(rt);
 		return ResponseModel.getInstance().succ(save).msg( save ? "增加收款账目类型成功" : "增加收款账目类型失败");
 	}
@@ -91,14 +91,14 @@ public class AccountTypeController {
 		AccountType accountType = accountTypeService.getOne(
 				new LambdaQueryWrapper<AccountType>()
 						.eq(AccountType::getTypeName,typeName)
-						.eq(AccountType::getType,Constant.FK_CHINESE)
+						.eq(AccountType::getType, DragonConstant.FK_CHINESE)
 		);
 		if(null != accountType){
 			return ResponseModel.getInstance().succ(false).msg("付款类型已经存在不能创建");
 		}
 		AccountType rt = new AccountType();
 		rt.setTypeName(typeName);
-		rt.setType(Constant.FK_CHINESE);
+		rt.setType(DragonConstant.FK_CHINESE);
 		boolean save = accountTypeService.save(rt);
 		return ResponseModel.getInstance().succ(save).msg( save ? "增加付款账目类型成功" : "增加付款账目类型失败");
 	}

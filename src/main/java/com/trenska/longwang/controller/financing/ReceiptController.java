@@ -130,25 +130,25 @@ public class ReceiptController {
 
 	@RequestMapping(value = "/list/{current}/{size}", method = RequestMethod.GET)
 	@ApiImplicitParams({
+			@ApiImplicitParam(name = "custId", value = "客户id", paramType = "query", dataType = "int"),
+			@ApiImplicitParam(name = "stat", value = "状态", paramType = "query", dataType = "boolean"),
+			@ApiImplicitParam(name = "receiptNo", value = "单号", paramType = "query", dataType = "string"),
+			@ApiImplicitParam(name = "areaGrpId", value = "所属区域", paramType = "query", dataType = "int"),
+			@ApiImplicitParam(name = "salesmanId", value = "业务员id", paramType = "query", dataType = "int"),
+			@ApiImplicitParam(name = "chargemanId", value = "收款人id", paramType = "query", dataType = "int"),
+			@ApiImplicitParam(name = "custName", value = "客户名称", paramType = "query", dataType = "string"),
+			@ApiImplicitParam(name = "type", value = "收款单/付款单", paramType = "query", dataType = "string"),
+			@ApiImplicitParam(name = "payway", value = "收/付款方式", paramType = "query", dataType = "string"),
+			@ApiImplicitParam(name = "accountType", value = "账目类型", paramType = "query", dataType = "string"),
+			@ApiImplicitParam(name = "endTime", value = "时间段查询条件-结束", paramType = "query", dataType = "string"),
 			@ApiImplicitParam(name = "current", value = "当前页", paramType = "path", required = true, dataType = "int"),
 			@ApiImplicitParam(name = "size", value = "每页记录数", paramType = "path", required = true, dataType = "int"),
 			@ApiImplicitParam(name = "beginTime", value = "时间段查询条件-开始", paramType = "query", dataType = "string"),
-			@ApiImplicitParam(name = "endTime", value = "时间段查询条件-结束", paramType = "query", dataType = "string"),
-			@ApiImplicitParam(name = "salesmanId", value = "业务员id", paramType = "query", dataType = "int"),
-			@ApiImplicitParam(name = "chargemanId", value = "收款人id", paramType = "query", dataType = "int"),
-			@ApiImplicitParam(name = "areaGrpId", value = "所属区域", paramType = "query", dataType = "int"),
-			@ApiImplicitParam(name = "custId", value = "客户id", paramType = "query", dataType = "int"),
-			@ApiImplicitParam(name = "custName", value = "客户名称", paramType = "query", dataType = "string"),
-			@ApiImplicitParam(name = "accountType", value = "账目类型", paramType = "query", dataType = "string"),
-			@ApiImplicitParam(name = "type", value = "收款单/付款单", paramType = "query", dataType = "string"),
-			@ApiImplicitParam(name = "receiptNo", value = "单号", paramType = "query", dataType = "string"),
-			@ApiImplicitParam(name = "payway", value = "收/付款方式", paramType = "query", dataType = "string"),
-			@ApiImplicitParam(name = "stat", value = "状态", paramType = "query", dataType = "boolean")
 	})
 	@ApiOperation("收款/付款单通用分页")
 	public PageHelper<Receipt> listReceiptPage(
-			@PathVariable("current") Integer current,
 			@PathVariable("size") Integer size,
+			@PathVariable("current") Integer current,
 			@RequestParam(required = false, name = "type") String type,
 			@RequestParam(required = false, name = "stat") Boolean stat,
 			@RequestParam(required = false, name = "payway") String payway,
@@ -232,17 +232,19 @@ public class ReceiptController {
 
 	@RequestMapping(value = "/account/checking/{current}/{size}", method = RequestMethod.GET)
 	@ApiImplicitParams({
-			@ApiImplicitParam(name = "current", value = "当前页", paramType = "path", required = true, dataType = "int"),
-			@ApiImplicitParam(name = "size", value = "每页记录数", paramType = "path", required = true, dataType = "int"),
-			@ApiImplicitParam(name = "beginTime", value = "时间段查询条件-开始", paramType = "query", dataType = "string"),
-			@ApiImplicitParam(name = "endTime", value = "时间段查询条件-结束", paramType = "query", dataType = "string"),
-			@ApiImplicitParam(name = "custName", value = "客户名称", paramType = "query", dataType = "string"),
 			@ApiImplicitParam(name = "salesmanId", value = "业务员", paramType = "query", dataType = "int"),
 			@ApiImplicitParam(name = "areaGrpId", value = "所属区域", paramType = "query", dataType = "int"),
-			@ApiImplicitParam(name = "priceGrpId", value = "所属分组", paramType = "query", dataType = "int")
+			@ApiImplicitParam(name = "priceGrpId", value = "所属分组", paramType = "query", dataType = "int"),
+			@ApiImplicitParam(name = "custId", value = "客户id", paramType = "query", dataType = "int"),
+			@ApiImplicitParam(name = "custName", value = "客户名称", paramType = "query", dataType = "string"),
+			@ApiImplicitParam(name = "endTime", value = "时间段查询条件-结束", paramType = "query", dataType = "string"),
+			@ApiImplicitParam(name = "current", value = "当前页", paramType = "path", required = true, dataType = "int"),
+			@ApiImplicitParam(name = "size", value = "每页记录数", paramType = "path", required = true, dataType = "int"),
+			@ApiImplicitParam(name = "beginTime", value = "时间段查询条件-开始", paramType = "query", dataType = "string")
 	})
 	@ApiOperation("客户对帐通用分页")
 	public PageHelper<AccountCheckingModel> listAccountChecking(
+			@RequestParam(required = false, name = "custId") String custId,
 			@RequestParam(required = false, name = "endTime") String endTime,
 			@RequestParam(required = false, name = "custName") String custName,
 			@RequestParam(required = false, name = "beginTime") String beginTime,
@@ -252,11 +254,12 @@ public class ReceiptController {
 			@PathVariable("current") Integer current, @PathVariable("size") Integer size
 	) {
 		Map<String, Object> params = new HashMap<>();
-		params.put("beginTime", beginTime);
+		params.put("custId", custId);
 		params.put("endTime", endTime);
 		params.put("custName", custName);
-		params.put("salesmanId", salesmanId);
 		params.put("areaGrpId", areaGrpId);
+		params.put("beginTime", beginTime);
+		params.put("salesmanId", salesmanId);
 		params.put("priceGrpId", priceGrpId);
 
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));

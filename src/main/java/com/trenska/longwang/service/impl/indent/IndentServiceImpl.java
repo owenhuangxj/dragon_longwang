@@ -7,7 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.annotation.DataAuthVerification;
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.context.ApplicationContextHolder;
 import com.trenska.longwang.dao.customer.AreaGrpMapper;
 import com.trenska.longwang.dao.customer.CustomerMapper;
@@ -148,17 +148,17 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		/**
 		 * 处理订货单
 		 */
-		Integer empIdInToken = SysUtil.getEmpId();
+		Integer empIdInToken = SysUtil.getEmpIdInToken();
 		indent.setEmpId(empIdInToken);
 
-		String prefix = Constant.DH_TITLE;
-		String indentType = Constant.DHD_CHINESE;
+		String prefix = DragonConstant.DH_TITLE;
+		String indentType = DragonConstant.DHD_CHINESE;
 		String indentNo = IndentUtil.getIndentNo(indentType, prefix, super.baseMapper);
 		indent.setIndentNo(indentNo);
 
 		// 数据库默认状态就是待审核
 		indent.setStat(IndentStat.WAIT_CONFIRM.getName());
-		indent.setIndentTime(TimeUtil.getCurrentTime(Constant.TIME_FORMAT));
+		indent.setIndentTime(TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT));
 
 		indent = IndentUtil.saveIndentInfos(indent);
 
@@ -255,7 +255,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			return ResponseModel.getInstance().succ(false).msg("待审核的订货单才可编辑!!");
 		}
 
-		indent.setIndentTime(TimeUtil.getCurrentTime(Constant.TIME_FORMAT));
+		indent.setIndentTime(TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT));
 
 		String indentNo = indent.getIndentNo();
 
@@ -295,6 +295,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 						.in(Goods::getGoodsId, goodsIds)
 		);
 
+		// 库存不足的商品
 		List<Goods> shortStockGoods = new ArrayList<>();
 
 		for (IndentDetail indentDetail : indentDetails) {
@@ -315,30 +316,6 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 				new LambdaQueryWrapper<Indent>()
 						.eq(Indent::getIndentNo, indentNo)
 		);
-
-		// 2.增加客户欠款
-		// 2.1 获取订单金额
-		//Indent dbIndent = this.getOne(
-		//		new LambdaQueryWrapper<Indent>()
-		//				.eq(Indent::getIndentNo, indentNo)
-		//);
-
-		// 2.2 增加客户欠款 ==>改到了出完库才增加欠款
-		//Customer customer = new Customer(custId).selectById();
-		//String oldDebt = customer.getDebt();
-		//BigDecimal amount = new BigDecimal(indent.getIndentTotal());
-		//CustomerUtil.addCustomerDebt(custId, oldDebt, amount);
-
-		// 记录交易明细 ,增加应收款,前缀 Constant.PLUS ==>改到了出完库才记账
-		//String nameNo = StringUtil.makeNameNo(Constant.DHD_CHINESE, indentNo);
-		//String currentTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
-		//String newDebt = new BigDecimal(customer.getDebt()).add(new BigDecimal(indent.getIndentTotal())).toString();
-		//DealDetailUtil.saveDealDetail(custId,nameNo,currentTime,Constant.PLUS.concat(amount.toString()),newDebt,Constant.XSSP);
-
-		// 3.待出库库存增加
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		return ResponseModel.getInstance().succ(true).msg("订货单审核成功，可以发货了");
 
 	}
@@ -468,7 +445,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		BigDecimal amount = new BigDecimal(dbIndent.getIndentTotal());
 
 		Integer custId = dbIndent.getCustId();
-		String nameNo = StringUtil.makeNameNo(Constant.DHD_CHINESE, dbIndent.getIndentNo());
+		String nameNo = StringUtil.makeNameNo(DragonConstant.DHD_CHINESE, dbIndent.getIndentNo());
 		if (IndentStat.STOCKOUTED.getName().equals(dbIndent.getStat())) {
 			// 2.如果为已出库状态，已出库表示已经记账 --> 减少客户应收款
 			dbCustomer = new Customer().selectById(custId);
@@ -478,10 +455,10 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			/**************************************** 更新客户欠款，客户欠款减少************************************/
 			CustomerUtil.subtractCustomerDebt(custId, oldDebt, amount);
 			// 保存交易明细 减少客户应收款 加前缀 -
-			String currentTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
+			String currentTime = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
 			String debt = new BigDecimal(dbCustomer.getDebt()).subtract(amount).toString();
 
-			String oper = Constant.XSSP_CX;
+			String oper = DragonConstant.XSSP_CX;
 			DealDetailUtil.saveDealDetail(custId, nameNo, currentTime, amount.negate().toPlainString(), debt, oper, "", "");
 		}
 
@@ -496,7 +473,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 							.eq(Receipt::getBusiNo, indentNo)
 							.eq(Receipt::getCustId, custId)
 							.eq(Receipt::getStat, true)
-							.eq(Receipt::getType, Constant.SKD_CHINESE)
+							.eq(Receipt::getType, DragonConstant.SKD_CHINESE)
 			);
 			updatingReceipts.addAll(receipts);
 		}
@@ -510,7 +487,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 							.eq(Receipt::getBusiNo, indentNo)
 							.eq(Receipt::getCustId, custId)
 							.eq(Receipt::getStat, true)
-							.eq(Receipt::getType, Constant.FKD_CHINESE)
+							.eq(Receipt::getType, DragonConstant.FKD_CHINESE)
 			);
 			updatingReceipts.addAll(receipts);
 		}
@@ -576,12 +553,12 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		if (!responseModel.getSucc()) {
 			return responseModel;
 		}
-		String stockTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
-		String stockNo = StockUtil.getStockNo(Constant.CK_TITLE, Constant.CKD_CHINESE, stockMapper);
+		String stockTime = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
+		String stockNo = StockUtil.getStockNo(DragonConstant.CK_TITLE, DragonConstant.CKD_CHINESE, stockMapper);
 
-		Integer empIdInToken = SysUtil.getEmpId();
+		Integer empIdInToken = SysUtil.getEmpIdInToken();
 		if (null == empIdInToken) {
-			return ResponseModel.getInstance().succ(false).msg(Constant.ACCESS_TIMEOUT_MSG);
+			return ResponseModel.getInstance().succ(false).msg(DragonConstant.ACCESS_TIMEOUT_MSG);
 		}
 		Stock stockout = new Stock();
 		stockout.setStockNo(stockNo);
@@ -589,8 +566,8 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		stockout.setStockTime(stockTime);
 		stockout.setCustId(indent.getCustId());
 		stockout.setBusiNo(indent.getIndentNo());
-		stockout.setStockType(Constant.CKD_CHINESE);
-		stockout.setOperType(Constant.XSCK_CHINESE);
+		stockout.setStockType(DragonConstant.CKD_CHINESE);
+		stockout.setOperType(DragonConstant.XSCK_CHINESE);
 		stockout.setShipmanId(indent.getShipmanId());
 
 		// 订单量
@@ -609,8 +586,8 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			stkoutDetail.setBusiNo(indent.getIndentNo()); // 关联业务单号:订货单号
 			stkoutDetail.setMulti(indentDetail.getMulti());
 			stkoutDetail.setSalesPrice(indentDetail.getPrice()); // 保存出库时商品的销售单价，方便统计送货金额/出库金额
-			stkoutDetail.setStockType(Constant.CKD_CHINESE); // 库存类型 : 出库单
-			stkoutDetail.setOperType(Constant.XSCK_CHINESE); // 操作类型 : 销售出库
+			stkoutDetail.setStockType(DragonConstant.CKD_CHINESE); // 库存类型 : 出库单
+			stkoutDetail.setOperType(DragonConstant.XSCK_CHINESE); // 操作类型 : 销售出库
 			stkoutDetail.setUnitId(indentDetail.getUnitId());
 			stkoutDetail.setGoodsId(indentDetail.getGoodsId());
 			// 商品出库数量
@@ -663,7 +640,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 				new LambdaQueryWrapper<StockDetail>()
 						.eq(StockDetail::getStat, true)
 						.eq(StockDetail::getBusiNo, indent.getIndentNo())
-						.eq(StockDetail::getStockType, Constant.CKD_CHINESE)
+						.eq(StockDetail::getStockType, DragonConstant.CKD_CHINESE)
 		);
 		int indentNum = 0;
 		int histroyStockoutNum = 0;
@@ -690,21 +667,21 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			CustomerUtil.addCustomerDebt(custId, oldDebt, amount);
 
 			// 2.记录交易明细 ,增加应收款,前缀 Constant.PLUS ==>改到了出完库才记账
-			String nameNo = StringUtil.makeNameNo(Constant.DHD_CHINESE, indentNo);
+			String nameNo = StringUtil.makeNameNo(DragonConstant.DHD_CHINESE, indentNo);
 			String newDebt = new BigDecimal(dbCustomer.getDebt()).add(amount).toString();
 			String auditRemarks = dbIndent.getAuditRemarks();
 			Indent updatingIndent = new Indent();
 			String dealDetailTime = "";
 			// 如果订单销售时间未设置过才设置，否则保留为第一次出库时的时间,明细的记录时间也同步
 			if (StringUtils.isEmpty(dbIndent.getSalesTime())) {
-				String currentTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
+				String currentTime = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
 				updatingIndent.setSalesTime(currentTime); // 设置销售时间为订单完成出库时间
 				dealDetailTime = currentTime;
 			} else {
 				dealDetailTime = dbIndent.getSalesTime();
 			}
-			DealDetailUtil.saveDealDetail(custId, nameNo, dealDetailTime, Constant.PLUS.concat(amount.toString()),
-					newDebt, Constant.XSSP, "", "", auditRemarks);
+			DealDetailUtil.saveDealDetail(custId, nameNo, dealDetailTime, DragonConstant.PLUS.concat(amount.toString()),
+					newDebt, DragonConstant.XSSP, "", "", auditRemarks);
 			if (payed) { //如果已经付款
 				updatingIndent.setAuditable(true);
 				updatingIndent.setIndentId(indentId);
@@ -763,10 +740,10 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	@Transactional
 	public ResponseModel saveSalesReturn(Indent indent) {
 
-		String currentTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
+		String currentTime = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
 		indent.setIndentTime(currentTime);
 		indent.setSalesTime(currentTime);
-		String indentNo = IndentUtil.getIndentNo(Constant.THD_CHINESE, Constant.TH_TITLE, super.baseMapper);
+		String indentNo = IndentUtil.getIndentNo(DragonConstant.THD_CHINESE, DragonConstant.TH_TITLE, super.baseMapper);
 		indent.setIndentNo(indentNo);
 
 		Integer custId = indent.getCustId();
@@ -776,7 +753,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		// 2. 直接入库
 		indent.setStat(IndentStat.FINISHED.getName());
 		// 设置类型为退货
-		indent.setIndentType(Constant.THD_CHINESE);
+		indent.setIndentType(DragonConstant.THD_CHINESE);
 		// 直接为已退款
 		indent.setReceiptStat(PaymentStat.PAYBACKED.getName());
 
@@ -792,12 +769,12 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		// 保存入库记录
 		Stock stock = new Stock();
-		String stockNo = StockUtil.getStockNo(Constant.RK_TITILE, Constant.RKD_CHINESE, stockMapper);
+		String stockNo = StockUtil.getStockNo(DragonConstant.RK_TITILE, DragonConstant.RKD_CHINESE, stockMapper);
 		stock.setStockNo(stockNo);
 		stock.setBusiNo(indentNo);
 		stock.setStockTime(currentTime);
-		stock.setStockType(Constant.RKD_CHINESE);
-		stock.setOperType(Constant.THRK_CHINESE);
+		stock.setStockType(DragonConstant.RKD_CHINESE);
+		stock.setOperType(DragonConstant.THRK_CHINESE);
 		stock.setCustId(indent.getCustId());
 		stock.setEmpId(indent.getEmpId());
 //		stock.setStockRemarks(Constant.THD_CHINESE.concat(indentNo).concat(Constant.THRK_CHINESE));
@@ -859,11 +836,11 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 				stockDetail.setStock(goodsNewStock);
 				stockDetail.setStockTime(currentTime);
 				stockDetail.setMulti(indentDetail.getMulti());
-				stockDetail.setStockType(Constant.RKD_CHINESE);
-				stockDetail.setOperType(Constant.THRK_CHINESE);
+				stockDetail.setStockType(DragonConstant.RKD_CHINESE);
+				stockDetail.setOperType(DragonConstant.THRK_CHINESE);
 				stockDetail.setUnitId(indentDetail.getUnitId());
 				stockDetail.setStockPrice(stockPrice.toString());
-				stockDetail.setDetailRemarks(Constant.THRK_CHINESE);
+				stockDetail.setDetailRemarks(DragonConstant.THRK_CHINESE);
 				stockDetail.setMadeDate(madeDate);
 				stockDetail.insert(); // 保存入库单详细
 				/******************************************保存库存明细******************************************/
@@ -873,7 +850,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			}
 		}
 		// 处理退货退款付款单
-		int empIdInToken = SysUtil.getEmpId();
+		int empIdInToken = SysUtil.getEmpIdInToken();
 //		String receiptNo = ReceiptUtil.getReceiptNo(Constant.FK_TITLE, Constant.FKD_CHINESE, receiptMapper);
 //		Receipt receipt = new Receipt();
 //		receipt.setCustId(custId);
@@ -893,11 +870,11 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		String oldDebt = customer.getDebt();
 		CustomerUtil.subtractCustomerDebt(custId, oldDebt, odrAmount);
 
-		String nameNo = StringUtil.makeNameNo(Constant.THD_CHINESE, indentNo);
+		String nameNo = StringUtil.makeNameNo(DragonConstant.THD_CHINESE, indentNo);
 		String newDebt = new BigDecimal(customer.getDebt()).subtract(odrAmount).toString();
 
 		// 保存交易明细 客户应收欠款减少 加前缀 -
-		DealDetailUtil.saveDealDetail(custId, nameNo, currentTime, Constant.MINUS.concat(odrAmount.toString()), newDebt, Constant.THTK, "", "");
+		DealDetailUtil.saveDealDetail(custId, nameNo, currentTime, DragonConstant.MINUS.concat(odrAmount.toString()), newDebt, DragonConstant.THTK, "", "");
 
 		indent.setOdrAmnt(odrAmount.toString());
 		indent.setIndentTotal(odrAmount.toString()); // 退货单的订单总额和应收款总额相同
@@ -920,10 +897,10 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	public ResponseModel invalidSalseReturn(Indent indent) {
 		Integer custId = indent.getCustId();
 		String indentNo = indent.getIndentNo();
-		String currentTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
+		String currentTime = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
 
 		if (Objects.isNull(indentNo)) {
-			return ResponseModel.getInstance().succ(false).msg(Constant.INVALID_INDENT);
+			return ResponseModel.getInstance().succ(false).msg(DragonConstant.INVALID_INDENT);
 		}
 
 		// 获取关联入库单
@@ -938,11 +915,11 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 				new LambdaQueryWrapper<StockDetail>()
 						.eq(StockDetail::getBusiNo, indentNo)
 						.eq(StockDetail::getStat, true)
-						.eq(StockDetail::getStockType, Constant.RKD_CHINESE)
+						.eq(StockDetail::getStockType, DragonConstant.RKD_CHINESE)
 		);
 
 		if (Objects.isNull(stockinDetails) || stockinDetails.isEmpty()) {
-			return ResponseModel.getInstance().succ(false).msg(Constant.INVALID_INDENT);
+			return ResponseModel.getInstance().succ(false).msg(DragonConstant.INVALID_INDENT);
 		}
 
 		List<Stock> stockins = new ArrayList<>();
@@ -952,7 +929,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		stockin.setStockins(stockinDetails);
 
 		// 作废入库单: 作废入库单、减少总库存、减少批次库存、保存库存明细
-		StockUtil.cancelStockin(stockins, Constant.RKDZF_CHINESE);
+		StockUtil.cancelStockin(stockins, DragonConstant.RKDZF_CHINESE);
 
 		// 增加客户应收欠款
 		Customer customer = customerMapper.selectById(custId);
@@ -967,12 +944,12 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		String newDebt = new BigDecimal(oldDebt).add(indentTotal).toString();
 
 		// 保存交易明细 客户应收欠款增加 加前缀 +
-		String nameNo = StringUtil.makeNameNo(Constant.THD_CHINESE, indent.getIndentNo());
+		String nameNo = StringUtil.makeNameNo(DragonConstant.THD_CHINESE, indent.getIndentNo());
 
-		String oper = Constant.THTK_ZF;
+		String oper = DragonConstant.THTK_ZF;
 
 		// 作废退货单 客户欠款+
-		DealDetailUtil.saveDealDetail(custId, nameNo, currentTime, Constant.PLUS.concat(indentTotal.toString()), newDebt, oper, "", "");
+		DealDetailUtil.saveDealDetail(custId, nameNo, currentTime, DragonConstant.PLUS.concat(indentTotal.toString()), newDebt, oper, "", "");
 
 		// 作废退货单
 		new Indent(indent.getIndentId(), IndentStat.INVALID.getName()).updateById();
@@ -1212,9 +1189,9 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		receipt.setReceiptAmount(payAmount);
 		receipt.setBusiNo(dbIndent.getIndentNo());
 		receipt.setAccountType(oper);
-		receipt.setType(Constant.FKD_CHINESE);
+		receipt.setType(DragonConstant.FKD_CHINESE);
 		String token = request.getHeader("token");
-		Integer empId = Integer.valueOf((String) redisTemplate.opsForValue().get(token.concat(Constant.EMP_ID_IDENTIFIER)));
+		Integer empId = Integer.valueOf((String) redisTemplate.opsForValue().get(token.concat(DragonConstant.EMP_ID_IDENTIFIER)));
 		receipt.setChargemanId(empId);
 		receipt.setEmpId(empId);
 		receipt.setPayway(payway);
@@ -1268,11 +1245,12 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		if (false == iouStat) {
 			return ResponseModel.getInstance().succ(false).msg("未交账的订货单不可以进行财务审核");
 		}
-		Integer custId = dbIndent.getCustId();
-		ResponseModel responseModel = CustomerUtil.checkDebtLimit(dbIndent.getIndentNo(), custId);
-		if (!responseModel.getSucc()) {
-			return responseModel;
-		}
+//		Integer custId = dbIndent.getCustId();
+		/* 订单进入到财审环节的时候会因为客户超过欠款额度而无法财审。用户要求在财审环节不需要做该限制。 */
+//		ResponseModel responseModel = CustomerUtil.checkDebtLimit(dbIndent.getIndentNo(), custId);
+//		if (!responseModel.getSucc()) {
+//			return responseModel;
+//		}
 		dbIndent.setAuditStat(true);
 		String dbAuditRemarks = dbIndent.getAuditRemarks();
 		String indentStat = dbIndent.getStat();
@@ -1310,10 +1288,10 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 						.eq(Indent::getIndentNo, busiNo)
 		);
 		if (Objects.isNull(dbIndent)) {
-			return ResponseModel.getInstance().succ(false).msg(Constant.INVALID_INDENT);
+			return ResponseModel.getInstance().succ(false).msg(DragonConstant.INVALID_INDENT);
 		}
 		if (IndentStat.FINISHED.getName().equals(dbIndent.getStat())) {
-			return ResponseModel.getInstance().succ(false).msg(Constant.INDENT_FORBIDDEN);
+			return ResponseModel.getInstance().succ(false).msg(DragonConstant.INDENT_FORBIDDEN);
 		}
 
 		String historyReceivedAmnt = dbIndent.getReceivedAmnt();
@@ -1343,10 +1321,10 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 						.eq(Indent::getIndentNo, busiNo)
 		);
 		if (Objects.isNull(dbIndent)) {
-			return ResponseModel.getInstance().succ(false).msg(Constant.INVALID_INDENT);
+			return ResponseModel.getInstance().succ(false).msg(DragonConstant.INVALID_INDENT);
 		}
 		if (IndentStat.FINISHED.getName().equals(dbIndent.getStat())) {
-			return ResponseModel.getInstance().succ(false).msg(Constant.INDENT_FORBIDDEN);
+			return ResponseModel.getInstance().succ(false).msg(DragonConstant.INDENT_FORBIDDEN);
 		}
 
 		String historyPayedAmnt = dbIndent.getPayedAmnt();
@@ -1389,13 +1367,13 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		Long indentId = indent.getIndentId();
 
 		if (NumberUtil.isLongNotUsable(indentId)) {
-			return ResponseModel.getInstance().succ(false).msg(Constant.INVALID_INDENT);
+			return ResponseModel.getInstance().succ(false).msg(DragonConstant.INVALID_INDENT);
 		}
 
 		Indent dbIndent = new Indent().selectById(indentId);
 
 		if (null == dbIndent) {
-			return ResponseModel.getInstance().succ(false).msg(Constant.INVALID_INDENT);
+			return ResponseModel.getInstance().succ(false).msg(DragonConstant.INVALID_INDENT);
 		}
 
 		Boolean auditStat = dbIndent.getAuditStat();
@@ -1414,15 +1392,15 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		if (IndentStat.STOCKOUTED.getName().equals(dbIndent.getStat())) {
 			Integer custId = dbIndent.getCustId();
 			BigDecimal dbIndentTotal = new BigDecimal(dbIndent.getIndentTotal());
-			String nameNo = StringUtil.makeNameNo(Constant.DHD_CHINESE, indentNo);
-			String currentTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
+			String nameNo = StringUtil.makeNameNo(DragonConstant.DHD_CHINESE, indentNo);
+			String currentTime = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
 			Customer dbCustomer = new Customer(custId).selectById();
 			BigDecimal oldDebt = new BigDecimal(dbCustomer.getDebt());
 			BigDecimal newDebt = oldDebt.subtract(dbIndentTotal);
 			// 减少客户欠款
 			CustomerUtil.subtractCustomerDebt(custId, oldDebt.toString(), dbIndentTotal);
 			//保存一条欠款明细
-			DealDetailUtil.saveDealDetail(custId, nameNo, currentTime, dbIndentTotal.negate().toPlainString(), newDebt.toString(), Constant.XSSP_HG, "", "", "");
+			DealDetailUtil.saveDealDetail(custId, nameNo, currentTime, dbIndentTotal.negate().toPlainString(), newDebt.toString(), DragonConstant.XSSP_HG, "", "", "");
 		}
 
 		// 获取出库信息
@@ -1434,16 +1412,16 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		// 处理订货单商品信息
 		if (CollectionUtils.isNotEmpty(stockouts)) {
 			Map<String, Object> params = new HashMap<>();
-			params.put("stat", Constant.VALID);
-			params.put("stockType", Constant.CKD_CHINESE);
-			params.put("operType", Constant.XSCK_CHINESE);
+			params.put("stat", DragonConstant.VALID);
+			params.put("stockType", DragonConstant.CKD_CHINESE);
+			params.put("operType", DragonConstant.XSCK_CHINESE);
 			stockouts.forEach(stock -> {
 				params.put("stockNo", stock.getStockNo());
 				List<StockDetail> stockoutDetails = stockDetailMapper.selectByParams(params);
 				stock.setStockouts(stockoutDetails);
 			});
 		}
-		Integer empIdInToken = SysUtil.getEmpId();
+		Integer empIdInToken = SysUtil.getEmpIdInToken();
 
 		// 删除出库信息
 		StockUtil.deleteStockout(stockouts, empIdInToken);
@@ -1503,7 +1481,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 						.set(Indent::getAuditRemarks, auditRemarks)
 		);
 		DealDetailUtil.saveOrUpdateAuditRemarks(auditRemarks, indentNo);
-		return ResponseModel.getInstance().succ(true).msg(Constant.CHANGE_SUCC);
+		return ResponseModel.getInstance().succ(true).msg(DragonConstant.CHANGE_SUCC);
 	}
 
 	@Override
@@ -1682,7 +1660,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	@DataAuthVerification
 	public Page<Indent> getIndentPageSelective(Map<String, Object> params, Page page) {
 
-		int empId = SysUtil.getEmpId();
+		int empId = SysUtil.getEmpIdInToken();
 
 		SysConfig sysConfig = SysUtil.getSysConfig(empId);
 		int retain = sysConfig.getRetain();
@@ -1733,12 +1711,12 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			indent.setIouAmnt(iouAmnt.toString());
 
 			// 处理出库详情
-			for (IndentDetail indentDetail : indent.getIndentDetails()) {
-				Integer goodsId = indentDetail.getGoodsId();
-				String indentNo = indentDetail.getIndentNo();
-				List<StockMadedate> stockMadedates = stockDetailMapper.selectStockoutDetailInfo(goodsId, indentNo);
-				indentDetail.setStockoutMadedates(stockMadedates);
-			}
+//			for (IndentDetail indentDetail : indent.getIndentDetails()) {
+//				Integer goodsId = indentDetail.getGoodsId();
+//				String indentNo = indentDetail.getIndentNo();
+//				List<StockMadedate> stockMadedates = stockDetailMapper.selectStockoutDetailInfo(goodsId, indentNo);
+//				indentDetail.setStockoutMadedates(stockMadedates);
+//			}
 		}
 
 		// 从结果中筛选有两个弊端 ，1: 分页不准确 ，2: 多发sql
@@ -2000,10 +1978,13 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	@DataAuthVerification
 	public Page<CustSalesBillModel> getCustSales(Map<String, Object> params, Page page) {
 
-		SysConfig sysConfig = SysUtil.getSysConfig(SysUtil.getEmpId());
+		long start = System.currentTimeMillis();
+		SysConfig sysConfig = SysUtil.getSysConfig(SysUtil.getEmpIdInToken());
 		int retain = sysConfig.getRetain();
 
 		CustSalesSummationModel summation = super.baseMapper.selectCustSalesBillSummation(params);
+
+		System.out.println("获取统计数据消耗:" + (System.currentTimeMillis() - start) / 1000);
 
 		BigDecimal salesDiscountSum = new BigDecimal(summation.getSalesDiscountSum());
 
@@ -2022,7 +2003,11 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		//设置销售应收/实收
 		summation.setReceivableAmntSum(new BigDecimal(summation.getSalesAmntSum()).subtract(new BigDecimal(summation.getSalesDiscountSum())).toString());
 
+		start = System.currentTimeMillis();
+
 		List<CustSalesBillRecordsModel> custSalesBillRecords = super.baseMapper.selectCustSalesBillPageSelective(params, page);
+
+		System.out.println("获取分页数据消耗:" + (System.currentTimeMillis() - start) / 1000);
 
 		for (CustSalesBillRecordsModel custSalesBillRecord : custSalesBillRecords) {
 
@@ -2039,8 +2024,10 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			discountTotal = discountTotal.setScale(retain, RoundingMode.HALF_UP);
 			custSalesBillRecord.setDiscountTotal(discountTotal.toString());
 		}
-
+		start = System.currentTimeMillis();
 		int total = super.baseMapper.selectCustSalesBillCountSelective(params);
+
+		System.out.println("获取总数消耗:" + (System.currentTimeMillis() - start) / 1000);
 
 		List<CustSalesBillModel> records = new ArrayList<>();
 		CustSalesBillModel custSalesBillModel = new CustSalesBillModel();
@@ -2144,7 +2131,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		// 去重
 		List<CustSalesStatisticsModel> uniqueGoodsIdAndCustId = records.stream().collect(
 				Collectors.collectingAndThen(
-						Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(o -> o.getGoodsId() + Constant.SPLITTER + o.getCustId()))), ArrayList::new)
+						Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(o -> o.getGoodsId() + DragonConstant.SPLITTER + o.getCustId()))), ArrayList::new)
 		);
 
 		uniqueGoodsIdAndCustId.forEach(unique -> {
@@ -2214,7 +2201,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 				salesAmnt = salesAmnt.negate();
 				indentTotal = indentTotal.negate();
 				discountAmount = discountAmount.negate();
-				record.setSalesNum(Constant.MINUS.concat(record.getSalesNum()));
+				record.setSalesNum(DragonConstant.MINUS.concat(record.getSalesNum()));
 			}
 
 			record.setSalesAmnt(salesAmnt.toString());
@@ -2445,7 +2432,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 				salesAmnt = salesAmnt.negate();
 				indentTotal = indentTotal.negate();
 				discountAmount = discountAmount.negate();
-				record.setNum(Constant.MINUS.concat(record.getNum()));
+				record.setNum(DragonConstant.MINUS.concat(record.getNum()));
 			}
 
 			salesAmnt = salesAmnt.setScale(retain, RoundingMode.HALF_UP);
@@ -2626,7 +2613,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	public Indent getIndentInfo(String indentNo) {
 		Indent indent = super.baseMapper.getIndentByNo(indentNo);
 		List<IndentDetail> indentDetails = indent.getIndentDetails();
-		SysConfig sysConfig = SysUtil.getSysConfig(SysUtil.getEmpId());
+		SysConfig sysConfig = SysUtil.getSysConfig(SysUtil.getEmpIdInToken());
 		int retain = sysConfig.getRetain();
 
 		for (IndentDetail indentDetail : indentDetails) {

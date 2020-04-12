@@ -2,7 +2,7 @@ package com.trenska.longwang.service.impl.financing;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.plugins.Page;
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.dao.customer.CustomerMapper;
 import com.trenska.longwang.dao.financing.DealDetailMapper;
 import com.trenska.longwang.entity.customer.Customer;
@@ -14,9 +14,7 @@ import com.trenska.longwang.util.CustomerUtil;
 import com.trenska.longwang.util.StringUtil;
 import com.trenska.longwang.util.TimeUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,9 +51,9 @@ public class DealDetailServiceImpl extends ServiceImpl<DealDetailMapper, DealDet
 	@Override
 	@Transactional
 	public boolean addDebt(DealDetail dealDetail) {
-		String amount = Constant.PLUS.concat(StringUtil.replacePrefix(Optional.of(dealDetail.getAmount())));
+		String amount = DragonConstant.PLUS.concat(StringUtil.replacePrefix(Optional.of(dealDetail.getAmount())));
 		dealDetail.setAmount(amount);
-		dealDetail.setTime(TimeUtil.getCurrentTime(Constant.TIME_FORMAT));
+		dealDetail.setTime(TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT));
 		Customer dbCustomer = customerMapper.selectById(dealDetail.getCustId());
 		if (dbCustomer == null){
 			throw new ServiceException(HttpServletResponse.SC_BAD_REQUEST,"客户信息输入有误","请输入有效的客户信息","com" +

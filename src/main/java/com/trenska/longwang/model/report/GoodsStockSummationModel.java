@@ -1,5 +1,4 @@
 package com.trenska.longwang.model.report;
-import com.trenska.longwang.constant.Constant;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;

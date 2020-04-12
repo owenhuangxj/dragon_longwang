@@ -35,8 +35,8 @@ public class SpecPropertyController {
 	@PostMapping("/add")
 	@CheckDuplicateSubmit
 	@ApiImplicitParams({
-			@ApiImplicitParam(name = "propName", value = "商品规格属性名", paramType = "body", required = true, dataType = "string"),
 			@ApiImplicitParam(name = "specId", value = "商品规格id", required = true, paramType = "body", dataType = "int"),
+			@ApiImplicitParam(name = "propName", value = "商品规格属性名", paramType = "body", required = true, dataType = "string")
 	})
 	@ApiOperation("添加单个商品规格属性")
 	public ResponseModel addSpecProperty(@Valid @RequestBody SpecProperty specProperty) {
@@ -70,9 +70,9 @@ public class SpecPropertyController {
 	@CheckDuplicateSubmit
 	@PutMapping("/update")
 	@ApiImplicitParams({
+			@ApiImplicitParam(name = "stat", paramType = "body", required = true,dataType = "boolean"),
 			@ApiImplicitParam(name = "specPropId", paramType = "body", required = true, dataType = "int"),
-			@ApiImplicitParam(name = "propName", paramType = "body", required = true, dataType = "string"),
-			@ApiImplicitParam(name = "stat", paramType = "body", required = true,dataType = "boolean")
+			@ApiImplicitParam(name = "propName", paramType = "body", required = true, dataType = "string")
 	})
 	@ApiOperation("修改商品规格属性,前端需要控制商品规格属性名称或状态有改变才允许请求")
 	public ResponseModel updateSpecProperty(@Valid @RequestBody SpecProperty specProperty) {
@@ -86,10 +86,10 @@ public class SpecPropertyController {
 
 	@GetMapping("/list/page/common/{current}/{size}")
 	@ApiImplicitParams({
-			@ApiImplicitParam(name = "current", value = "当前页",required = true, paramType = "path", dataType = "int"),
-			@ApiImplicitParam(name = "size", value = "每页记录数",required = true, paramType = "path", dataType = "int"),
+			@ApiImplicitParam(name = "stat", value = "商品规格属性状态", paramType = "query", dataType = "boolean"),
 			@ApiImplicitParam(name = "PropName", value = "商品规格属性名称", paramType = "query", dataType = "string"),
-			@ApiImplicitParam(name = "stat", value = "商品规格属性状态", paramType = "query", dataType = "boolean")
+			@ApiImplicitParam(name = "current", value = "当前页",required = true, paramType = "path", dataType = "int"),
+			@ApiImplicitParam(name = "size", value = "每页记录数",required = true, paramType = "path", dataType = "int")
 	})
 	@ApiOperation("商品规格值通用分页")
 	public PageHelper<SpecProperty> listSpecPropertyPageSelective(@PathVariable("current") Integer current, @PathVariable("size") Integer size, @RequestParam(value = "PropName",required = false) String PropName, @RequestParam(value = "stat",required = false) Boolean stat) {
@@ -120,8 +120,8 @@ public class SpecPropertyController {
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "current", value = "当前页", paramType = "path", required = true, dataType = "int"),
 			@ApiImplicitParam(name = "size", value = "每页记录数", paramType = "path", required = true, dataType = "int"),
-			@ApiImplicitParam(name = "specId", value = "商品规格的id", paramType = "path", required = true, dataType = "int"),
-			@ApiImplicitParam(name = "stat", value = "属性状态", paramType = "query", required = true, dataType = "boolean")
+			@ApiImplicitParam(name = "stat", value = "属性状态", paramType = "query", required = true, dataType = "boolean"),
+			@ApiImplicitParam(name = "specId", value = "商品规格的id", paramType = "path", required = true, dataType = "int")
 
 	})
 	@ApiOperation("通过商品规格的 specId 分页商品规格属性,点击商品规格详情时调用该接口")

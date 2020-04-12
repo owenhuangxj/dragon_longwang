@@ -2,7 +2,7 @@ package com.trenska.longwang.entity.stock;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.entity.goods.Goods;
 import com.trenska.longwang.entity.indent.StockMadedate;
 import io.swagger.annotations.ApiModel;
@@ -109,7 +109,7 @@ public class StockDetail extends Model<StockDetail> {
 	}
 
 	public String getGroupingbyKey() {
-		return goodsId + Constant.SPLITTER + madeDate;
+		return goodsId + DragonConstant.SPLITTER + madeDate;
 	}
 
 	public int getStockNumber() {

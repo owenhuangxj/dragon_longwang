@@ -1,6 +1,6 @@
 package com.trenska.longwang.session;
 
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.web.servlet.ShiroHttpServletRequest;
 import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
@@ -17,7 +17,7 @@ import java.io.Serializable;
  */
 public class LongWangShiroSessionManager extends DefaultWebSessionManager {
 
-	private static final String AUTHORIZATION = Constant.TOKEN_NAME;
+	private static final String AUTHORIZATION = DragonConstant.TOKEN_NAME;
 
 	private static final String REFERENCED_SESSION_ID_SOURCE = "Stateless Request";
 

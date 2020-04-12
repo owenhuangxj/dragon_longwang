@@ -6,7 +6,6 @@ import com.trenska.longwang.entity.customer.AreaGrp;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -49,7 +48,7 @@ public class Active extends Model<Active> {
 
 	@ApiModelProperty(value = "折扣点数", required = true)
 	private Integer discount;
-	@TableLogic
+	//	@TableLogic
 	@ApiModelProperty(value = "逻辑删除 1 删除 0 未删除", readOnly = true, required = true)
 	private Boolean deleted;
 
@@ -61,11 +60,11 @@ public class Active extends Model<Active> {
 	@TableField(exist = false)
 	private Set<Integer> goodsIds = new HashSet<>();
 
-	@ApiModelProperty(value = "参加活动的商品集合，用于查询时向前端返回数据",readOnly = true,hidden = true)
+	@ApiModelProperty(value = "参加活动的商品集合，用于查询时向前端返回数据", readOnly = true, hidden = true)
 	@TableField(exist = false)
 	private Set<Goods> goods = new HashSet<>();
 
-	@ApiModelProperty(value = "参加活动的赠品集合，用于查询时向前端返回数据",readOnly = true,hidden = true)
+	@ApiModelProperty(value = "参加活动的赠品集合，用于查询时向前端返回数据", readOnly = true, hidden = true)
 	@TableField(exist = false)
 	private Set<Goods> gifts = new HashSet<>();
 
@@ -77,7 +76,7 @@ public class Active extends Model<Active> {
 	private Set<Integer> areaGrpIds = new HashSet<>();
 
 	@TableField(exist = false)
-	@ApiModelProperty(value = "商品活动对应的区域分组集合，用于查询时向前端返回数据",readOnly = true,hidden = true)
+	@ApiModelProperty(value = "商品活动对应的区域分组集合，用于查询时向前端返回数据", readOnly = true, hidden = true)
 	private Set<AreaGrp> areaGrps = new HashSet<>();
 
 	/**

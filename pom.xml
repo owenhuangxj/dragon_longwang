@@ -145,9 +145,10 @@
             <version>1.1.9</version>
         </dependency>
 
-        <!-- Kryo是一个快速高效的Java对象图形序列化框架，原生支持Java，且在Java的序列化上甚至优于Google著名的序列化框架protobuf。那，Kryo为什么那么快呢？
-             Kryo为了保证序列化的高效性，不会序列化对象的field描述信息，且对int和long使用变长存储。这样，序列化后的对象大小就比较小，
-             且由于Kryo只会在第一次序列化类时才去加载类，后续直接保存了类的信息，整体的序列化速度就会提升很明显。 -->
+        <!-- Kryo是一个快速高效的Java对象图形序列化框架，原生支持Java，且在Java的序列化上甚至优于Google著名的序列化框架protobuf。
+             那，Kryo为什么那么快呢？Kryo为了保证序列化的高效性，不会序列化对象的field描述信息，且对int和long使用变长存储。
+             这样，序列化后的对象大小就比较小，且由于Kryo只会在第一次序列化类时才去加载类，后续直接保存了类的信息，
+             整体的序列化速度就会提升很明显。 -->
         <dependency>
             <groupId>de.javakaffee</groupId>
             <artifactId>kryo-serializers</artifactId>
@@ -335,13 +336,17 @@
         <dependency>
             <groupId>com.github.ulisesbocchio</groupId>
             <artifactId>jasypt-spring-boot-starter</artifactId>
-            <version>2.1.2</version>
+            <version>3.0.2</version>
         </dependency>
         <dependency>
             <groupId>org.crazycake</groupId>
             <artifactId>shiro-redis</artifactId>
             <version>2.8.20</version>
         </dependency>
+        <!--<dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
+        </dependency>-->
     </dependencies>
     <build>
         <plugins>

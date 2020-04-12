@@ -2,26 +2,21 @@ package com.trenska.longwang.controller.financing;
 
 
 import com.baomidou.mybatisplus.plugins.Page;
-import com.trenska.longwang.constant.Constant;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.financing.DealDetail;
-import com.trenska.longwang.entity.financing.DealDetailSummarizing;
 import com.trenska.longwang.model.sys.ResponseModel;
 import com.trenska.longwang.service.financing.IDealDetailService;
 import com.trenska.longwang.util.NumberUtil;
 import com.trenska.longwang.util.PageUtils;
 import com.trenska.longwang.util.StringUtil;
-import com.trenska.longwang.util.TimeUtil;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * <p>
@@ -62,12 +57,12 @@ public class DebtController {
 
 	@RequestMapping(value = "/page/{current}/{size}", method = RequestMethod.GET)
 	@ApiImplicitParams({
+			@ApiImplicitParam(name = "oper", value = "业务类型", paramType = "query", dataType = "string"),
+			@ApiImplicitParam(name = "endTime", value = "结束日期", paramType = "query", dataType = "string"),
+			@ApiImplicitParam(name = "beginTime", value = "开始日期", paramType = "query", dataType = "string"),
+			@ApiImplicitParam(name = "custId", value = "客户id", paramType = "query", required = true, dataType = "int"),
 			@ApiImplicitParam(name = "current", value = "当前页", paramType = "path", required = true, dataType = "int"),
 			@ApiImplicitParam(name = "size", value = "每页记录数", paramType = "path", required = true, dataType = "int"),
-			@ApiImplicitParam(name = "custId", value = "客户id", paramType = "query", required = true, dataType = "int"),
-			@ApiImplicitParam(name = "beginTime", value = "开始日期", paramType = "query", dataType = "string"),
-			@ApiImplicitParam(name = "endTime", value = "结束日期", paramType = "query", dataType = "string"),
-			@ApiImplicitParam(name = "oper", value = "业务类型", paramType = "query", dataType = "string")
 	})
 	@ApiOperation("客户欠款明细")
 	public PageHelper<DealDetail> listCustomerTradeDetail(
@@ -87,4 +82,3 @@ public class DebtController {
 		return PageHelper.getInstance().pageData(pageInfo);
 	}
 }
-

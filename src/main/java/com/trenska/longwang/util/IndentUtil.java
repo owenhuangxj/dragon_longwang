@@ -1,7 +1,7 @@
 package com.trenska.longwang.util;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.dao.indent.IndentMapper;
 import com.trenska.longwang.entity.customer.Customer;
 import com.trenska.longwang.entity.indent.Indent;
@@ -30,7 +30,7 @@ public class IndentUtil {
 		Indent indent = indentMapper.selectRecordOfMaxId(indentType);
 
 		String indentNo;
-		String currentDate = new SimpleDateFormat(Constant.BILL_TIME_FORMAT).format(new Date());
+		String currentDate = new SimpleDateFormat(DragonConstant.BILL_TIME_FORMAT).format(new Date());
 		boolean isTowDateEquals =
 				currentDate.equals(BillsUtil.getDateOfBillNo(Optional.of(indent.getIndentNo())));
 
@@ -122,7 +122,7 @@ public class IndentUtil {
 		boolean audited = indent.getAuditStat();
 		boolean finished = IndentStat.FINISHED.getName().equals(stat);
 		if(finished){
-			return ResponseModel.getInstance().succ(false).msg(Constant.INDENT_FORBIDDEN);
+			return ResponseModel.getInstance().succ(false).msg(DragonConstant.INDENT_FORBIDDEN);
 		}
 
 		BigDecimal indentTotal = new BigDecimal(indent.getIndentTotal());
@@ -366,7 +366,7 @@ public class IndentUtil {
 
 			stockDetails.forEach(stockDetail -> {
 				String stockType = stockDetail.getStockType();
-				stockType = stockType.concat(Constant.ZF);
+				stockType = stockType.concat(DragonConstant.ZF);
 				stockDetail.setStockType(stockType);
 				StockDetailsUtil.dbLogStockDetail(stockDetail);
 			});
@@ -412,7 +412,7 @@ public class IndentUtil {
 									.eq(StockDetail::getGoodsId,goodsId)
 					);
 					stockDetails.forEach(stockDetail -> {
-						stockDetail.setStockType(stockDetail.getStockType().concat(Constant.ZF));
+						stockDetail.setStockType(stockDetail.getStockType().concat(DragonConstant.ZF));
 						// 还回库存并保存库存明细
 						StockUtil.returnStock(stockDetail,empId);
 						// 移除出库记录
@@ -446,8 +446,8 @@ public class IndentUtil {
 		/** 如果减少商品种类并且订单修改前已经出库完成
 		 * 	如果只是减少商品种类并且所有商品都已经出库就会出现修改后状态为已出库的情况
 		 * */
-		String nameNo = StringUtil.makeNameNo(Constant.DHD_CHINESE,indentNo);
-		String currentTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
+		String nameNo = StringUtil.makeNameNo(DragonConstant.DHD_CHINESE,indentNo);
+		String currentTime = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
 		Customer dbCustomer = new Customer(custId).selectById();
 		String oldDebt = dbCustomer.getDebt();
 		if(sum + giftSum == stockoutSum){
@@ -463,7 +463,7 @@ public class IndentUtil {
 				BigDecimal newDebt = new BigDecimal(oldDebt).add(difference);
 
 				// 如果是减少商品总类，并且订单修改之前已经出库完成，需要记录一条交易明细
-				DealDetailUtil.saveDealDetail(custId,nameNo,currentTime,difference.toPlainString(),newDebt.toString(),Constant.DHD_ZF_CHINESE_CHANGE,"","");
+				DealDetailUtil.saveDealDetail(custId,nameNo,currentTime,difference.toPlainString(),newDebt.toString(), DragonConstant.DHD_ZF_CHINESE_CHANGE,"","");
 				indent.setSalesTime(currentTime); // 更新销售时间
 			}
 		}else if(sum + giftSum > stockoutSum){
@@ -474,7 +474,7 @@ public class IndentUtil {
 				String newDebt = new BigDecimal(oldDebt).subtract(amount).toString();
 				CustomerUtil.subtractCustomerDebt(custId,oldDebt,amount);
 				// 增加交易明细-->客户欠款减少
-				DealDetailUtil.saveDealDetail(custId,nameNo,currentTime,Constant.MINUS.concat(amount.toString()),newDebt,Constant.DHD_ZF_CHINESE_CHANGE,"","");
+				DealDetailUtil.saveDealDetail(custId,nameNo,currentTime, DragonConstant.MINUS.concat(amount.toString()),newDebt, DragonConstant.DHD_ZF_CHINESE_CHANGE,"","");
 			}
 			indent.setStat(IndentStat.WAIT_STOCKOUT.getName());
 			indent.setSalesTime(null); // 销售时间置空

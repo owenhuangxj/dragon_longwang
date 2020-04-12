@@ -1,6 +1,6 @@
 package com.trenska.longwang.util;
 
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.dao.financing.LoanMapper;
 import org.apache.commons.lang3.StringUtils;
 
@@ -20,9 +20,9 @@ public class LoanUtil {
 		String loanNoOfMaxId = loanMapper.getLastLoanNo();
 
 		if (StringUtils.isEmpty(loanNoOfMaxId)){
-			return BillsUtil.makeBillNo(Constant.TZD_PREFIX,1);
+			return BillsUtil.makeBillNo(DragonConstant.TZD_PREFIX,1);
 		}
-		String todayDate = TimeUtil.getCurrentTime(Constant.BILL_TIME_FORMAT);
+		String todayDate = TimeUtil.getCurrentTime(DragonConstant.BILL_TIME_FORMAT);
 		String dateOfMaxLoanId = "";
 
 		if (StringUtils.isNotEmpty(loanNoOfMaxId)){
@@ -35,10 +35,10 @@ public class LoanUtil {
 		boolean isLastLoanNoEmpty = StringUtils.isEmpty(lastLoanNo);
 
 		if (isLastLoanNoEmpty || !todayDate.equals(dateOfMaxLoanId) ){
-			loanNo = BillsUtil.makeBillNo(Constant.TZD_PREFIX,1);
+			loanNo = BillsUtil.makeBillNo(DragonConstant.TZD_PREFIX,1);
 		}else {
 			int serialNumber = BillsUtil.getSerialNumberOfBillNo(Optional.of(loanNoOfMaxId)) + 1;
-			loanNo = BillsUtil.makeBillNo(Constant.TZD_PREFIX,serialNumber);
+			loanNo = BillsUtil.makeBillNo(DragonConstant.TZD_PREFIX,serialNumber);
 		}
 		return loanNo;
 	}

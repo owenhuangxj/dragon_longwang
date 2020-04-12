@@ -5,9 +5,10 @@ import java.util.Optional;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
+import com.trenska.longwang.util.JasyptUtil;
 import com.trenska.longwang.util.SysUtil;
 import org.apache.commons.lang3.StringUtils;
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.util.ResponseUtil;
 
 import javax.servlet.http.HttpServletRequest;
@@ -48,16 +49,18 @@ public class AccessControlTokenFilter extends AccessControlFilter {
 //		SysEmp sysEmp = (SysEmp) getSubject(request, response).getPrincipal();
 
 		HttpServletRequest req = (HttpServletRequest) request;
-		String tokenInHeader = req.getHeader(Constant.TOKEN_NAME);
+		String tokenInHeader = req.getHeader(DragonConstant.TOKEN_NAME);
 		// 如果无令牌
 		if (StringUtils.isEmpty(tokenInHeader)) {
-			ResponseUtil.accessDenied(Constant.TOKEN_MISSING,Constant.TOKEN_MISSING_MSG,Constant.TOKEN_MISSING_MSG);
+			ResponseUtil.accessDenied(DragonConstant.TOKEN_MISSING, DragonConstant.TOKEN_MISSING_MSG, DragonConstant.TOKEN_MISSING_MSG);
 			return false;
 		}
-		String tokenInRedis = SysUtil.getTokenInRedis(Optional.of(tokenInHeader));
+
+		String decryptTokenInHeader = JasyptUtil.decrypt("dragon-erp", tokenInHeader);
+		String tokenInRedis = SysUtil.getTokenInRedis(Optional.of(decryptTokenInHeader));
 		// 如果令牌超时
 		if (StringUtils.isEmpty(tokenInRedis)) {
-			ResponseUtil.accessDenied(Constant.ACCESS_TIMEOUT,Constant.ACCESS_TIMEOUT_MSG,Constant.ACCESS_TIMEOUT_MSG);
+			ResponseUtil.accessDenied(DragonConstant.ACCESS_TIMEOUT, DragonConstant.ACCESS_TIMEOUT_MSG, DragonConstant.ACCESS_TIMEOUT_MSG);
 		}
 		/**
 		 * 如果Header里面的token和Redis里面的token都不为null则允许访问资源

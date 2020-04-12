@@ -176,7 +176,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 		// 获取账号所有角色
 //		List<SysEmpRole> dbEmpRoles = empRoleMapper.selectList(
 //				new LambdaQueryWrapper<SysEmpRole>()
-//						.eq(SysEmpRole::getEmpId,empId)
+//						.eq(SysEmpRole::getEmpIdInToken,empId)
 //		);
 		// 删除旧角色
 		empRoleMapper.delete(

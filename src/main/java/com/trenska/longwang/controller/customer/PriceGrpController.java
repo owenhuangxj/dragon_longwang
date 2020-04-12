@@ -35,8 +35,8 @@ public class PriceGrpController {
 	@CheckDuplicateSubmit
 	@ApiOperation(value = "添加客户价格分组", notes = "返回的数据中data属性是添加成功的客户价格分组id，即priceGrpId")
 	@ApiImplicitParams({
-			@ApiImplicitParam(name = "priceGrpName", value = "价格分组名称", paramType = "body", required = true, dataType = "String"),
-			@ApiImplicitParam(name = "descr", value = "客户价格分组备注", paramType = "body", dataType = "String")
+			@ApiImplicitParam(name = "descr", value = "客户价格分组备注", paramType = "body", dataType = "String"),
+			@ApiImplicitParam(name = "priceGrpName", value = "价格分组名称", paramType = "body", required = true, dataType = "String")
 	})
 	public ResponseModel addCustPriceGrp(@RequestBody @Valid PriceGrp priceGrp) {
 		if (null == priceGrp) {
@@ -69,9 +69,9 @@ public class PriceGrpController {
 	@CheckDuplicateSubmit
 	@ApiOperation(value = "修改客户价格分组")
 	@ApiImplicitParams({
+			@ApiImplicitParam(name = "descr", value = "客户价格分组备注", paramType = "body", dataType = "string"),
 			@ApiImplicitParam(name = "priceGrpId", value = "客户价格分组id", paramType = "body", required = true, dataType = "int"),
-			@ApiImplicitParam(name = "priceGrpName", value = "客户价格分组名称", paramType = "body", required = true, dataType = "string"),
-			@ApiImplicitParam(name = "descr", value = "客户价格分组备注", paramType = "body", dataType = "string")
+			@ApiImplicitParam(name = "priceGrpName", value = "客户价格分组名称", paramType = "body", required = true, dataType = "string")
 	})
 	public ResponseModel updatePriceGrp(@RequestBody PriceGrp priceGrp) {
 		boolean succ = priceGrpService.updateById(priceGrp);
@@ -127,5 +127,4 @@ public class PriceGrpController {
 		boolean exists = null != priceGrp;
 		return ResponseModel.getInstance().succ(exists).msg(exists ? "价格分组名称已经存在" : "价格分组名称不存在，可以使用");
 	}
-
 }

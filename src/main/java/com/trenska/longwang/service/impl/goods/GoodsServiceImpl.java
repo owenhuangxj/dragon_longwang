@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.plugins.Page;
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.context.ApplicationContextHolder;
 import com.trenska.longwang.dao.goods.*;
 import com.trenska.longwang.dao.indent.IndentDetailMapper;
@@ -26,7 +26,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -309,8 +308,10 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
 		for (Goods goods : records){
 			Collection<GoodsSpec> goodsSpecs = goods.getGoodsSpecs();
 			String propName = "";
-			for(GoodsSpec goodsSpec : goodsSpecs){
-				propName += (goodsSpec.getPropName() + "\r\n");
+			if (CollectionUtils.isNotEmpty(goodsSpecs)) {
+				for (GoodsSpec goodsSpec : goodsSpecs) {
+					propName += (goodsSpec.getPropName() + "\r\n");
+				}
 			}
 			goods.setPropName(propName);
 			int avbStock = goods.getStock() - goods.getStockout();
@@ -333,9 +334,9 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
 			}
 			goods.setPropName(propName);
 			if(true == goods.getStat()){
-				goods.setStatus(Constant.ON_SALE);
+				goods.setStatus(DragonConstant.ON_SALE);
 			}else{
-				goods.setStatus(Constant.OFF_SALE);
+				goods.setStatus(DragonConstant.OFF_SALE);
 			}
 		}
 		page.setTotal(total);
@@ -512,7 +513,7 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
 		Collection<SpecProperty> updatingSpecProperties = new ArrayList<>();
 
 		// 如果新建商品选择了规格，则需要存储商品规格 goods : spec = 1:n
-		if (!goods.getGoodsSpecs().isEmpty()) {
+		if (CollectionUtils.isNotEmpty(goods.getGoodsSpecs())) {
 
 			for (GoodsSpec goodsSpec : goods.getGoodsSpecs()) {
 
@@ -536,7 +537,7 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
 		/**
 		 * 处理商品的价格分组信息
 		 */
-		if (!goods.getPriceGrps().isEmpty()) {
+		if (CollectionUtils.isNotEmpty(goods.getPriceGrps())) {
 			List<GoodsPriceGrp> insertingPriceGrps = new ArrayList<>();
 			goods.getPriceGrps().forEach(priceGrp -> {
 				priceGrp.setGoodsId(goodsId);
@@ -548,7 +549,7 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
 		/**
 		 * 处理商品的客户特价/指定价
 		 */
-		if (!goods.getSpecialPrices().isEmpty()) {
+		if (CollectionUtils.isNotEmpty(goods.getSpecialPrices())) {
 			List<GoodsCustSpecify> insertingGoodsCustSpecifies = new ArrayList<>();
 			goods.getSpecialPrices().forEach(specialPrice -> {
 				specialPrice.setGoodsId(goodsId);

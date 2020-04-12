@@ -1,6 +1,6 @@
 package com.trenska.longwang.util;
 
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.context.ApplicationContextHolder;
 import com.trenska.longwang.dao.customer.AreaGrpMapper;
 import com.trenska.longwang.entity.sys.SysConfig;
@@ -19,13 +19,16 @@ import java.util.*;
  */
 public class SysUtil {
 
-	public static int getEmpId() {
+	public static int getEmpIdInToken() {
 		HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-		String token = request.getHeader(Constant.TOKEN_NAME);
+		String token = request.getHeader(DragonConstant.TOKEN_NAME);
 		if (StringUtils.isEmpty(token)) {
 			return -1;
 		}
-		String[] strs = StringUtils.split(token, Constant.SPLITTER);
+
+		String decryptedToken = JasyptUtil.decrypt("dragon-erp", token);
+
+		String[] strs = StringUtils.split(decryptedToken, DragonConstant.SPLITTER);
 		if (strs == null || strs.length <= 1) {
 			return -1;
 		}
@@ -35,7 +38,7 @@ public class SysUtil {
 
 
 	public static String getTokenInRedis(Optional<String> token) {
-		String[] strs = StringUtils.split(token.get(), Constant.SPLITTER);
+		String[] strs = StringUtils.split(token.get(), DragonConstant.SPLITTER);
 		if (strs == null || strs.length <= 1) {
 			return null;
 		}
@@ -46,9 +49,9 @@ public class SysUtil {
 		}
 
 		RedisTemplate<String, String> redisTemplate =
-				ApplicationContextHolder.getBean(Constant.REDIS_TEMPLATE_NAME);
+				ApplicationContextHolder.getBean(DragonConstant.REDIS_TEMPLATE_NAME);
 
-		String tokenInRedis = redisTemplate.opsForValue().get(Constant.EMP_ID_IDENTIFIER.concat(empIdStr));
+		String tokenInRedis = redisTemplate.opsForValue().get(DragonConstant.EMP_ID_IDENTIFIER.concat(empIdStr));
 
 		return tokenInRedis;
 	}
@@ -61,15 +64,15 @@ public class SysUtil {
 	public static SysConfig getSysConfig(int empId) {
 		// 从redis中获取SysConfig
 		RedisTemplate<String, Object> jsonRedisTemplate =
-				ApplicationContextHolder.getBean(Constant.REDIS_JSON_TEMPLATE_NAME);
+				ApplicationContextHolder.getBean(DragonConstant.REDIS_JSON_TEMPLATE_NAME);
 
 		SysConfig sysConfig =
-				(SysConfig) jsonRedisTemplate.opsForValue().get(Constant.SYS_CONFIG_IDENTIFIER.concat(String.valueOf(empId)));
+				(SysConfig) jsonRedisTemplate.opsForValue().get(DragonConstant.SYS_CONFIG_IDENTIFIER.concat(String.valueOf(empId)));
 		// 如果redis 出故障了或者缓存失效了则先获取数据库中的对应记录，如果数据库中没有对应的配置记录，则获取容器中的默认系统配置
 		if (null == sysConfig) {
 			sysConfig = new SysConfig().selectById(empId);
 			if (null == sysConfig) {
-				sysConfig = ApplicationContextHolder.getBean(Constant.SYS_CONFIG_IDENTIFIER.concat(String.valueOf(Constant.DEFAULT_CONFIG_NUMBER)));
+				sysConfig = ApplicationContextHolder.getBean(DragonConstant.SYS_CONFIG_IDENTIFIER.concat(String.valueOf(DragonConstant.DEFAULT_CONFIG_NUMBER)));
 			}
 		}
 		return sysConfig;
@@ -85,27 +88,27 @@ public class SysUtil {
 				((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
 
 		// 获取 token ，格式为 uuid + :: + empId
-		String token = request.getHeader(Constant.TOKEN_NAME);
+		String token = request.getHeader(DragonConstant.TOKEN_NAME);
 
 		//从token中获取empId
 		String empIdInToken = getTokenInRedis(Optional.of(token));
 
 		// 如果是一个无效的empId，则设置为系统默认配置对应的empId->10000
 		if (!StringUtil.isNumeric(empIdInToken, false)) {
-			empIdInToken = String.valueOf(Constant.DEFAULT_CONFIG_NUMBER);
+			empIdInToken = String.valueOf(DragonConstant.DEFAULT_CONFIG_NUMBER);
 		}
 
 		// 从redis中获取SysConfig
 		RedisTemplate<String, Object> jsonRedisTemplate =
-				ApplicationContextHolder.getBean(Constant.REDIS_JSON_TEMPLATE_NAME);
+				ApplicationContextHolder.getBean(DragonConstant.REDIS_JSON_TEMPLATE_NAME);
 
 		SysConfig sysConfig =
-				(SysConfig) jsonRedisTemplate.opsForValue().get(Constant.SYS_CONFIG_IDENTIFIER.concat(empIdInToken));
+				(SysConfig) jsonRedisTemplate.opsForValue().get(DragonConstant.SYS_CONFIG_IDENTIFIER.concat(empIdInToken));
 		// 如果redis 出故障了则获取容器中的默认系统配置
 		if (sysConfig == null) {
 			sysConfig = new SysConfig().selectById(empIdInToken);
 			if (sysConfig == null) {
-				sysConfig = ApplicationContextHolder.getBean(Constant.SYS_CONFIG_IDENTIFIER.concat(String.valueOf(Constant.DEFAULT_CONFIG_NUMBER)));
+				sysConfig = ApplicationContextHolder.getBean(DragonConstant.SYS_CONFIG_IDENTIFIER.concat(String.valueOf(DragonConstant.DEFAULT_CONFIG_NUMBER)));
 			}
 		}
 		Integer retain = sysConfig.getRetain();
@@ -130,7 +133,7 @@ public class SysUtil {
 	public static Map<String, Object> dealDataPermAndAreaGrp(Map<String, Object> srcParams, AreaGrpMapper areaGrpMapper) {
 		///////////////////////////////////// 处理数据权限 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 		Set<Integer> custIds = CustomerUtil.getCurrentUserDataAuth(areaGrpMapper);
-		srcParams.put(Constant.CUST_IDS_LABEL, custIds);
+		srcParams.put(DragonConstant.CUST_IDS_LABEL, custIds);
 
 		///////////////////////////////////// 处理区域分组 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 		Integer areaGrpId = (Integer) srcParams.get("areaGrpId");

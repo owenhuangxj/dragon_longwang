@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.annotation.DataAuthVerification;
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.context.ApplicationContextHolder;
 import com.trenska.longwang.dao.customer.AreaGrpMapper;
 import com.trenska.longwang.dao.customer.CustomerMapper;
@@ -75,7 +75,7 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 	@Autowired
 	private LoanMapper loanMapper;
 
-	@Resource(name = Constant.REDIS_JSON_TEMPLATE_NAME)
+	@Resource(name = DragonConstant.REDIS_JSON_TEMPLATE_NAME)
 	private RedisTemplate<String, Object> jsonRedisTemplate;
 
 	@Override
@@ -83,7 +83,7 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 		page.setTotal(baseMapper.selectReceiptCountSelective(params));
 		List<Receipt> receipts = baseMapper.selectReceiptPageSelective(params, page);
 
-		SysConfig sysConfig = SysUtil.getSysConfig(SysUtil.getEmpId());
+		SysConfig sysConfig = SysUtil.getSysConfig(SysUtil.getEmpIdInToken());
 		Integer retain = sysConfig.getRetain();
 
 		for (Receipt receipt : receipts) {
@@ -106,7 +106,7 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 	@Override
 	@Transactional
 	public ResponseModel saveReceipt(Receipt receipt) {
-		return ReceiptUtil.saveReceipt(receipt, receiptMapper, Constant.SKD_CHINESE, Constant.SK_CHINESE);
+		return ReceiptUtil.saveReceipt(receipt, receiptMapper, DragonConstant.SKD_CHINESE, DragonConstant.SK_CHINESE);
 	}
 
 	/**
@@ -119,7 +119,7 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 	@Override
 	@Transactional
 	public ResponseModel savePayReceipt(Receipt pay) {
-		return ReceiptUtil.saveReceipt(pay, receiptMapper, Constant.FKD_CHINESE, Constant.FK_CHINESE);
+		return ReceiptUtil.saveReceipt(pay, receiptMapper, DragonConstant.FKD_CHINESE, DragonConstant.FK_CHINESE);
 	}
 
 	/**
@@ -187,14 +187,14 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 		String nameNo = StringUtil.makeNameNo(dbPayReceipt.getType(), dbPayReceipt.getReceiptNo());
 		Integer custId = customer.getCustId();
 
-		String currentTime = TimeUtil.getCurrentTime(Constant.TIME_FORMAT);
+		String currentTime = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
 
-		if (receiptAmount.startsWith(Constant.PLUS) || receiptAmount.startsWith(Constant.MINUS)) {
+		if (receiptAmount.startsWith(DragonConstant.PLUS) || receiptAmount.startsWith(DragonConstant.MINUS)) {
 			receiptAmount = receiptAmount.substring(1);
 		}
-		String amount = Constant.PLUS.concat(receiptAmount);
+		String amount = DragonConstant.PLUS.concat(receiptAmount);
 
-		String oper = dbPayReceipt.getAccountType().concat(Constant.ZF);
+		String oper = dbPayReceipt.getAccountType().concat(DragonConstant.ZF);
 
 		String remarks = dbPayReceipt.getReceiptRemarks();
 
@@ -218,21 +218,20 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 	@DataAuthVerification
 	public Page<AccountCheckingModel> getAccountChecking(Map<String, Object> params, Page page) {
 
-		// 处理业务员: 查询业务员就是查询该业务员所有的客户 ; 将业务员的客户和处数据权限的客户区交集
+		// 处理业务员: 查询业务员就是查询该业务员所有的客户;将业务员的客户和数据权限的客户取交集
 		Integer salesmanId = (Integer) params.get("salesmanId");
 		if (NumberUtil.isIntegerUsable(salesmanId)) {
 			Set<Integer> intersectionCustIds = null;
 			Set<Integer> custIdsOfSalesman = customerMapper.selectCustIdsOfSalesman(salesmanId);
-			Set<Integer> custIdsOfDataAuthority = (Set<Integer>) params.get(Constant.CUST_IDS_LABEL);
+			Set<Integer> custIdsOfDataAuthority = (Set<Integer>) params.get(DragonConstant.CUST_IDS_LABEL);
 			intersectionCustIds = custIdsOfSalesman.stream().filter(custId -> custIdsOfDataAuthority.contains(custId)).collect(Collectors.toSet());
 			List<Integer> lastSurplusCustIds = dealDetailMapper.selectLastSurplusCustIds(params);
 			if (CollectionUtils.isNotEmpty(lastSurplusCustIds) && CollectionUtils.isNotEmpty(intersectionCustIds)) {
 				intersectionCustIds = intersectionCustIds.stream().filter(custId -> lastSurplusCustIds.contains(custId)).collect(Collectors.toSet());
 			}
-			params.put(Constant.CUST_IDS_LABEL, intersectionCustIds);
+			params.put(DragonConstant.CUST_IDS_LABEL, intersectionCustIds);
 			if (CollectionUtils.isEmpty(intersectionCustIds)) {
 				return new Page<>(0, 0);
-
 			}
 		}
 
@@ -276,7 +275,7 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 	@Override
 	public AccountCheckingSummationModel getAccountCheckingSummation(Map<String, Object> params) {
 
-		Set<Integer> custIds = (Set<Integer>) params.get(Constant.CUST_IDS_LABEL);
+		Set<Integer> custIds = (Set<Integer>) params.get(DragonConstant.CUST_IDS_LABEL);
 		// 没有满足条件的记录(没有客户信息)就不去做统计了
 		AccountCheckingSummationModel accountCheckingSummation = new AccountCheckingSummationModel();
 		if (CollectionUtils.isNotEmpty(custIds)) {
@@ -284,7 +283,7 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 		}
 
 		// 这里的custIds是 "归属员工"和"数据权限" 条件筛选之后的结果
-		BigDecimal initDebtTotal = new BigDecimal(0);
+		BigDecimal initDebtTotal = BigDecimal.ZERO;
 		for (Integer custId : custIds) {
 			params.put("custId", custId);
 			String lastSurplusDebt = this.getInitDebt(params);
@@ -322,7 +321,7 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 			BigDecimal amount = new BigDecimal(record.getAmount());
 			amount = amount.setScale(retain, RoundingMode.HALF_UP);
 			if (amount.doubleValue() > 0) {
-				record.setAmount(Constant.PLUS + amount.toPlainString());
+				record.setAmount(DragonConstant.PLUS + amount.toPlainString());
 			} else {
 				record.setAmount(amount.toPlainString());
 			}
@@ -331,7 +330,6 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 		page.setRecords(records);
 		return page;
 	}
-
 
 	public String getInitDebt(Map<String, Object> params) {
 		/*同一时刻可能有多条欠款明细*/
@@ -350,7 +348,7 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 		dealDetail = dealDetailMapper.selectLastSurplusDebtBetween(params);
 
 		if (null != dealDetail) {
-			if (Constant.QCQK_CHINESE.equals(dealDetail.getOper())) {
+			if (DragonConstant.QCQK_CHINESE.equals(dealDetail.getOper())) {
 				return dealDetail.getNewDebt();
 			}
 			String newDebt = dealDetail.getNewDebt();
@@ -358,7 +356,7 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 			BigDecimal lastSurplusDebt = new BigDecimal(newDebt).subtract(new BigDecimal(amount));
 			return lastSurplusDebt.toString();
 		}
-		return "0.00";
+		return DragonConstant.DFT_CURRENCY_PRECISION_STR;
 	}
 
 	@Override
@@ -376,17 +374,6 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 		if (null != dealDetail) {
 			return dealDetail.getNewDebt();
 		}
-//		dealDetail = dealDetailMapper.selectLastSurplusDebtBetween(params);
-//
-//		if(ObjectUtils.isNotEmpty(dealDetail)) {
-//			if (Constant.QCQK_CHINESE.equals(dealDetail.getOper())) {
-//				return dealDetail.getNewDebt();
-//			}
-//			String newDebt = dealDetail.getNewDebt();
-//			String amount = dealDetail.getAmount();
-//			BigDecimal lastSurplusDebt = new BigDecimal(newDebt).subtract(new BigDecimal(amount));
-//			return lastSurplusDebt.toString();
-//		}
 		return "0.00";
 	}
 
@@ -452,7 +439,7 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 	@Override
 	public CommonReceiptSummation getReceiptSelectiveSummation(Map<String, Object> params) {
 
-		SysConfig sysConfig = SysUtil.getSysConfig(SysUtil.getEmpId());
+		SysConfig sysConfig = SysUtil.getSysConfig(SysUtil.getEmpIdInToken());
 		Integer retain = sysConfig.getRetain();
 
 		CommonReceiptSummation commonReceiptSummation = super.baseMapper.selectReceiptSelectiveSummation(params);

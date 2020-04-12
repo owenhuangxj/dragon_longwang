@@ -33,8 +33,8 @@ public class CustTypeController{
 	@CheckDuplicateSubmit
 	@ApiOperation(value = "添加客户类型", notes = "返回的数据中data属性是添加成功的客户类型id，即custTypeId")
 	@ApiImplicitParams({
-			@ApiImplicitParam(name = "custTypeName", value = "客户类型名称", paramType = "body", required = true, dataType = "String"),
-			@ApiImplicitParam(name = "descr", value = "客户类型备注", paramType = "body", dataType = "String")
+			@ApiImplicitParam(name = "descr", value = "客户类型备注", paramType = "body", dataType = "String"),
+			@ApiImplicitParam(name = "custTypeName", value = "客户类型名称", paramType = "body", required = true, dataType = "String")
 	})
 	public ResponseModel addCustType(@RequestBody @Valid CustType custType){
 		return ResponseModel.getInstance().succ(custTypeService.save(custType)).msg("客户信息添加成功");
@@ -64,9 +64,9 @@ public class CustTypeController{
 	@PutMapping("/update")
 	@ApiOperation(value = "修改客户类型")
 	@ApiImplicitParams({
+			@ApiImplicitParam(name = "descr", value = "客户类型备注", paramType = "body", dataType = "string"),
 			@ApiImplicitParam(name = "custTypeId", value = "客户类型id", paramType = "body", required = true, dataType = "int"),
-			@ApiImplicitParam(name = "custTypeName", value = "客户类型名称", paramType = "body", required = true, dataType = "string"),
-			@ApiImplicitParam(name = "descr", value = "客户类型备注", paramType = "body", dataType = "string")
+			@ApiImplicitParam(name = "custTypeName", value = "客户类型名称", paramType = "body", required = true, dataType = "string")
 	})
 	public ResponseModel updateCustType(@RequestBody CustType custType){
 		boolean succ = custTypeService.updateById(custType);
@@ -104,5 +104,4 @@ public class CustTypeController{
 		Page<CustType> pageInfo = custTypeService.getCustTypePageByName(PageUtils.getPageParam(new PageHelper(current,size)),custTypeName);
 		return PageHelper.getInstance().pageData(pageInfo);
 	}
-
 }

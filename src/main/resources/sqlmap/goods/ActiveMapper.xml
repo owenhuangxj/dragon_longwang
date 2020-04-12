@@ -24,9 +24,8 @@
     <sql id="Base_Column_List">
         ta.active_id, ta.active_name, ta.begin_time, ta.end_time, ta.stat, ta.active_type, ta.is_all_join, ta.min_odr_num, ta.gift_num, ta.discount, ta.deleted
     </sql>
-    <update id="updateActiveStat">
-        update t_active ta set ta.stat = 0
-        where DATE_FORMAT(now(),'%Y-%m-%d %H:%i:%s') not between ta.begin_time and ta.end_time
+    <update id="invalidateActives">
+        update t_active set stat = 0 where UNIX_TIMESTAMP(now()) > UNIX_TIMESTAMP(end_time)
     </update>
     <select id="selectActivePage" resultMap="BaseResultMap">
         select <include refid="Base_Column_List"/>

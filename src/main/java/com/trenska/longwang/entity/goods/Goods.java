@@ -191,15 +191,19 @@ public class Goods extends Model<Goods> {
 
 	@ApiModelProperty("商品对应的规格(参数)集合")
 	@TableField(exist = false)
-	private Collection<GoodsSpec> goodsSpecs = new ArrayList<>();
+	private Collection<GoodsSpec> goodsSpecs;
 
 	@TableField(exist = false)
 	@ApiModelProperty("商品-价格分组，创建商品时前端传递")
-	private List<GoodsPriceGrp> priceGrps = new ArrayList<>();
+	private List<GoodsPriceGrp> priceGrps;
 
 	@TableField(exist = false)
 	@ApiModelProperty("商品-客户特价，创建商品时前端传递")
-	private List<GoodsCustSpecify> specialPrices = new ArrayList<>();
+	private List<GoodsCustSpecify> specialPrices;
+
+	public Goods(Integer goodsId) {
+		this.goodsId = goodsId;
+	}
 
 	public Goods(Integer goodsId, Integer stock) {
 		this.goodsId = goodsId;

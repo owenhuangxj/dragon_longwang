@@ -63,6 +63,7 @@ public class ReportsController {
 			@ApiImplicitParam(name = "current", value = "当前页", required = true, paramType = "path", dataType = "int"),
 			@ApiImplicitParam(name = "size", value = "每页记录数", required = true, paramType = "path", dataType = "int"),
 			@ApiImplicitParam(name = "custName", value = "客户名称", paramType = "query", dataType = "string"),
+			@ApiImplicitParam(name = "custId", value = "客户id", paramType = "query", dataType = "int"),
 			@ApiImplicitParam(name = "beginTime", value = "时间段-开始", dataType = "string", paramType = "query"),
 			@ApiImplicitParam(name = "endTime", value = "时间段-结束", dataType = "string", paramType = "query"),
 			@ApiImplicitParam(name = "areaGrpId", value = "区域id", dataType = "int", paramType = "query"),
@@ -75,6 +76,7 @@ public class ReportsController {
 	})
 	@ApiOperation("客户销售总账")
 	public PageHelper<CustSalesBillModel> custSalesBillAmount(
+			@RequestParam(required = false, name = "custId") Integer custId,
 			@RequestParam(required = false, name = "endTime") String endTime,
 			@RequestParam(required = false, name = "custName") String custName,
 			@RequestParam(required = false, name = "brandName") String brandName,
@@ -88,6 +90,7 @@ public class ReportsController {
 			@PathVariable(value = "current") Integer current, @PathVariable(value = "size") Integer size
 	) {
 		Map<String, Object> params = new HashMap<>();
+		params.put("custId", custId);
 		params.put("endTime", endTime);
 		params.put("custName", custName);
 		params.put("frtCatName", frtCatName);

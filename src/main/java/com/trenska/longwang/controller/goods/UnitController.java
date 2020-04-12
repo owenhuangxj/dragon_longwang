@@ -75,9 +75,9 @@ public class UnitController {
 	@CheckDuplicateSubmit
 	@PutMapping("/update")
 	@ApiImplicitParams({
-			@ApiImplicitParam(name = "unitId", paramType = "body", required = true, dataType = "int"),
+			@ApiImplicitParam(name = "stat", paramType = "body", dataType = "boolean"),
 			@ApiImplicitParam(name = "unitName", paramType = "body", dataType = "string"),
-			@ApiImplicitParam(name = "stat", paramType = "body", dataType = "boolean")
+			@ApiImplicitParam(name = "unitId", paramType = "body", required = true, dataType = "int")
 	})
 	@ApiOperation("根据单位id即unitId修改商品单位,该接口可以同时修改三个属性，也可两两组合或者只修改一个属性")
 	public ResponseModel updateUnit(@Valid @RequestBody Unit unit) {
@@ -87,13 +87,18 @@ public class UnitController {
 
 	@GetMapping("/list/page/common/{current}/{size}")
 	@ApiImplicitParams({
-			@ApiImplicitParam(name = "current", value = "当前页",required = true, paramType = "path", dataType = "int"),
-			@ApiImplicitParam(name = "size", value = "每页记录数",required = true, paramType = "path", dataType = "int"),
+			@ApiImplicitParam(name = "stat", value = "商品单位状态", paramType = "query", dataType = "boolean"),
 			@ApiImplicitParam(name = "unitName", value = "商品单位名称", paramType = "query", dataType = "string"),
-			@ApiImplicitParam(name = "stat", value = "商品单位状态", paramType = "query", dataType = "boolean")
+			@ApiImplicitParam(name = "current", value = "当前页",required = true, paramType = "path", dataType = "int"),
+			@ApiImplicitParam(name = "size", value = "每页记录数",required = true, paramType = "path", dataType = "int")
 	})
 	@ApiOperation("通用分页")
-	public PageHelper<Unit> listUnitPageSelective(@PathVariable("current") Integer current, @PathVariable("size") Integer size, @RequestParam(value = "unitName",required = false) String unitName, @RequestParam(value = "stat",required = false) Boolean stat) {
+	public PageHelper<Unit> listUnitPageSelective(
+			@PathVariable("size") Integer size,
+			@PathVariable("current") Integer current,
+			@RequestParam(value = "stat",required = false) Boolean stat,
+			@RequestParam(value = "unitName",required = false) String unitName
+	) {
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
 		Page<Unit> pageInfo;
 		if (ObjectUtils.anyNotNull(unitName,stat)) {

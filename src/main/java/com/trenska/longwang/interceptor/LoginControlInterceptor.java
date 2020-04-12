@@ -1,13 +1,11 @@
 package com.trenska.longwang.interceptor;
 
-import com.trenska.longwang.constant.Constant;
-import com.trenska.longwang.util.CryptographyUtil;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.util.JasyptUtil;
 import com.trenska.longwang.util.ResponseUtil;
 import com.trenska.longwang.util.SysUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -33,18 +31,18 @@ public class LoginControlInterceptor implements HandlerInterceptor {
 			return true;
 		}
 
-		String tokenInHeader = request.getHeader(Constant.TOKEN_NAME);
+		String tokenInHeader = request.getHeader(DragonConstant.TOKEN_NAME);
 
 		tokenInHeader = JasyptUtil.decrypt("dragon-erp",tokenInHeader);
 
 		String tokenInRedis = SysUtil.getTokenInRedis(Optional.of(tokenInHeader));
 
 		if (StringUtils.isEmpty(tokenInRedis)) {
-			ResponseUtil.accessDenied(Constant.ACCESS_TIMEOUT, Constant.ACCESS_TIMEOUT_MSG, "com.trenska.longwang.timeout");
+			ResponseUtil.accessDenied(DragonConstant.ACCESS_TIMEOUT, DragonConstant.ACCESS_TIMEOUT_MSG, "com.trenska.longwang.timeout");
 			return false;
 		} else {
 			if (!tokenInHeader.equals(tokenInRedis)) {
-				ResponseUtil.accessDenied(Constant.LOGGED_OTHER_PLACE, Constant.LOGGED_OTHER_PLACE_MSG,
+				ResponseUtil.accessDenied(DragonConstant.LOGGED_OTHER_PLACE, DragonConstant.LOGGED_OTHER_PLACE_MSG,
 						"com.trenska.longwang.sso");
 				return false;
 			}

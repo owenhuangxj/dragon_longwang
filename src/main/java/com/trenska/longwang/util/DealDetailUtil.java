@@ -2,13 +2,11 @@ package com.trenska.longwang.util;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.trenska.longwang.constant.Constant;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.entity.financing.DealDetail;
-import com.trenska.longwang.entity.financing.Receipt;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -45,7 +43,7 @@ public class DealDetailUtil {
 
 	public static void saveOrUpdateAuditRemarks(String auditRemarks, String indentNo) {
 
-		String nameNo = StringUtil.makeNameNo(Constant.DHD_CHINESE,indentNo);
+		String nameNo = StringUtil.makeNameNo(DragonConstant.DHD_CHINESE,indentNo);
 
 		List<DealDetail> dealDetails = new DealDetail().selectList(
 				new LambdaQueryWrapper<DealDetail>()
