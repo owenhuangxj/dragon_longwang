@@ -8,13 +8,15 @@ spring:
 #    allow-bean-definition-overriding: true
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://rm-m5ehuh0rsc7p80mx3wo.mysql.rds.aliyuncs.com:3306/longwang?useUnicode=true&characterEncoding=UTF-8&userSSL=false&tinyIntlisBit=true&serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL
+    url: "jdbc:mysql://rm-m5ehuh0rsc7p80mx3wo.mysql.rds.aliyuncs\
+    .com:3306/longwang?useUnicode=true&characterEncoding=UTF-8&userSSL=false&tinyIntlisBit=true\
+    &serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL"
     username: longke
     password: Longke123
 #    password: JKgry6o7hOXAgpwtHlMx/cBtsfKmTpGK
   redis:
     host: localhost
-#    host: 192.168.31.61
+#    host: 192.168.31.62
     password: xxlw
     port: 6379
     ##redis统一timeout 缓存有效期，毫秒

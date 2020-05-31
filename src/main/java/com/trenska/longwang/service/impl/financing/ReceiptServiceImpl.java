@@ -170,7 +170,7 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 		if (dbPayReceipt.getStat() == false) {
 			return ResponseModel.getInstance().succ(false).msg("付款单已作废,请勿重新操作.");
 		}
-		if (StringUtils.isNotEmpty(dbPayReceipt.getBusiNo())){
+		if (StringUtils.isNotEmpty(dbPayReceipt.getBusiNo())) {
 			return ResponseModel.getInstance().succ(false).msg("关联订货单的付款单请到订货单处作废.");
 		}
 		// 付款单金额
@@ -208,7 +208,7 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 	}
 
 	/**
-	 * 客户对账
+	 * 客户对账单
 	 *
 	 * @param params
 	 * @param page
@@ -217,13 +217,12 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 	@Override
 	@DataAuthVerification
 	public Page<AccountCheckingModel> getAccountChecking(Map<String, Object> params, Page page) {
-
 		// 处理业务员: 查询业务员就是查询该业务员所有的客户;将业务员的客户和数据权限的客户取交集
 		Integer salesmanId = (Integer) params.get("salesmanId");
 		if (NumberUtil.isIntegerUsable(salesmanId)) {
+			Set<Integer> custIdsOfDataAuthority = (Set<Integer>) params.get(DragonConstant.CUST_IDS_LABEL);
 			Set<Integer> intersectionCustIds = null;
 			Set<Integer> custIdsOfSalesman = customerMapper.selectCustIdsOfSalesman(salesmanId);
-			Set<Integer> custIdsOfDataAuthority = (Set<Integer>) params.get(DragonConstant.CUST_IDS_LABEL);
 			intersectionCustIds = custIdsOfSalesman.stream().filter(custId -> custIdsOfDataAuthority.contains(custId)).collect(Collectors.toSet());
 			List<Integer> lastSurplusCustIds = dealDetailMapper.selectLastSurplusCustIds(params);
 			if (CollectionUtils.isNotEmpty(lastSurplusCustIds) && CollectionUtils.isNotEmpty(intersectionCustIds)) {
@@ -285,6 +284,7 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 
 		// 这里的custIds是 "归属员工"和"数据权限" 条件筛选之后的结果
 		BigDecimal initDebtTotal = BigDecimal.ZERO;
+		/* 如果参数custId为空才遍历custIds */
 		for (Integer custId : custIds) {
 			params.put("custId", custId);
 			String lastSurplusDebt = this.getInitDebt(params);

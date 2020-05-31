@@ -87,6 +87,7 @@ public class DragonConstant {
 	public static final String PLUS = "+";
 	public static final String MINUS = "-";
 	public static final int DEFAULT_MULTI = 1;
+	public static final String CUST_ID_LABEL = "custId";
 	public static final String CUST_IDS_LABEL = "custIds";
 	public static final String LOGGED_OTHER_PLACE_MSG = "账号已经在其它地方登陆，您被迫下线！";
 	public static final String ZERO_STR = "0";

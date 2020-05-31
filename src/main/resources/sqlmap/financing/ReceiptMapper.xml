@@ -238,7 +238,7 @@
         FROM(
         select * from t_customer
         <trim prefix="where" prefixOverrides="and">
-              <if test="custIds != null and custIds.size() > 0">
+              <if test="custId == null and (custIds != null and custIds.size() > 0)">
                   <foreach collection="custIds" item="custId" open="and cust_id in (" close=")" separator=",">
                       #{custId}
                   </foreach>
@@ -248,27 +248,20 @@
                     select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
                   )
               </if>
-              <if test="custName != null and custName != ''">
-                  and cust_name like concat('%',#{custName},'%')
+              <if test="custId != null and custId > 0">
+                  and cust_id = #{custId}
               </if>
               <if test="priceGrpId != null and priceGrpId != 0">
                   and price_grp_id = #{priceGrpId}
               </if>
           </trim>
-        ) as tc
+        ) AS tc
         LEFT JOIN(
           select * from t_deal_detail where deal_time between #{beginTime} and #{endTime}
-        ) as tdd
-        on tdd.cust_id = tc.cust_id
+        ) AS tdd
+        ON tdd.cust_id = tc.cust_id
         GROUP BY tc.cust_id
-        ORDER BY abs(
-        ifnull(
-            sum(
-            if(substring(tdd.name_no,1,3) = '收款单' ,cast(tdd.amount as decimal(9,2)),0)
-            )
-            ,0
-            )
-        ) desc,tc.cust_no
+        ORDER BY tc.cust_no
     </select>
 
     <resultMap id="AccountCheckingModelMap" type="com.trenska.longwang.model.finaning.AccountCheckingModel" autoMapping="true">
@@ -297,8 +290,8 @@
                   select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
                 )
             </if>
-            <if test="custName != null and custName != ''">
-                and cust_name LIKE concat('%',#{custName},'%')
+            <if test="custId != null and custId > 0">
+                and cust_id = #{custId}
             </if>
             <if test="priceGrpId != null and priceGrpId != 0">
                 and price_grp_id = #{priceGrpId}
@@ -452,9 +445,10 @@
                   select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
                 )
             </if>
-            <if test="custName != null and custName != ''">
-                AND cust_name LIKE concat('%',#{custName},'%')
+            <if test="custId != null and custId > 0">
+                AND cust_id = #{custId}
             </if>
+
             <if test="priceGrpId != null and priceGrpId != 0">
                 AND price_grp_id = #{priceGrpId}
             </if>

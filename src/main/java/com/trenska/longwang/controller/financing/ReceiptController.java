@@ -2,6 +2,7 @@ package com.trenska.longwang.controller.financing;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.plugins.Page;
+import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.dao.customer.AreaGrpMapper;
 import com.trenska.longwang.dao.customer.CustomerMapper;
 import com.trenska.longwang.dao.financing.DealDetailMapper;
@@ -242,9 +243,9 @@ public class ReceiptController {
 			@ApiImplicitParam(name = "size", value = "每页记录数", paramType = "path", required = true, dataType = "int"),
 			@ApiImplicitParam(name = "beginTime", value = "时间段查询条件-开始", paramType = "query", dataType = "string")
 	})
-	@ApiOperation("客户对帐通用分页")
+	@ApiOperation("客户对帐单通用分页")
 	public PageHelper<AccountCheckingModel> listAccountChecking(
-			@RequestParam(required = false, name = "custId") String custId,
+			@RequestParam(required = false, name = "custId") Integer custId,
 			@RequestParam(required = false, name = "endTime") String endTime,
 			@RequestParam(required = false, name = "custName") String custName,
 			@RequestParam(required = false, name = "beginTime") String beginTime,
@@ -263,9 +264,10 @@ public class ReceiptController {
 		params.put("priceGrpId", priceGrpId);
 
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
-
 		Page<AccountCheckingModel> pageInfo = receiptService.getAccountChecking(params, page);
 		List<AccountCheckingModel> records = pageInfo.getRecords();
+		Set<Integer> custIds = records.stream().map(AccountCheckingModel::getCustId).distinct().collect(Collectors.toSet());
+		params.put(DragonConstant.CUST_IDS_LABEL,custIds); // 将符合条件的custIds置换掉params中key为custIds的值
 		AccountCheckingSummationModel dbSummation = new AccountCheckingSummationModel();
 		// 没有满足条件的记录就不去做统计了
 		if(CollectionUtils.isNotEmpty(records)){
