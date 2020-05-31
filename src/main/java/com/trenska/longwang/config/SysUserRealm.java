@@ -96,7 +96,7 @@ public class SysUserRealm extends AuthorizingRealm {
 			principals.add(sysEmp);
 			authenticationInfo = new SimpleAuthenticationInfo(principals, sysEmp.getEmpPwd(), getName());
 			// 将用户信息存入Session中
-			 SecurityUtils.getSubject().getSession(true).setAttribute("sysEmp", sysEmp);
+			SecurityUtils.getSubject().getSession(true).setAttribute("sysEmp", sysEmp);
 //			ServletRequestAttributes requestAttributes = (ServletRequestAttributes)RequestContextHolder.getRequestAttributes();
 //			HttpServletRequest request = requestAttributes.getRequest();
 //			HttpSession session = request.getSession(true);

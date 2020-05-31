@@ -2,6 +2,7 @@ package com.trenska.longwang.service.financing;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.plugins.Page;
+import com.trenska.longwang.annotation.DataAuthVerification;
 import com.trenska.longwang.entity.financing.DealDetail;
 import com.trenska.longwang.entity.financing.DealDetailSummarizing;
 import com.trenska.longwang.entity.financing.Receipt;

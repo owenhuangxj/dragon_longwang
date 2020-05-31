@@ -273,6 +273,7 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 	}
 
 	@Override
+	@DataAuthVerification
 	public AccountCheckingSummationModel getAccountCheckingSummation(Map<String, Object> params) {
 
 		Set<Integer> custIds = (Set<Integer>) params.get(DragonConstant.CUST_IDS_LABEL);

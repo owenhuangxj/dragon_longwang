@@ -3,7 +3,44 @@
 <mapper namespace="com.trenska.longwang.dao.indent.IndentMapper">
 
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.trenska.longwang.entity.indent.Indent">
+    <resultMap id="BasicResultMap" type="com.trenska.longwang.entity.indent.Indent">
+        <id column="indent_id" property="indentId"/>
+        <result column="indent_no" property="indentNo"/>
+        <result column="emp_id" property="empId"/>
+        <result column="shipway" property="shipway"/>
+        <result column="payway" property="payway"/>
+        <result column="cust_id" property="custId"/>
+        <result column="indent_time" property="indentTime"/>
+        <result column="sales_time" property="salesTime"/>
+        <result column="stat" property="stat"/>
+        <result column="receipt_stat" property="receiptStat"/>
+        <result column="odr_amnt" property="odrAmnt"/>
+        <result column="iou_amnt" property="iouAmnt"/>
+        <result column="iou_stat" property="iouStat"/>
+        <result column="iou_time" property="iouTime"/>
+        <result column="iou_remarks" property="iouRemarks"/>
+        <result column="auditable" property="auditable"/>
+        <result column="audit_stat" property="auditStat"/>
+        <result column="audit_remarks" property="auditRemarks"/>
+        <result column="received_amnt" property="receivedAmnt"/>
+        <result column="payed_amnt" property="payedAmnt"/>
+        <result column="due_amnt" property="dueAmnt"/>
+        <result column="sum" property="sum"/>
+        <result column="gift_sum" property="giftSum"/>
+        <result column="indent_total" property="indentTotal"/>
+        <result column="discount_total" property="discountTotal"/>
+        <result column="odr_src" property="odrSrc"/>
+        <result column="payed_amnt" property="payedAmnt"/>
+        <result column="indent_type" property="indentType"/>
+        <result column="indent_remarks" property="indentRemarks"/>
+        <result column="deleted" property="deleted"/>
+        <result column="emp_name" property="empName"/>
+        <result column="cust_name" property="custName"/>
+        <association column="salesman_id" property="salesmanName" select="com.trenska.longwang.dao.sys.SysEmpMapper.selectNameById"/>
+    </resultMap>
+
+    <!-- 查询映射结果 -->
+    <resultMap id="ResultMap" type="com.trenska.longwang.entity.indent.Indent">
         <id column="indent_id" property="indentId"/>
         <result column="indent_no" property="indentNo"/>
         <result column="emp_id" property="empId"/>
@@ -97,11 +134,9 @@
 
     <!--订货/退货单通用分页记录总数-->
     <select id="selectIndentPageSelectiveCount" resultType="java.lang.Integer">
-        select count(1) from t_indent ti ,t_customer tc
-        <if test="empName != null and empName != ''">
-            , sys_emp se
-        </if>
+        select count(1) from t_indent ti ,t_customer tc, sys_emp se
         where ti.cust_id = tc.cust_id
+        and se.emp_id = ti.salesman_id
         <if test="custIds != null and custIds.size() > 0">
             <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
                 #{custId}
@@ -122,7 +157,6 @@
             </if>
             <if test="empName != null and empName != ''">
                 and se.emp_name = #{empName}
-                and se.emp_id = ti.salesman_id
             </if>
             <if test="custName != null and custName != ''">
                 and tc.cust_name like concat('%',#{custName},'%')
@@ -152,13 +186,16 @@
     </select>
 
     <!--订货/退货单通用分页-->
-    <select id="selectIndentPageSelective" resultMap="BaseResultMap">
-        select <include refid="Base_Column_List"/>,(ti.indent_total-ti.received_amnt-ti.payed_amnt) as dueAmnt
-        from t_indent ti ,t_customer tc
-        <if test="empName != null and empName != ''">
-            , sys_emp se
-        </if>
+    <select id="selectIndentPageSelective" resultMap="BasicResultMap">
+        select ti.indent_id, ti.indent_no, ti.emp_id,ti.salesman_id, ti.shipway, ti.payway, ti.cust_id,
+               ti.indent_time,ti.sales_time, ti.stat, ti.receipt_stat, ti.received_amnt, ti.payed_amnt,
+               ti.sum, ti.gift_sum,ti.odr_amnt, ti.iou_amnt, ti.iou_stat, ti.iou_time, ti.iou_remarks,
+               ti.auditable,ti.audit_stat, ti.audit_remarks, ti.indent_total, ti.discount_total,
+               ti.odr_src, ti.indent_remarks,ti.indent_type, ti.deleted,
+               (ti.indent_total-ti.received_amnt-ti.payed_amnt) as due_amnt,se.emp_name,tc.cust_name
+        from t_indent ti, t_customer tc, sys_emp se
         where ti.cust_id = tc.cust_id
+        and se.emp_id = ti.salesman_id
         <if test="custIds != null and custIds.size() > 0">
             <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
                 #{custId}
@@ -179,7 +216,6 @@
             </if>
             <if test="empName != null and empName != ''">
                 and se.emp_name = #{empName}
-                and se.emp_id = ti.salesman_id
             </if>
             <if test="custName != null and custName != ''">
                 and tc.cust_name like concat('%',#{custName},'%')
@@ -202,9 +238,14 @@
             </if>
             <if test="areaGrpId != null">
                 and tc.area_grp_id in (
-                  select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                  select concat(#{areaGrpId},group_concat(area_grp_id)) from t_area_grp where pid = #{areaGrpId}
                 )
             </if>
+            <!--<if test="areaGrpId != null">
+                and tc.area_grp_id in (
+                  select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                )
+            </if>-->
         </trim>
         order by ti.indent_time desc
     </select>

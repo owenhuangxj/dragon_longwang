@@ -6,6 +6,7 @@ import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.util.HttpUtil;
 import com.trenska.longwang.util.ResponseUtil;
+import com.trenska.longwang.util.SysUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
@@ -40,6 +41,7 @@ public class DuplicateSubmitAspect {
 		String key = this.makeDuplicateTokenKey(pjp);
 		if (UPDATE_METHODS.contains(HttpUtil.getHttpMethod())) {
 			if (CACHES.getIfPresent(key) != null) {
+				log.info("submit too often,the method is {}", HttpUtil.getHttpMethod());
 				ResponseUtil.accessDenied(HttpServletResponse.SC_BAD_REQUEST, "Please do not submit too " +
 						"often,if the server is blocked,try again several seconds later", "submit too often");
 			} else {
@@ -59,7 +61,7 @@ public class DuplicateSubmitAspect {
 	private String makeDuplicateTokenKey(JoinPoint joinPoint) {
 		String methodName = joinPoint.getSignature().getName();
 		StringBuilder key = new StringBuilder(DUPLICATE_TOKEN_KEY);
-		key.append(DragonConstant.SPLITTER).append(methodName);
+		key.append(DragonConstant.SPLITTER).append(methodName).append(SysUtil.getEmpIdInToken());
 		return key.toString();
 	}
 }

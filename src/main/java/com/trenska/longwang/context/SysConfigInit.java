@@ -25,7 +25,7 @@ public class SysConfigInit implements ApplicationContextAware, ApplicationListen
 
 	@Override
 	public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
-		/* ys_emp_id为10000的记录为系统默认配置*/
+		/* sys_emp_id为10000的记录为系统默认配置*/
 		SysConfig sysConfig = new SysConfig().selectById(DragonConstant.DEFAULT_CONFIG_NUMBER);
 		DefaultListableBeanFactory beanFactory =
 				(DefaultListableBeanFactory) contextRefreshedEvent.getApplicationContext().getAutowireCapableBeanFactory();
