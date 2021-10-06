@@ -27,6 +27,8 @@ public interface DealDetailMapper extends BaseMapper<DealDetail> {
 
 	List<DealDetail> selectLastSurplusDebtBefore(Map<String,Object> params);
 
+	List<DealDetail> selectLastSurplusDebtBeforeSum(Map<String,Object> params);
+
 	DealDetail selectLastSurplusDebtBetween(Map<String, Object> params);
 
 	List<Integer> selectLastSurplusCustIds(Map<String, Object> params);

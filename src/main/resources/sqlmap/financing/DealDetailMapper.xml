@@ -5,13 +5,13 @@
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.trenska.longwang.entity.financing.DealDetail">
         <id column="id" property="id"/>
+        <result column="oper" property="oper"/>
+        <result column="debt" property="newDebt"/>
+        <result column="amount" property="amount"/>
+        <result column="payway" property="payway"/>
         <result column="cust_id" property="custId"/>
         <result column="name_no" property="nameNo"/>
         <result column="deal_time" property="time"/>
-        <result column="amount" property="amount"/>
-        <result column="debt" property="newDebt"/>
-        <result column="oper" property="oper"/>
-        <result column="payway" property="payway"/>
         <result column="remarks" property="remarks"/>
         <result column="audit_remarks" property="auditRemarks"/>
     </resultMap>
@@ -69,12 +69,10 @@
         from t_customer as tc,t_deal_detail as tdd
         where tdd.cust_id = tc.cust_id
         <trim prefix="and" prefixOverrides="and">
-            <if test="custId == null">
-                <if test="custIds != null and custIds.size() > 0">
-                    <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
-                        #{custId}
-                    </foreach>
-                </if>
+            <if test="custIds != null and custIds.size() > 0">
+                <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
+                    #{custId}
+                </foreach>
             </if>
             <if test="areaGrpId != null">
                 and tc.area_grp_id in (
@@ -110,7 +108,37 @@
         </trim>
     </select>
 
-    <!--同一时刻可能有多条欠款明细-->
+    <!-- 获取上期结余总额 -->
+    <select id="selectLastSurplusDebtBeforeSum" resultMap="BaseResultMap">
+        select <include refid="Base_Column_List"/>
+        from t_deal_detail tdd,t_customer tc
+        where tdd.deal_time = (
+        select max(deal_time)
+        from t_deal_detail
+        where cust_id = #{custId}
+        and deal_time <![CDATA[<]]> #{beginTime}
+        )
+        <foreach collection="custIds" item="custId" open="and tc.cust_id in(" close=")" separator=",">
+            #{custId}
+        </foreach>
+        <trim prefix="and" prefixOverrides="and">
+            <if test="areaGrpId != null">
+                and tc.area_grp_id in (
+                select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                )
+            </if>
+            <if test="priceGrpId != null and priceGrpId != 0">
+                and tc.price_grp_id = #{priceGrpId}
+            </if>
+            <if test="oper != null and oper != ''">
+                and tdd.oper = #{oper}
+            </if>
+        </trim>
+        group by tc.cust_id
+    </select>
+
+
+    <!-- 获取上期结余，同一时刻可能有多条欠款明细 -->
     <select id="selectLastSurplusDebtBefore" resultMap="BaseResultMap">
         select <include refid="Base_Column_List"/>
         from t_deal_detail tdd,t_customer tc
@@ -135,7 +163,6 @@
                 and tdd.oper = #{oper}
             </if>
         </trim>
-
     </select>
     <select id="selectLastSurplusDebtBetween" resultMap="BaseResultMap">
         select <include refid="Base_Column_List"/> from t_deal_detail tdd , t_customer tc

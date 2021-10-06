@@ -1398,7 +1398,8 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			Integer custId = dbIndent.getCustId();
 			BigDecimal dbIndentTotal = new BigDecimal(dbIndent.getIndentTotal());
 			String nameNo = StringUtil.makeNameNo(DragonConstant.DHD_CHINESE, indentNo);
-			String currentTime = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
+//			String currentTime = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
+			String currentTime = dbIndent.getSalesTime(); // 20200531 核改时间修改为销售时间
 			Customer dbCustomer = new Customer(custId).selectById();
 			BigDecimal oldDebt = new BigDecimal(dbCustomer.getDebt());
 			BigDecimal newDebt = oldDebt.subtract(dbIndentTotal);
