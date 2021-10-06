@@ -6,7 +6,6 @@ import com.trenska.longwang.constant.DragonConstant;
 import com.trenska.longwang.entity.customer.Customer;
 import com.trenska.longwang.entity.sys.EmpAreaGrp;
 import com.trenska.longwang.util.NumberUtil;
-import com.trenska.longwang.util.ParamUtil;
 import com.trenska.longwang.util.ResponseUtil;
 import com.trenska.longwang.util.SysUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -91,14 +90,6 @@ public class DataAuthAspect {
 		for (Object arg : args) {
 			if (arg instanceof Map) {
 				Map<String, Object> params = (Map<String, Object>) arg;
-				Integer custId = ParamUtil.getCustId(params);
-				/* 如果查询参数中包含custId，则只查询custId对应的结果 */
-				if (NumberUtil.isIntegerUsable(custId)) {
-					Set<Integer> custIdSet = new HashSet();
-					custIdSet.add(custId);
-					custIds =
-							custIds.stream().filter(cutomerId -> custIdSet.contains(cutomerId)).collect(Collectors.toSet());
-				}
 				params.put(DragonConstant.CUST_IDS_LABEL, custIds);
 			}
 		}
