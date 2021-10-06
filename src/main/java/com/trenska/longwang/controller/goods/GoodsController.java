@@ -15,7 +15,7 @@ import com.trenska.longwang.entity.goods.GoodsSpec;
 import com.trenska.longwang.excel_import.GoodsImportListener;
 import com.trenska.longwang.model.goods.GoodsExportModel;
 import com.trenska.longwang.model.sys.ExistModel;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.goods.IGoodsService;
 import com.trenska.longwang.service.goods.IGoodsSpecService;
 import com.trenska.longwang.util.*;
@@ -51,7 +51,6 @@ import java.util.*;
 @RequestMapping("/goods")
 @Api(description = "商品接口")
 public class GoodsController {
-
 	@Autowired
 	private IGoodsService goodsService;
 	@Autowired
@@ -82,9 +81,9 @@ public class GoodsController {
 //	@ApiOperation("添加商品，返回对象中data属性是添加成功的商品的id")
 	@PostMapping("/add")
 	@CheckDuplicateSubmit
-	public ResponseModel addGoods(@RequestBody @Valid @ApiParam Goods goods, HttpServletRequest request) {
+	public CommonResponse addGoods(@RequestBody @Valid @ApiParam Goods goods, HttpServletRequest request) {
 		if (goods == null) {
-			ResponseModel.getInstance().succ(false).msg("无效商品，请完善商品信息");
+			CommonResponse.getInstance().succ(false).msg("无效商品，请完善商品信息");
 		}
 		return goodsService.saveGoods(goods);
 	}
@@ -92,10 +91,10 @@ public class GoodsController {
 	@CheckDuplicateSubmit
 	@ApiOperation("删除商品")
 	@DeleteMapping("/delete/{goodsId}")
-	public ResponseModel deleteGoods(@ApiParam(name = "goodsId", required = true) @PathVariable("goodsId") Integer goodsId) {
+	public CommonResponse deleteGoods(@ApiParam(name = "goodsId", required = true) @PathVariable("goodsId") Integer goodsId) {
 
 		if (!NumberUtil.isIntegerUsable(goodsId)) {
-			return ResponseModel.getInstance().succ(false).msg("商品删除失败:无此商品");
+			return CommonResponse.getInstance().succ(false).msg("商品删除失败:无此商品");
 		}
 
 		return goodsService.removeGoodsById(goodsId);
@@ -104,9 +103,9 @@ public class GoodsController {
 	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/batch")
 	@ApiOperation("批量删除商品")
-	public ResponseModel batchDeleteGoods(@ApiParam(name = "goodsIds", value = "需要批量删除的商品id集合/数组", required = true) @RequestParam(value = "goodsIds") Collection<Integer> goodsIds) {
+	public CommonResponse batchDeleteGoods(@ApiParam(name = "goodsIds", value = "需要批量删除的商品id集合/数组", required = true) @RequestParam(value = "goodsIds") Collection<Integer> goodsIds) {
 		Boolean removed = goodsService.removeGoodsByIds(goodsIds);
-		return ResponseModel.getInstance().succ(removed).msg(removed ? "商品删除成功" : "商品删除失败");
+		return CommonResponse.getInstance().succ(removed).msg(removed ? "商品删除成功" : "商品删除失败");
 	}
 
 	@CheckDuplicateSubmit
@@ -132,9 +131,9 @@ public class GoodsController {
 //			@ApiImplicitParam(name = "specialPrices", value = "商品-客户特价,不用传递goodsId,但是修改旧值必须传递specifyId", paramType = "body", dataType = "list")
 //	})
 	@ApiOperation("修改商品")
-	public ResponseModel updateGoods(@RequestBody Goods goods) {
+	public CommonResponse updateGoods(@RequestBody Goods goods) {
 		if (goods == null) {
-			return ResponseModel.getInstance().succ(false).msg("商品不能为空");
+			return CommonResponse.getInstance().succ(false).msg("商品不能为空");
 		}
 		/**
 		 * 由于使用的组合字段，所以需要特殊处理
@@ -145,17 +144,17 @@ public class GoodsController {
 	@CheckDuplicateSubmit
 	@PutMapping("/update/stat/up")
 	@ApiOperation("批量上架商品")
-	public ResponseModel batchUpGoodsStat(@NotNull @RequestParam Collection<Integer> goodsIds) {
+	public CommonResponse batchUpGoodsStat(@NotNull @RequestParam Collection<Integer> goodsIds) {
 		boolean successful = goodsService.batchUpStatByIds(goodsIds);
-		return ResponseModel.getInstance().succ(successful).msg(successful ? "批量上架商品成功" : "批量上架商品失败");
+		return CommonResponse.getInstance().succ(successful).msg(successful ? "批量上架商品成功" : "批量上架商品失败");
 	}
 
 	@CheckDuplicateSubmit
 	@PutMapping("/update/stat/down")
 	@ApiOperation("批量上架商品")
-	public ResponseModel batchDownGoodsStat(@Valid @RequestParam Collection<Integer> goodsIds) {
+	public CommonResponse batchDownGoodsStat(@Valid @RequestParam Collection<Integer> goodsIds) {
 		boolean successful = goodsService.batchDownStatByIds(goodsIds);
-		return ResponseModel.getInstance().succ(successful).msg(successful ? "批量下架商品成功" : "批量下架商品失败");
+		return CommonResponse.getInstance().succ(successful).msg(successful ? "批量下架商品成功" : "批量下架商品失败");
 	}
 
 	@CheckDuplicateSubmit
@@ -168,9 +167,9 @@ public class GoodsController {
 			@ApiImplicitParam(name = "propName", paramType = "body", required = true, dataType = "string")
 	})
 	@ApiOperation("修改商品规格")
-	public ResponseModel updateGoodsSpec(@Valid @RequestBody List<GoodsSpec> goodsSpecs) {
+	public CommonResponse updateGoodsSpec(@Valid @RequestBody List<GoodsSpec> goodsSpecs) {
 		boolean successful = goodsSpecService.updateGoodsSpecs(goodsSpecs);
-		return ResponseModel.getInstance().succ(successful).msg(successful ? "商品规格修改成功" : "商品规格修改失败");
+		return CommonResponse.getInstance().succ(successful).msg(successful ? "商品规格修改成功" : "商品规格修改失败");
 	}
 
 	@GetMapping("/list/page/{current}/{size}")
@@ -396,23 +395,23 @@ public class GoodsController {
 
 	@DeleteMapping("/clear/{goodsId}")
 	@ApiOperation("删除商品所有规格")
-	public ResponseModel clearGoodSpec(@PathVariable("goodsId") Integer goodsId) {
+	public CommonResponse clearGoodSpec(@PathVariable("goodsId") Integer goodsId) {
 		Boolean successful = true;
 		if (goodsId != null) {
 			successful = goodsSpecService.remove(new QueryWrapper<GoodsSpec>().eq("goods_id", goodsId));
 		}
-		return ResponseModel.getInstance().succ(successful).msg(successful ? "清除规格成功" : "清除规格失败");
+		return CommonResponse.getInstance().succ(successful).msg(successful ? "清除规格成功" : "清除规格失败");
 	}
 
 
 	@GetMapping("/spec/get/{goodsId}")
 	@ApiOperation("获取商品的规格值")
-	public ResponseModel getGoodSpecs(@PathVariable("goodsId") Integer goodsId) {
+	public CommonResponse getGoodSpecs(@PathVariable("goodsId") Integer goodsId) {
 
 		if (null == goodsId || goodsId <= 0) {
-			return ResponseModel.getInstance().succ(false).msg("无效的商品信息");
+			return CommonResponse.getInstance().succ(false).msg("无效的商品信息");
 		}
-		return ResponseModel.getInstance().succ(true).msg(goodsService.getGoodsPropsByGoodsId(goodsId));
+		return CommonResponse.getInstance().succ(true).msg(goodsService.getGoodsPropsByGoodsId(goodsId));
 
 	}
 
@@ -432,13 +431,13 @@ public class GoodsController {
 	}
 
 	@PostMapping(value = "/excel/batch/import")
-	public ResponseModel readExcel(MultipartFile excel) throws IOException {
+	public CommonResponse readExcel(MultipartFile excel) throws IOException {
 		ExcelReaderBuilder readerBuilder = EasyExcel.read(excel.getInputStream(),new GoodsImportListener(goodsService));
 		ExcelReader excelReader = readerBuilder.build();
 		ReadSheet readSheet =
 				EasyExcel.readSheet(0).headRowNumber(1).build();
 		excelReader.read(readSheet);
 		excelReader.finish();
-		return ResponseModel.getInstance().succ(true).msg("导入成功！");
+		return CommonResponse.getInstance().succ(true).msg("导入成功！");
 	}
 }

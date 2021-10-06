@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.customer.CustType;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.customer.ICustTypeService;
 import com.trenska.longwang.util.PageUtils;
 import io.swagger.annotations.Api;
@@ -36,8 +36,8 @@ public class CustTypeController{
 			@ApiImplicitParam(name = "descr", value = "客户类型备注", paramType = "body", dataType = "String"),
 			@ApiImplicitParam(name = "custTypeName", value = "客户类型名称", paramType = "body", required = true, dataType = "String")
 	})
-	public ResponseModel addCustType(@RequestBody @Valid CustType custType){
-		return ResponseModel.getInstance().succ(custTypeService.save(custType)).msg("客户信息添加成功");
+	public CommonResponse addCustType(@RequestBody @Valid CustType custType){
+		return CommonResponse.getInstance().succ(custTypeService.save(custType)).msg("客户信息添加成功");
 	}
 
 	@CheckDuplicateSubmit
@@ -46,8 +46,8 @@ public class CustTypeController{
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "custTypeId", value = "客户类型id", paramType = "path", required = true, dataType = "int")
 	})
-	public ResponseModel deleteCustType(@PathVariable  Integer custTypeId){
-		return ResponseModel.getInstance().succ(custTypeService.removeById(custTypeId)).msg("客户类型信息删除成功");
+	public CommonResponse deleteCustType(@PathVariable  Integer custTypeId){
+		return CommonResponse.getInstance().succ(custTypeService.removeById(custTypeId)).msg("客户类型信息删除成功");
 	}
 
 	@CheckDuplicateSubmit
@@ -56,8 +56,8 @@ public class CustTypeController{
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "custTypeIds", value = "需要批量删除的客户类型id集合/数组", paramType = "query", required = true, dataType = "int")
 	})
-	public ResponseModel batchDeleteCustType(@RequestParam(value = "custTypeIds") Collection<Integer> custTypeIds){
-		return ResponseModel.getInstance().succ(custTypeService.removeByIds(custTypeIds)).msg("批量删除客户类型信息成功");
+	public CommonResponse batchDeleteCustType(@RequestParam(value = "custTypeIds") Collection<Integer> custTypeIds){
+		return CommonResponse.getInstance().succ(custTypeService.removeByIds(custTypeIds)).msg("批量删除客户类型信息成功");
 	}
 
 	@CheckDuplicateSubmit
@@ -68,9 +68,9 @@ public class CustTypeController{
 			@ApiImplicitParam(name = "custTypeId", value = "客户类型id", paramType = "body", required = true, dataType = "int"),
 			@ApiImplicitParam(name = "custTypeName", value = "客户类型名称", paramType = "body", required = true, dataType = "string")
 	})
-	public ResponseModel updateCustType(@RequestBody CustType custType){
+	public CommonResponse updateCustType(@RequestBody CustType custType){
 		boolean succ = custTypeService.updateById(custType);
-		return ResponseModel.getInstance().succ(succ).msg("客户类型信息更新成功");
+		return CommonResponse.getInstance().succ(succ).msg("客户类型信息更新成功");
 	}
 
 	@GetMapping("/list/all")

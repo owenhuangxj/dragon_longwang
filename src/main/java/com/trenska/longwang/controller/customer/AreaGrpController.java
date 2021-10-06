@@ -5,7 +5,7 @@ import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.customer.AreaGrp;
 import com.trenska.longwang.model.customer.AreaGrpModel;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.customer.IAreaGrpService;
 import com.trenska.longwang.util.PageUtils;
 import io.swagger.annotations.*;
@@ -38,10 +38,10 @@ public class AreaGrpController {
 			@ApiImplicitParam(name = "areaGrpDeep", value = "区域节点深度 1:一级区域;2:二级区域;3:三级区域", required = true, paramType = "body", dataType = "int")
 	})
 	@ApiOperation("添加区域")
-	public ResponseModel addSubCustArea(@ApiParam(name = "custAreaGrp", value = "提交参数", required = true) @Valid @RequestBody AreaGrp areaGrp) {
+	public CommonResponse addSubCustArea(@ApiParam(name = "custAreaGrp", value = "提交参数", required = true) @Valid @RequestBody AreaGrp areaGrp) {
 
 		if(null == areaGrp){
-			return ResponseModel.getInstance().succ(false).msg("区域分组信息不能为空");
+			return CommonResponse.getInstance().succ(false).msg("区域分组信息不能为空");
 		}
 		return areaGrpService.addSubAreaGrp(areaGrp);
 	}
@@ -59,7 +59,7 @@ public class AreaGrpController {
 			@ApiImplicitParam(name = "areaGrpDeep", value = "节点深度 1:一级区域;2:二级区域;3:三级区域", required = true, paramType = "path", dataType = "int")
 	})
 	@ApiOperation("删除区域分组")
-	public ResponseModel deleteAreaGrp(
+	public CommonResponse deleteAreaGrp(
 			@ApiParam(name = "custId", value = "区域分组id", required = true) @PathVariable("areaGrpId") Integer areaGrpId,
 			@ApiParam(name = "areaGrpDeep", value = "区域分组深度", required = true) @PathVariable("areaGrpDeep") Integer areaGrpDeep) {
 		return areaGrpService.removeAreaGrp(areaGrpId, areaGrpDeep);
@@ -71,8 +71,8 @@ public class AreaGrpController {
 			@ApiImplicitParam(name = "areaGrpName", value = "节点名", paramType = "body", required = true, dataType = "string")
 	})
 	@ApiOperation("修改区域分组")
-	public ResponseModel updateAreaGrp(@ApiParam(name = "custAreaGrp", value = "区域实体", required = true) @Valid @RequestBody AreaGrp areaGrp) {
-		return ResponseModel.getInstance().succ(areaGrpService.updateAreaGrp(areaGrp)).msg("修改成功");
+	public CommonResponse updateAreaGrp(@ApiParam(name = "custAreaGrp", value = "区域实体", required = true) @Valid @RequestBody AreaGrp areaGrp) {
+		return CommonResponse.getInstance().succ(areaGrpService.updateAreaGrp(areaGrp)).msg("修改成功");
 	}
 
 	@GetMapping("/list/{areaGrpId}")

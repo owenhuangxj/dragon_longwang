@@ -8,7 +8,7 @@ import com.trenska.longwang.entity.customer.Customer;
 import com.trenska.longwang.entity.financing.Loan;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.trenska.longwang.entity.sys.SysConfig;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.financing.ILoanService;
 import com.trenska.longwang.util.*;
 import org.apache.commons.lang3.ObjectUtils;
@@ -52,7 +52,7 @@ public class LoanServiceImpl extends ServiceImpl<LoanMapper, Loan> implements IL
 	 */
 	@Override
 	@Transactional
-	public ResponseModel addLoan(Loan loan) {
+	public CommonResponse addLoan(Loan loan) {
 
 		Integer empIdInToken = SysUtil.getEmpIdInToken();
 
@@ -60,11 +60,11 @@ public class LoanServiceImpl extends ServiceImpl<LoanMapper, Loan> implements IL
 		Integer lendCustId = loan.getLendCustId();
 
 		if (ObjectUtils.isEmpty(borrowCustId) || ObjectUtils.isEmpty(lendCustId)) {
-			return ResponseModel.getInstance().succ(false).msg("无效的客户信息");
+			return CommonResponse.getInstance().succ(false).msg("无效的客户信息");
 		}
 
 		if (borrowCustId.intValue() == lendCustId.intValue()) {
-			return ResponseModel.getInstance().succ(false).msg("不能调账给自己");
+			return CommonResponse.getInstance().succ(false).msg("不能调账给自己");
 		}
 
 		BigDecimal amount = new BigDecimal(loan.getAmount());
@@ -94,7 +94,7 @@ public class LoanServiceImpl extends ServiceImpl<LoanMapper, Loan> implements IL
 		loan.setLoanTime(currentTime);
 		super.baseMapper.insert(loan);
 
-		return ResponseModel.getInstance().succ(true).msg("调账成功");
+		return CommonResponse.getInstance().succ(true).msg("调账成功");
 	}
 
 	@Override
@@ -125,10 +125,10 @@ public class LoanServiceImpl extends ServiceImpl<LoanMapper, Loan> implements IL
 	 */
 	@Override
 	@Transactional
-	public ResponseModel invalidLoanById(Long loanId) {
+	public CommonResponse invalidLoanById(Long loanId) {
 		Loan dbLoan = super.baseMapper.selectById(loanId);
 		if (ObjectUtils.isEmpty(dbLoan)) {
-			return ResponseModel.getInstance().succ(false).msg("无效的调账单");
+			return CommonResponse.getInstance().succ(false).msg("无效的调账单");
 		}
 
 		String amount = dbLoan.getAmount();
@@ -158,7 +158,7 @@ public class LoanServiceImpl extends ServiceImpl<LoanMapper, Loan> implements IL
 		// 作废调帐单
 		dbLoan.setStat(false);
 		dbLoan.updateById();
-		return ResponseModel.getInstance().succ(true).msg("调账单作废成功");
+		return CommonResponse.getInstance().succ(true).msg("调账单作废成功");
 	}
 
 }

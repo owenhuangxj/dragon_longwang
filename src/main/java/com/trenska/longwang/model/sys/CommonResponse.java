@@ -3,7 +3,6 @@ package com.trenska.longwang.model.sys;
 import com.baomidou.mybatisplus.plugins.Page;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +14,7 @@ import java.util.List;
  * 因为像ResultModel类的设计Swagger不能生成文档
  */
 @ApiModel
-public class ResponseModel<T> {
+public class CommonResponse<T> {
 	@ApiModelProperty("返回的消息")
 	private String msg;
 	@ApiModelProperty("操作成功与否")
@@ -32,7 +31,7 @@ public class ResponseModel<T> {
 	private Object summarizing;
 	private List<T> records = new ArrayList<>();
 
-	public ResponseModel page(Page page){
+	public CommonResponse page(Page page){
 		this.total = page.getTotal();
 		this.pages = page.getPages();
 		this.records = page.getRecords();
@@ -42,33 +41,33 @@ public class ResponseModel<T> {
 	/**
 	 * 以下所有操作都是为了链式调用
 	 */
-	private ResponseModel(){}
+	private CommonResponse(){}
 
-	public static ResponseModel getInstance(){
-		return new ResponseModel();
+	public static CommonResponse getInstance(){
+		return new CommonResponse();
 	}
 
-	public ResponseModel succ(Boolean succ){
+	public CommonResponse succ(Boolean succ){
 		this.succ = succ;
 		return this;
 	}
 
-	public ResponseModel msg(String msg){
+	public CommonResponse msg(String msg){
 		this.msg = msg;
 		return this;
 	}
 
-	public ResponseModel reason(String reason){
+	public CommonResponse reason(String reason){
 		this.reason = reason;
 		return this;
 	}
 
-	public ResponseModel data(Object data){
+	public CommonResponse data(Object data){
 		this.data = data;
 		return this;
 	}
 
-	public ResponseModel code(int code){
+	public CommonResponse code(int code){
 		this.code = code;
 		return this;
 	}

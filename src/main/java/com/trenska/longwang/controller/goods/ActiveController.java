@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.goods.Active;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.goods.IActiveService;
 import com.trenska.longwang.util.NumberUtil;
 import com.trenska.longwang.util.PageUtils;
@@ -37,16 +37,16 @@ public class ActiveController {
 	@PostMapping("/add")
 	@CheckDuplicateSubmit
 	@ApiOperation("添加商品活动")
-	public ResponseModel addActive(@Valid @RequestBody @ApiParam Active active) {
+	public CommonResponse addActive(@Valid @RequestBody @ApiParam Active active) {
 		if (null == active) {
-			return ResponseModel.getInstance().succ(false).msg("无效的活动信息.");
+			return CommonResponse.getInstance().succ(false).msg("无效的活动信息.");
 		}
 
 		Boolean isAllJoin = active.getIsAllJoin();
 
 		/* 如果不是所有商品都参加活动并且参加活动的商品为空则返回错误 */
 		if (CollectionUtils.isEmpty(active.getActiveGoods()) && BooleanUtils.isFalse(isAllJoin)) {
-			return ResponseModel.getInstance().succ(false).msg("请选择活动商品.");
+			return CommonResponse.getInstance().succ(false).msg("请选择活动商品.");
 		}
 		return activeService.saveActive(active);
 	}
@@ -54,9 +54,9 @@ public class ActiveController {
 	@DeleteMapping("/delete/{activeId}")
 	@CheckDuplicateSubmit
 	@ApiOperation("删除商品活动")
-	public ResponseModel deleteActive(@ApiParam(name = "activeId", required = true) @PathVariable("activeId") Integer activeId) {
+	public CommonResponse deleteActive(@ApiParam(name = "activeId", required = true) @PathVariable("activeId") Integer activeId) {
 		if (!NumberUtil.isIntegerUsable(activeId)) {
-			return ResponseModel.getInstance().succ(false).msg("无效的活动");
+			return CommonResponse.getInstance().succ(false).msg("无效的活动");
 		}
 		/**
 		 * 通过触发器级联删除了t_active_area_grp和t_active_goods表中对应active_id的级联,所以可以不使用 removeActiveById方法
@@ -72,10 +72,10 @@ public class ActiveController {
 	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/batch")
 	@ApiOperation("批量删除商品活动")
-	public ResponseModel batchDeleteActive(@ApiParam(name = "activeIds", value = "需要批量删除的商品活动id集合/数组", required = true) @RequestParam(value = "activeIds") Collection<Integer> activeIds) {
+	public CommonResponse batchDeleteActive(@ApiParam(name = "activeIds", value = "需要批量删除的商品活动id集合/数组", required = true) @RequestParam(value = "activeIds") Collection<Integer> activeIds) {
 
 		if (activeIds.isEmpty()) {
-			return ResponseModel.getInstance().succ(false).msg("无效的活动");
+			return CommonResponse.getInstance().succ(false).msg("无效的活动");
 		}
 		return activeService.removeActiveByIds(activeIds);
 	}
@@ -86,20 +86,20 @@ public class ActiveController {
 			@ApiImplicitParam(name = "activeId", value = "商品活动id", paramType = "body", dataType = "int")
 	})
 	@ApiOperation("关闭商品活动")
-	public ResponseModel downActive(@PathVariable Integer activeId) {
+	public CommonResponse downActive(@PathVariable Integer activeId) {
 		Active active = new Active();
 		active.setActiveId(activeId);
 		active.setStat(false);
 		boolean successful = activeService.updateById(active);
-		return ResponseModel.getInstance().succ(successful).msg(successful ? "关闭商品活动成功" : "关闭商品活动失败");
+		return CommonResponse.getInstance().succ(successful).msg(successful ? "关闭商品活动成功" : "关闭商品活动失败");
 	}
 
 	@CheckDuplicateSubmit
 	@PutMapping("/close/batch")
 	@ApiOperation("批量关闭商品活动")
-	public ResponseModel batchDownActive(@Valid @RequestParam Collection<Integer> activeIds) {
+	public CommonResponse batchDownActive(@Valid @RequestParam Collection<Integer> activeIds) {
 		boolean successful = activeService.update(new UpdateWrapper<Active>().in("active_id", activeIds).set("stat", false));
-		return ResponseModel.getInstance().succ(successful).msg(successful ? "批量关闭商品活动成功" : "批量关闭商品活动失败");
+		return CommonResponse.getInstance().succ(successful).msg(successful ? "批量关闭商品活动成功" : "批量关闭商品活动失败");
 	}
 
 	@GetMapping("/list/page/{current}/{size}")

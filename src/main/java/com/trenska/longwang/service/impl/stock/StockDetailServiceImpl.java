@@ -16,7 +16,7 @@ import com.trenska.longwang.entity.stock.GoodsStock;
 import com.trenska.longwang.entity.stock.Stock;
 import com.trenska.longwang.entity.stock.StockDetail;
 import com.trenska.longwang.model.stock.StockWarningModel;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.stock.IGoodsStockService;
 import com.trenska.longwang.service.stock.IStockDetailService;
 import com.trenska.longwang.util.*;
@@ -65,10 +65,10 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 	 */
 	@Override
 	@Transactional
-	public ResponseModel stockin(Stock stock) {
+	public CommonResponse stockin(Stock stock) {
 		Integer empIdInToken = SysUtil.getEmpIdInToken();
 		if (Objects.isNull(empIdInToken)) {
-			return ResponseModel.getInstance().succ(false).msg(DragonConstant.ACCESS_TIMEOUT_MSG).code(DragonConstant.ACCESS_TIMEOUT);
+			return CommonResponse.getInstance().succ(false).msg(DragonConstant.ACCESS_TIMEOUT_MSG).code(DragonConstant.ACCESS_TIMEOUT);
 		}
 		stock.setEmpId(empIdInToken);
 		return StockUtil.stockin(stock, stockMapper, goodsMapper);
@@ -76,11 +76,11 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 
 	@Override
 	@Transactional
-	public ResponseModel stockout(Stock stock, HttpServletRequest request) {
+	public CommonResponse stockout(Stock stock, HttpServletRequest request) {
 
 		Integer empIdInToken = SysUtil.getEmpIdInToken();
 		if (NumberUtil.isIntegerNotUsable(empIdInToken)) {
-			return ResponseModel.getInstance().succ(false).msg(DragonConstant.ACCESS_TIMEOUT_MSG).code(DragonConstant.ACCESS_TIMEOUT);
+			return CommonResponse.getInstance().succ(false).msg(DragonConstant.ACCESS_TIMEOUT_MSG).code(DragonConstant.ACCESS_TIMEOUT);
 		}
 
 		String stockTime = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
@@ -198,11 +198,11 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 	 */
 	@Override
 	@Transactional
-	public ResponseModel cancelStockin(String stockNo) {
+	public CommonResponse cancelStockin(String stockNo) {
 
 		Integer empIdInToken = SysUtil.getEmpIdInToken();
 		if (Objects.isNull(empIdInToken)) {
-			return ResponseModel.getInstance().succ(false).msg(DragonConstant.ACCESS_TIMEOUT_MSG).code(DragonConstant.ACCESS_TIMEOUT);
+			return CommonResponse.getInstance().succ(false).msg(DragonConstant.ACCESS_TIMEOUT_MSG).code(DragonConstant.ACCESS_TIMEOUT);
 		}
 		String msg = "作废入库单成功";
 		boolean successful = true;
@@ -213,10 +213,10 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 						.eq(Stock::getStockType, DragonConstant.RKD_CHINESE)
 		);
 		if (Objects.isNull(dbStock)) {
-			return ResponseModel.getInstance().succ(false).msg("无效的入库单");
+			return CommonResponse.getInstance().succ(false).msg("无效的入库单");
 		}
 		if (BooleanUtils.isFalse(dbStock.getStat())) {
-			return ResponseModel.getInstance().succ(false).msg("作废的入库单无需再作废");
+			return CommonResponse.getInstance().succ(false).msg("作废的入库单无需再作废");
 		}
 		// 1.作废入库单；2.保存入库单作废详情(作废入库单后，在库存明细中增加一条记录(变更类型:入库单(作废)，操作类型：与原类型一致))
 		stockMapper.updateById(new Stock(dbStock.getStockId(), false));// 作废入库单
@@ -243,7 +243,7 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 			stockinDetail.setStockType(DragonConstant.RKDZF_CHINESE);
 			StockDetailsUtil.dbLogStockDetail(stockinDetail);
 		}
-		return ResponseModel.getInstance().succ(successful).msg(msg);
+		return CommonResponse.getInstance().succ(successful).msg(msg);
 
 	}
 
@@ -256,16 +256,16 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 	 */
 	@Override
 	@Transactional
-	public ResponseModel cancelStockout(String stockNo) {
+	public CommonResponse cancelStockout(String stockNo) {
 		Stock dbStockout = stockMapper.selectOne(
 				new LambdaQueryWrapper<Stock>()
 						.eq(Stock::getStockNo, stockNo)
 		);
 		if (Objects.isNull(dbStockout)) {
-			return ResponseModel.getInstance().succ(false).msg("无效的出库单");
+			return CommonResponse.getInstance().succ(false).msg("无效的出库单");
 		}
 		if (BooleanUtils.isFalse(dbStockout.getStat())) {
-			return ResponseModel.getInstance().succ(false).msg("作废的出库单无需再作废");
+			return CommonResponse.getInstance().succ(false).msg("作废的出库单无需再作废");
 		}
 
 		List<StockDetail> stockDetails = stockDetailMapper.selectList(
@@ -284,15 +284,15 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 
 	@Override
 	@Transactional
-	public ResponseModel changeStockin(Stock stock) throws IOException {
+	public CommonResponse changeStockin(Stock stock) throws IOException {
 		String stockNo = stock.getStockNo();
 
 		Stock dbStockin = stockMapper.selectByStockNo(stockNo);
 		if (Objects.isNull(dbStockin)) {
-			return ResponseModel.getInstance().succ(false).msg("无效的入库单");
+			return CommonResponse.getInstance().succ(false).msg("无效的入库单");
 		}
 		if (!dbStockin.getStat()) {
-			return ResponseModel.getInstance().succ(false).msg("不能修改作废的入库单");
+			return CommonResponse.getInstance().succ(false).msg("不能修改作废的入库单");
 		}
 
 		Map<String, Object> params = new HashMap<>();
@@ -314,7 +314,7 @@ public class StockDetailServiceImpl extends ServiceImpl<StockDetailMapper, Stock
 		List<StockDetail> stockDetailList = getDistinctStockDetails(stock.getStockins());
 		stock.setStockId(dbStockin.getStockId());
 		StockUtil.changeStockin(stock, stockDetailList, goodsMapper);
-		return ResponseModel.getInstance().succ(true).msg("更改入库单成功.");
+		return CommonResponse.getInstance().succ(true).msg("更改入库单成功.");
 	}
 
 	/**

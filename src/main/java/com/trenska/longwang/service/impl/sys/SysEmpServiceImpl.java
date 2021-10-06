@@ -8,7 +8,7 @@ import com.trenska.longwang.entity.sys.EmpAreaGrp;
 import com.trenska.longwang.entity.sys.SysConfig;
 import com.trenska.longwang.entity.sys.SysEmp;
 import com.trenska.longwang.entity.sys.SysEmpRole;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.sys.ISysEmpRoleService;
 import com.trenska.longwang.service.sys.ISysEmpService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,7 +51,7 @@ public class SysEmpServiceImpl extends ServiceImpl<SysEmpMapper, SysEmp> impleme
 
 	@Override
 	@Transactional
-	public ResponseModel saveEmp(SysEmp emp) {
+	public CommonResponse saveEmp(SysEmp emp) {
 
 		this.save(emp);
 
@@ -76,11 +76,11 @@ public class SysEmpServiceImpl extends ServiceImpl<SysEmpMapper, SysEmp> impleme
 			empAreaGrpService.save(new EmpAreaGrp(empId,areaGrpId));
 		});
 
-		return ResponseModel.getInstance().succ(true).msg("添加账号成功.");
+		return CommonResponse.getInstance().succ(true).msg("添加账号成功.");
 	}
 
 	@Override
-	public ResponseModel updateEmp(SysEmp emp) {
+	public CommonResponse updateEmp(SysEmp emp) {
 		this.updateById(emp);
 		List<SysEmpRole> empRoles = new ArrayList<>();
 		// 获取账号的所有角色
@@ -108,6 +108,6 @@ public class SysEmpServiceImpl extends ServiceImpl<SysEmpMapper, SysEmp> impleme
 			sysEmpRoleService.saveBatch(insertings);
 		}
 
-		return ResponseModel.getInstance().succ(true).msg("更新账号信息成功");
+		return CommonResponse.getInstance().succ(true).msg("更新账号信息成功");
 	}
 }

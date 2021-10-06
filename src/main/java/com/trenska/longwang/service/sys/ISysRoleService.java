@@ -2,9 +2,8 @@ package com.trenska.longwang.service.sys;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.plugins.Page;
-import com.trenska.longwang.entity.sys.SysEmpRole;
 import com.trenska.longwang.entity.sys.SysRole;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 
 import java.util.List;
 import java.util.Map;
@@ -17,15 +16,15 @@ public interface ISysRoleService extends IService<SysRole> {
      */
     Set<SysRole> getRolesByEmpId(Integer empId);
 
-	ResponseModel removeRolesByIds(List<Integer> rids);
+	CommonResponse removeRolesByIds(List<Integer> rids);
 
 	Page<SysRole> getSysRolesSelective(Map<String, Object> params, Page page);
 
-	ResponseModel removeRolesById(Integer rid);
+	CommonResponse removeRolesById(Integer rid);
 
-	ResponseModel saveOrUpdateRolePerms(Integer rid, List<String> pvals);
+	CommonResponse saveOrUpdateRolePerms(Integer rid, List<String> pvals);
 
-	ResponseModel editEmpDataAuthority(Integer empId,boolean allData,List<Integer> areaGrpIds);
+	CommonResponse editEmpDataAuthority(Integer empId, boolean allData, List<Integer> areaGrpIds);
 
-	ResponseModel editEmpRoles(Integer empId, List<Integer> roleIds);
+	CommonResponse editEmpRoles(Integer empId, List<Integer> roleIds);
 }

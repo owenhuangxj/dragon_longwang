@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.goods.Unit;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.goods.IUnitService;
 import com.trenska.longwang.util.PageUtils;
 import io.swagger.annotations.*;
@@ -29,7 +29,6 @@ import java.util.Map;
 @RequestMapping("/unit")
 @Api(description = "商品-单位管理接口")
 public class UnitController {
-
 	@Autowired
 	private IUnitService unitService;
 
@@ -39,9 +38,9 @@ public class UnitController {
 			@ApiImplicitParam(name = "unitName", value = "单位名", paramType = "body", required = true, dataType = "string")
 	})
 	@ApiOperation("添加单位")
-	public ResponseModel addUnit(@Valid @RequestBody Unit unit) {
+	public CommonResponse addUnit(@Valid @RequestBody Unit unit) {
 		if(null == unit){
-			return ResponseModel.getInstance().succ(false).msg("无效的单位信息");
+			return CommonResponse.getInstance().succ(false).msg("无效的单位信息");
 		}
 		@NotNull String unitName = unit.getUnitName();
 
@@ -54,21 +53,21 @@ public class UnitController {
 			unitService.save(unit);
 		}
 
-		return ResponseModel.getInstance().succ(true).msg("单位添加成功");
+		return CommonResponse.getInstance().succ(true).msg("单位添加成功");
 	}
 
 	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/{unitId}")
 	@ApiOperation("删除商品单位")
-	public ResponseModel deleteUnit(@ApiParam(name = "unitId", required = true) @PathVariable("unitId") Integer unitId) {
+	public CommonResponse deleteUnit(@ApiParam(name = "unitId", required = true) @PathVariable("unitId") Integer unitId) {
 		unitService.removeById(unitId);
-		return ResponseModel.getInstance().succ(true).msg("单位删除成功");
+		return CommonResponse.getInstance().succ(true).msg("单位删除成功");
 	}
 
 	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/batch")
 	@ApiOperation("批量删除商品单位")
-	public ResponseModel batchDeleteUnit(@ApiParam(name = "unitIds", value = "需要批量删除的商品单位id集合/数组", required = true) @RequestParam(value = "unitIds") Collection<Integer> unitIds) {
+	public CommonResponse batchDeleteUnit(@ApiParam(name = "unitIds", value = "需要批量删除的商品单位id集合/数组", required = true) @RequestParam(value = "unitIds") Collection<Integer> unitIds) {
 		return unitService.removeUnitByIds(unitIds);
 	}
 
@@ -80,9 +79,9 @@ public class UnitController {
 			@ApiImplicitParam(name = "unitId", paramType = "body", required = true, dataType = "int")
 	})
 	@ApiOperation("根据单位id即unitId修改商品单位,该接口可以同时修改三个属性，也可两两组合或者只修改一个属性")
-	public ResponseModel updateUnit(@Valid @RequestBody Unit unit) {
+	public CommonResponse updateUnit(@Valid @RequestBody Unit unit) {
 		unitService.updateById(unit);
-		return ResponseModel.getInstance().succ(true).msg("修改单位成功" );
+		return CommonResponse.getInstance().succ(true).msg("修改单位成功" );
 	}
 
 	@GetMapping("/list/page/common/{current}/{size}")
@@ -126,7 +125,7 @@ public class UnitController {
 
 	@GetMapping("/exists/{unitName}")
 	@ApiOperation("查询单位是否存在")
-	public ResponseModel checkSpec(@PathVariable("unitName") String unitName) {
+	public CommonResponse checkSpec(@PathVariable("unitName") String unitName) {
 		Unit dbUnit = unitService.getOne(
 				new LambdaQueryWrapper<Unit>()
 						.eq(Unit::getUnitName, unitName)
@@ -138,13 +137,13 @@ public class UnitController {
 			}else{
 				msg = "单位已经存在,不需要重新创建";
 			}
-			return ResponseModel.getInstance().succ(false).msg(msg);
+			return CommonResponse.getInstance().succ(false).msg(msg);
 		}else{
 
 		}
 		Map<String,Boolean> data = new HashMap<>();
 		data.put("exists",true);
-		return ResponseModel.getInstance().succ(true).data(data);
+		return CommonResponse.getInstance().succ(true).data(data);
 	}
 
 //	@GetMapping("/list/page/search/{current}/{size}")

@@ -2,7 +2,7 @@ package com.trenska.longwang.controller.stock;
 
 import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.entity.stock.Stock;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.stock.IStockDetailService;
 import com.trenska.longwang.util.ResponseUtil;
 import com.trenska.longwang.validate.ValidateUtil;
@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
@@ -38,7 +37,7 @@ public class StockinController {
 	@PostMapping("/add")
 	@CheckDuplicateSubmit
 	@ApiOperation("商品入库")
-	public ResponseModel stockin(@Valid @RequestBody @ApiParam Stock stock) {
+	public CommonResponse stockin(@Valid @RequestBody @ApiParam Stock stock) {
 		// 入库
 		return stockinService.stockin(stock);
 	}
@@ -46,7 +45,7 @@ public class StockinController {
 	@CheckDuplicateSubmit
 	@PutMapping("/change")
 	@ApiOperation("修改入库单")
-	public ResponseModel changeStockin(@Valid @RequestBody @ApiParam Stock stock) throws IOException {
+	public CommonResponse changeStockin(@Valid @RequestBody @ApiParam Stock stock) throws IOException {
 		validStock(stock);
 		return stockinService.changeStockin(stock);
 	}
@@ -54,9 +53,9 @@ public class StockinController {
 	@CheckDuplicateSubmit
 	@PutMapping("/cancel/{stockNo}")
 	@ApiOperation("作废入库单")
-	public ResponseModel cancelStockin(@PathVariable("stockNo") String stockNo) {
+	public CommonResponse cancelStockin(@PathVariable("stockNo") String stockNo) {
 		if (stockNo == null) {
-			return ResponseModel.getInstance().succ(false).msg("无效的入库单");
+			return CommonResponse.getInstance().succ(false).msg("无效的入库单");
 		}
 		return stockinService.cancelStockin(stockNo);
 	}

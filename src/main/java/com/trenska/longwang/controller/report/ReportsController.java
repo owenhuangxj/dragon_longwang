@@ -10,6 +10,7 @@ import com.trenska.longwang.service.financing.IReceiptService;
 import com.trenska.longwang.service.indent.IIndentService;
 import com.trenska.longwang.service.stock.IStockService;
 import com.trenska.longwang.util.PageUtils;
+import com.trenska.longwang.util.SysUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -101,64 +102,23 @@ public class ReportsController {
 		params.put("goodsScope", goodsScope);
 		params.put("shipmanId", shipmanId);
 		params.put("salesmanId", salesmanId);
+		params.put("employeeId",SysUtil.getEmpIdInToken());
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
 		Page<CustSalesBillModel> pageInfo = indentService.getCustSales(params, page);
 		return PageHelper.getInstance().pageData(pageInfo);
 	}
 
 	@GetMapping("/cust-sales-summarizing/{current}/{size}")
-	@ApiImplicitParams({
-			@ApiImplicitParam(name = "current", value = "当前页", required = true, paramType = "path", dataType = "int"),
-			@ApiImplicitParam(name = "size", value = "每页记录数", required = true, paramType = "path", dataType = "int"),
-			@ApiImplicitParam(name = "beginTime", value = "时间段-开始", dataType = "string", paramType = "query"),
-			@ApiImplicitParam(name = "endTime", value = "时间段-结束", dataType = "string", paramType = "query"),
-			@ApiImplicitParam(name = "areaGrpId", value = "区域id", dataType = "int", paramType = "query"),
-			@ApiImplicitParam(name = "goodsScope", value = "正品/赠品/所有", dataType = "int", paramType = "query"),
-			@ApiImplicitParam(name = "custId", value = "客户id", dataType = "int", paramType = "query"),
-			@ApiImplicitParam(name = "custName", value = "客户名称", dataType = "string", paramType = "query"),
-			@ApiImplicitParam(name = "shipmanId", value = "送货人id", dataType = "int", paramType = "query"),
-			@ApiImplicitParam(name = "salesmanId", value = "业务员id", dataType = "int", paramType = "query"),
-			@ApiImplicitParam(name = "brandName", value = "品牌", dataType = "string", paramType = "query"),
-			@ApiImplicitParam(name = "remarks", value = "商品备注", dataType = "string", paramType = "query"),
-			@ApiImplicitParam(name = "frtCatName", value = "商品一级分类", paramType = "body", dataType = "string"),
-			@ApiImplicitParam(name = "scdCatName", value = "商品二级分类", paramType = "body", dataType = "string")
-	})
 	@ApiOperation("客户销售汇总")
 	public PageHelper<CustSalesSummarizingModel> custSalesSummarizing(
-			@RequestParam(required = false, name = "custId") Integer custId,
-			@RequestParam(required = false, name = "custName") String custName,
-			@RequestParam(required = false, name = "brandName") String brandName,
-			@RequestParam(required = false, name = "remarks") String remarks,
-			@RequestParam(required = false, name = "endTime") String endTime,
-			@RequestParam(required = false, name = "beginTime") String beginTime,
-			@RequestParam(required = false, name = "areaGrpId") Integer areaGrpId,
-			@RequestParam(required = false, name = "goodsScope") Integer goodsScope,
-			@RequestParam(required = false, name = "shipmanId") Integer shipmanId,
-			@RequestParam(required = false, name = "salesmanId") Integer salesmanId,
-			@RequestParam(required = false, name = "frtCatName") String frtCatName,
-			@RequestParam(required = false, name = "scdCatName") String scdCatName,
-			@PathVariable(value = "size") Integer size, @PathVariable(value = "current") Integer current
+			CustSalesSummarizingSearchModel searchModel,
+			@PathVariable(value = "size") int size, @PathVariable(value = "current") int current
 	) {
-		Map<String, Object> params = new HashMap<>();
-		params.put("custId", custId);
-		params.put("custName", custName);
-		params.put("remarks", remarks);
-		params.put("endTime", endTime);
-		params.put("beginTime", beginTime);
-		params.put("areaGrpId", areaGrpId);
-		params.put("brandName", brandName);
-		params.put("frtCatName", frtCatName);
-		params.put("scdCatName", scdCatName);
-		params.put("goodsScope", goodsScope);
-		params.put("shipmanId", shipmanId);
-		params.put("salesmanId", salesmanId);
-		SysEmp sysEmp = (SysEmp) SecurityUtils.getSubject().getPrincipal();
-
-		System.out.println("sysEmp : " + sysEmp);
+//		SysEmp sysEmp = (SysEmp) SecurityUtils.getSubject().getPrincipal();
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
-		Page<CustSalesSummarizingModel> pageInfo = indentService.getCustSalesSummarizing(params, page);
-
-		CustSalesSummationModel summarizing = indentService.getCustSalesSummation(params);
+		searchModel.setEmployeeId(SysUtil.getEmpIdInToken());
+		CustSalesSummationModel summarizing = indentService.getCustSalesSummation(searchModel);
+		Page<CustSalesSummarizingModel> pageInfo = indentService.getCustSalesSummarizing(searchModel, page);
 		return PageHelper.getInstance().pageData(pageInfo).summarizing(summarizing);
 	}
 
@@ -194,7 +154,7 @@ public class ReportsController {
 		params.put("custName", custName);
 		params.put("shipmanId", shipmanId);
 		params.put("beginTime", beginTime);
-		params.put("goodsScope",goodsScope);
+		params.put("goodsScope", goodsScope);
 		params.put("frtCatName", frtCatName);
 		params.put("scdCatName", scdCatName);
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
@@ -242,7 +202,7 @@ public class ReportsController {
 		Page<CustSalesDetailModel> pageInfo = indentService.getCustSalesDetail(params, page);
 		CustSalesDetailSummarizingModel summarizing = indentService.getCustSalesDetailSummarizing(params);
 
-		if (ObjectUtils.isEmpty(summarizing)){
+		if (ObjectUtils.isEmpty(summarizing)) {
 			summarizing = new CustSalesDetailSummarizingModel();
 		}
 		BigDecimal salesAmntSum = new BigDecimal(summarizing.getSalesAmntSum());
@@ -265,7 +225,7 @@ public class ReportsController {
 			@ApiImplicitParam(name = "areaGrpId", value = "区域分组id", dataType = "int", paramType = "query"),
 			@ApiImplicitParam(name = "endTime", value = "时间段-结束", dataType = "string", paramType = "query"),
 			@ApiImplicitParam(name = "beginTime", value = "时间段-开始", dataType = "string", paramType = "query"),
-			@ApiImplicitParam(name = "current", value = "当前页", required = true,dataType = "int" ,paramType = "path"),
+			@ApiImplicitParam(name = "current", value = "当前页", required = true, dataType = "int", paramType = "path"),
 			@ApiImplicitParam(name = "size", value = "每页记录数", required = true, dataType = "int", paramType = "path"),
 			@ApiImplicitParam(name = "frtCatName", value = "商品一级分类", paramType = "body", dataType = "string"),
 			@ApiImplicitParam(name = "scdCatName", value = "商品二级分类", paramType = "body", dataType = "string"),
@@ -502,7 +462,7 @@ public class ReportsController {
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
 		Map<String, Object> params = new HashMap<>();
 		params.put("endTime", endTime);
-		params.put("byAmount",byAmount);
+		params.put("byAmount", byAmount);
 		params.put("custName", custName);
 		params.put("beginTime", beginTime);
 		params.put("brandName", brandName);
@@ -546,7 +506,7 @@ public class ReportsController {
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
 		Map<String, Object> params = new HashMap<>();
 		params.put("endTime", endTime);
-		params.put("byAmount",byAmount);
+		params.put("byAmount", byAmount);
 		params.put("beginTime", beginTime);
 		params.put("areaGrpId", areaGrpId);
 		params.put("brandName", brandName);
@@ -596,10 +556,10 @@ public class ReportsController {
 		long start = System.currentTimeMillis();
 		Page<GoodsStockSummarizingModel> pageInfo = stockService.getGoodsStockSummarizing(params, page);
 		long end = System.currentTimeMillis();
-		log.info("get page records spend {} seconds in ReportsController.",(end-start)/1000);
+		log.info("get page records spend {} seconds in ReportsController.", (end - start) / 1000);
 		GoodsStockSummationModel summarizing = stockService.getGoodsStockSummation(params);
 		log.info("get summation info spend {} seconds in ReportsController.",
-				(System.currentTimeMillis() - end)/1000);
+				(System.currentTimeMillis() - end) / 1000);
 		return PageHelper.getInstance().pageData(pageInfo).summarizing(summarizing);
 	}
 
@@ -630,7 +590,7 @@ public class ReportsController {
 		Map<String, Object> params = new HashMap<>();
 		params.put("endTime", endTime);
 		params.put("combine", combine);
-		params.put("operType",operType);
+		params.put("operType", operType);
 		params.put("brandName", brandName);
 		params.put("beginTime", beginTime);
 		params.put("scdCatName", scdCatName);
@@ -657,7 +617,7 @@ public class ReportsController {
 			@RequestParam(required = false, name = "brandName") String brandName,
 			@RequestParam(required = false, name = "areaGrpId") Integer areaGrpId,
 			@RequestParam(required = false, name = "salesmanId") Integer salesmanId,
-			@PathVariable(value = "size") Integer size,@PathVariable(value = "current") Integer current
+			@PathVariable(value = "size") Integer size, @PathVariable(value = "current") Integer current
 	) {
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
 		Map<String, Object> params = new HashMap<>();
@@ -735,7 +695,7 @@ public class ReportsController {
 		params.put("beginTime", beginTime);
 		params.put("shipmanId", shipmanId);
 		CommonSummation summarizing = indentService.getGoodsDeliveryStaticsSummarizing(params);
-		Page<DeliveryStaticsModel> pageInfo = indentService.getGoodsDeliveryStatics(page,params);
+		Page<DeliveryStaticsModel> pageInfo = indentService.getGoodsDeliveryStatics(page, params);
 		return PageHelper.getInstance().pageData(pageInfo).summarizing(summarizing);
 	}
 

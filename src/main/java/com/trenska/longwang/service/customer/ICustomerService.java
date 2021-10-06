@@ -5,9 +5,8 @@ import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.entity.customer.Customer;
 import com.trenska.longwang.model.report.CustomerInfoModel;
 import com.trenska.longwang.model.customer.GoodsActiveInfoModel;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +21,7 @@ public interface ICustomerService extends IService<Customer> {
 
 	Page<Customer> getCustomerPageSelective(Map<String,Object> params, Page page);
 
-	ResponseModel addCustomer(Customer customer);
+	CommonResponse addCustomer(Customer customer);
 
 	String getCustomerSpecialPrice(Map<String, Object> params);
 
@@ -30,9 +29,9 @@ public interface ICustomerService extends IService<Customer> {
 
 	Page<Customer> getCustomerPageNoParams(Page pageParam);
 
-	ResponseModel deleteCustomerById(Integer custId);
+	CommonResponse deleteCustomerById(Integer custId);
 
-	ResponseModel deleteCustomerByIds(Collection<Integer> custIds);
+	CommonResponse deleteCustomerByIds(Collection<Integer> custIds);
 
 	List<CustomerInfoModel> getCustomerInfoSelective(Map<String, Object> params);
 

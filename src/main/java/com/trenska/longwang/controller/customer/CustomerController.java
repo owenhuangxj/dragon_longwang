@@ -9,7 +9,7 @@ import com.trenska.longwang.entity.customer.Customer;
 import com.trenska.longwang.entity.sys.SysEmp;
 import com.trenska.longwang.model.report.CustomerInfoModel;
 import com.trenska.longwang.model.customer.GoodsActiveInfoModel;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.customer.ICustomerService;
 import com.trenska.longwang.util.ExcelUtil;
 import com.trenska.longwang.util.NumberUtil;
@@ -49,19 +49,19 @@ public class CustomerController {
 	@PostMapping("/add")
 	@CheckDuplicateSubmit
 	@ApiOperation(value = "添加客户信息")
-	public ResponseModel addCustomer(@Valid @RequestBody @ApiParam Customer customer) {
+	public CommonResponse addCustomer(@Valid @RequestBody @ApiParam Customer customer) {
 		if (null == customer) {
-			return ResponseModel.getInstance().succ(false).msg("客户信息不能为空");
+			return CommonResponse.getInstance().succ(false).msg("客户信息不能为空");
 		}
 
 		boolean isValidDebtLimit = StringUtil.isNumeric(customer.getDebtLimit(), true);
 		if (!isValidDebtLimit) {
-			return ResponseModel.getInstance().succ(false).msg("无效的欠款额度.");
+			return CommonResponse.getInstance().succ(false).msg("无效的欠款额度.");
 		}
 
 		boolean isValidInitDebt = StringUtil.isNumeric(customer.getInitDebt(), true);
 		if (!isValidInitDebt){
-			return ResponseModel.getInstance().succ(false).msg("无效的期初欠款.");
+			return CommonResponse.getInstance().succ(false).msg("无效的期初欠款.");
 		}
 
 		return customerService.addCustomer(customer);
@@ -79,9 +79,9 @@ public class CustomerController {
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "custId", value = "客户id", paramType = "path", required = true, dataType = "int")
 	})
-	public ResponseModel deletePriceGrp(@PathVariable Integer custId) {
+	public CommonResponse deletePriceGrp(@PathVariable Integer custId) {
 		if (!NumberUtil.isIntegerUsable(custId)) {
-			return ResponseModel.getInstance().succ(false).msg("无此客户");
+			return CommonResponse.getInstance().succ(false).msg("无此客户");
 		}
 		return customerService.deleteCustomerById(custId);
 
@@ -93,9 +93,9 @@ public class CustomerController {
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = DragonConstant.CUST_IDS_LABEL, value = "需要批量删除的客户id集合/数组", paramType = "query", required = true, dataType = "int")
 	})
-	public ResponseModel batchDeletePriceGrp(@RequestParam(value = DragonConstant.CUST_IDS_LABEL) Collection<Integer> custIds) {
+	public CommonResponse batchDeletePriceGrp(@RequestParam(value = DragonConstant.CUST_IDS_LABEL) Collection<Integer> custIds) {
 		if (null == custIds || (null != custIds && custIds.size() == 0)) {
-			return ResponseModel.getInstance().succ(false).msg("无效的客户信息");
+			return CommonResponse.getInstance().succ(false).msg("无效的客户信息");
 
 		}
 		return customerService.deleteCustomerByIds(custIds);
@@ -117,12 +117,12 @@ public class CustomerController {
 			@ApiImplicitParam(name = "custId", value = "客户id", paramType = "body", required = true, dataType = "int"),
 			@ApiImplicitParam(name = "custName", value = "客户名称", paramType = "body", required = true, dataType = "string")
 	})
-	public ResponseModel updateCustomer(@RequestBody Customer customer) {
+	public CommonResponse updateCustomer(@RequestBody Customer customer) {
 		Subject subject = SecurityUtils.getSubject();
 		SysEmp sysEmp = (SysEmp) subject.getPrincipal();
 		log.debug("sysEmp : {}", sysEmp);
 		boolean succ = customerService.updateById(customer);
-		return ResponseModel.getInstance().succ(succ).msg("客户信息更新成功");
+		return CommonResponse.getInstance().succ(succ).msg("客户信息更新成功");
 	}
 
 	@GetMapping("/list/page/{current}/{size}")
@@ -226,17 +226,17 @@ public class CustomerController {
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "custName", value = "客户名称", paramType = "path", required = true, dataType = "string")
 	})
-	public ResponseModel checkCustNameExists(@PathVariable("custName") String custName) {
+	public CommonResponse checkCustNameExists(@PathVariable("custName") String custName) {
 
 		if (StringUtils.isEmpty(custName)) {
-			return ResponseModel.getInstance().succ(false).msg("客户名称不能为空");
+			return CommonResponse.getInstance().succ(false).msg("客户名称不能为空");
 		}
 
 		int count = customerService.count(
 				new LambdaQueryWrapper<Customer>()
 						.eq(Customer::getCustName, custName)
 		);
-		return ResponseModel.getInstance().succ(count > 0).msg(count > 0 ? "客户名称已经存在" : "客户名称不存在，可以使用");
+		return CommonResponse.getInstance().succ(count > 0).msg(count > 0 ? "客户名称已经存在" : "客户名称不存在，可以使用");
 
 	}
 
@@ -245,17 +245,17 @@ public class CustomerController {
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "custNo", value = "客户编号", paramType = "path", required = true, dataType = "string")
 	})
-	public ResponseModel checkCustNoExists(@PathVariable("custNo") String custNo) {
+	public CommonResponse checkCustNoExists(@PathVariable("custNo") String custNo) {
 
 		if (StringUtils.isEmpty(custNo)) {
-			return ResponseModel.getInstance().succ(false).msg("客户编号不能为空");
+			return CommonResponse.getInstance().succ(false).msg("客户编号不能为空");
 		}
 
 		int count = customerService.count(
 				new LambdaQueryWrapper<Customer>()
 						.eq(Customer::getCustNo, custNo)
 		);
-		return ResponseModel.getInstance().succ(count > 0).msg(count > 0 ? "客户编号已经存在" : "客户编号不存在，可以使用");
+		return CommonResponse.getInstance().succ(count > 0).msg(count > 0 ? "客户编号已经存在" : "客户编号不存在，可以使用");
 
 	}
 

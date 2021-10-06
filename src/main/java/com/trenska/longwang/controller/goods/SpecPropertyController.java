@@ -6,7 +6,7 @@ import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.goods.SpecProperty;
 import com.trenska.longwang.model.sys.ExistModel;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.goods.ISpecPropertyService;
 import com.trenska.longwang.util.PageUtils;
 import io.swagger.annotations.*;
@@ -39,30 +39,30 @@ public class SpecPropertyController {
 			@ApiImplicitParam(name = "propName", value = "商品规格属性名", paramType = "body", required = true, dataType = "string")
 	})
 	@ApiOperation("添加单个商品规格属性")
-	public ResponseModel addSpecProperty(@Valid @RequestBody SpecProperty specProperty) {
+	public CommonResponse addSpecProperty(@Valid @RequestBody SpecProperty specProperty) {
 		Boolean successful = specPropertyService.save(specProperty);
-		return ResponseModel.getInstance().succ(successful).msg(successful ? "添加商品规格属性成功" : "添加商品规格属性失败");
+		return CommonResponse.getInstance().succ(successful).msg(successful ? "添加商品规格属性成功" : "添加商品规格属性失败");
 	}
 
 	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/{specPropId}")
 	@ApiImplicitParams({@ApiImplicitParam(name = "specPropId", required = true, paramType = "path", dataType = "int")})
 	@ApiOperation("删除商品规格属性 ")
-	public ResponseModel deleteSpecProperty(@ApiParam(name = "specPropId", value = "商品规格属性id", required = true) @PathVariable("specPropId") Integer specPropId) {
+	public CommonResponse deleteSpecProperty(@ApiParam(name = "specPropId", value = "商品规格属性id", required = true) @PathVariable("specPropId") Integer specPropId) {
 		if (BooleanUtils.toBoolean(specPropId)) {
 			Boolean successful = specPropertyService.removeById(specPropId);
-			return ResponseModel.getInstance().succ(successful).msg(successful ? "商品规格属性删除成功" : "商品规格属性删除失败");
+			return CommonResponse.getInstance().succ(successful).msg(successful ? "商品规格属性删除成功" : "商品规格属性删除失败");
 		} else {
-			return ResponseModel.getInstance().succ(false).msg("商品规格属性id不能小于 1");
+			return CommonResponse.getInstance().succ(false).msg("商品规格属性id不能小于 1");
 		}
 	}
 
 	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/batch")
 	@ApiOperation("批量删除商品规格属性 ")
-	public ResponseModel batchDeleteSpecProperty(@ApiParam(name = "specPropIds", value = "商品规格属性id的集合/数组", required = true) @RequestParam("specPropIds") Collection<Integer> specPropIds) {
+	public CommonResponse batchDeleteSpecProperty(@ApiParam(name = "specPropIds", value = "商品规格属性id的集合/数组", required = true) @RequestParam("specPropIds") Collection<Integer> specPropIds) {
 		if (specPropIds.isEmpty()) {
-			return ResponseModel.getInstance().succ(false).msg("无效的商品规格属性");
+			return CommonResponse.getInstance().succ(false).msg("无效的商品规格属性");
 		}
 		return specPropertyService.removeSpecPropertyByIds(specPropIds);
 	}
@@ -75,13 +75,13 @@ public class SpecPropertyController {
 			@ApiImplicitParam(name = "propName", paramType = "body", required = true, dataType = "string")
 	})
 	@ApiOperation("修改商品规格属性,前端需要控制商品规格属性名称或状态有改变才允许请求")
-	public ResponseModel updateSpecProperty(@Valid @RequestBody SpecProperty specProperty) {
+	public CommonResponse updateSpecProperty(@Valid @RequestBody SpecProperty specProperty) {
 		if (specProperty == null) {
-			return ResponseModel.getInstance().succ(false).msg( "不存在该规格值");
+			return CommonResponse.getInstance().succ(false).msg( "不存在该规格值");
 		}
 
 		boolean successful = specPropertyService.updateSpecPropertyById(specProperty);
-		return ResponseModel.getInstance().succ(successful).msg(successful ? "修改商品规格属性成功" : "修改商品规格属性失败");
+		return CommonResponse.getInstance().succ(successful).msg(successful ? "修改商品规格属性成功" : "修改商品规格属性失败");
 	}
 
 	@GetMapping("/list/page/common/{current}/{size}")

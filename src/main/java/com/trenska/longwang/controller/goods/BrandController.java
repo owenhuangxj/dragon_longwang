@@ -7,7 +7,7 @@ import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.goods.Brand;
 import com.trenska.longwang.model.sys.ExistModel;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.goods.IBrandService;
 import com.trenska.longwang.util.PageUtils;
 import io.swagger.annotations.*;
@@ -43,28 +43,28 @@ public class BrandController {
 	})
 	@ApiOperation("添加品牌，返回对象中data属性是添加成功的品牌的id")
 //	@RequiresPermissions({"10203001"})
-	public ResponseModel addBrand(@Valid @RequestBody Brand brand) {
+	public CommonResponse addBrand(@Valid @RequestBody Brand brand) {
 		boolean successful = brandService.save(brand);
-		return ResponseModel.getInstance().succ(successful).msg(successful ? "品牌添加成功" : "品牌添加失败");
+		return CommonResponse.getInstance().succ(successful).msg(successful ? "品牌添加成功" : "品牌添加失败");
 	}
 
 	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/{brandId}")
 	@ApiOperation("删除商品品牌")
-	public ResponseModel deleteBrand(@ApiParam(name = "brandId", required = true) @PathVariable("brandId") Integer brandId) {
+	public CommonResponse deleteBrand(@ApiParam(name = "brandId", required = true) @PathVariable("brandId") Integer brandId) {
 		logger.debug("brandId : {} ", brandId);
 		Boolean removed = brandService.removeById(brandId);
-		return ResponseModel.getInstance().succ(removed).msg(removed ? "商品品牌删除成功" : "商品品牌删除失败");
+		return CommonResponse.getInstance().succ(removed).msg(removed ? "商品品牌删除成功" : "商品品牌删除失败");
 
 	}
 
 	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/batch")
 	@ApiOperation("批量删除商品品牌")
-	public ResponseModel batchDeleteBrand(
+	public CommonResponse batchDeleteBrand(
 			@ApiParam(name = "brandIds", value = "需要批量删除的商品品牌id集合/数组", required = true) @RequestParam(value = "brandIds") Collection<Integer> brandIds) {
 		if(brandIds.isEmpty()){
-			return ResponseModel.getInstance().succ(false).msg("无效的品牌信息");
+			return CommonResponse.getInstance().succ(false).msg("无效的品牌信息");
 		}
 		return brandService.removeBrandByIds(brandIds);
 
@@ -78,7 +78,7 @@ public class BrandController {
 			@ApiImplicitParam(name = "stat", paramType = "body", dataType = "boolean")
 	})
 	@ApiOperation("根据品牌id即brandId修改商品品牌,该接口可以同时修改三个属性，也可两两组合或者只修改一个属性")
-	public ResponseModel updateBrand(@Valid @RequestBody Brand brand) {
+	public CommonResponse updateBrand(@Valid @RequestBody Brand brand) {
 		return brandService.updateBrand(brand);
 	}
 

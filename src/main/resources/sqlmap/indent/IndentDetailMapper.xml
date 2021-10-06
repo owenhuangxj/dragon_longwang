@@ -85,7 +85,7 @@
                     )
                 )
             </if>
-            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+            <if test="beginTime != null and endTime != null">
                 and ti.indent_time between #{beginTime} and #{endTime}
             </if>
             <if test="custId != null">

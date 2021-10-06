@@ -1,7 +1,5 @@
 package com.trenska.longwang.cron;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
 import java.util.concurrent.*;
 
 /**
@@ -34,7 +32,12 @@ public class ThreadPoolUtil {
 	 * RejectedExecutionHandler handler: A handler for tasks that cannot be executed by a
 	 * ThreadPoolExecutor.当线程池不能执行一个任务时的处理器
 	 */
-	public static final ThreadPoolExecutor THREAD_POOL_EXECUTOR = new ThreadPoolExecutor(5,20,10,
-			TimeUnit.SECONDS,WORK_QUEUE);
+	public static final ThreadPoolExecutor THREAD_POOL_EXECUTOR = new ThreadPoolExecutor(5, 20, 120,
+			TimeUnit.SECONDS, WORK_QUEUE, Executors.defaultThreadFactory(), new RejectedExecutionHandler() {
+		@Override
+		public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+
+		}
+	});
 
 }

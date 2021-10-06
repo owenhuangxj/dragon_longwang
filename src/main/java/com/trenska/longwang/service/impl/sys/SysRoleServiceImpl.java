@@ -9,7 +9,7 @@ import com.trenska.longwang.dao.sys.SysEmpRoleMapper;
 import com.trenska.longwang.dao.sys.SysRoleMapper;
 import com.trenska.longwang.dao.sys.SysRolePermMapper;
 import com.trenska.longwang.entity.sys.*;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.sys.ISysRolePermService;
 import com.trenska.longwang.service.sys.ISysRoleService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -42,7 +42,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
     }
 
 	@Override
-	public ResponseModel removeRolesByIds(List<Integer> rids) {
+	public CommonResponse removeRolesByIds(List<Integer> rids) {
 
 		boolean success = removeByIds(rids);
 		// 删除用户角色
@@ -55,7 +55,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 				new QueryWrapper<SysRolePerm>()
 						.in("rid",rids)
 		);
-		return ResponseModel.getInstance().succ(success).msg(success?"删除角色成功.":"不存在该角色");
+		return CommonResponse.getInstance().succ(success).msg(success?"删除角色成功.":"不存在该角色");
 
 	}
 
@@ -67,7 +67,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 	}
 
 	@Override
-	public ResponseModel removeRolesById(Integer rid) {
+	public CommonResponse removeRolesById(Integer rid) {
 		boolean success = removeById(rid);
 		// 删除用户角色
 		empRoleMapper.delete(
@@ -79,11 +79,11 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 				new QueryWrapper<SysRolePerm>()
 						.eq("rid",rid)
 		);
-		return ResponseModel.getInstance().succ(success).msg(success?"删除角色成功.":"不存在该角色");
+		return CommonResponse.getInstance().succ(success).msg(success?"删除角色成功.":"不存在该角色");
 	}
 
 	@Override
-	public ResponseModel saveOrUpdateRolePerms(Integer rid, List<String> pvals) {
+	public CommonResponse saveOrUpdateRolePerms(Integer rid, List<String> pvals) {
 
 		// 查询角色权限
 		List<SysRolePerm> dbSysRolePerms = rolePermMapper.selectList(new QueryWrapper<SysRolePerm>().eq("rid", rid));
@@ -96,9 +96,9 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 						new QueryWrapper<SysRolePerm>()
 								.eq("rid",rid)
 				);
-				return ResponseModel.getInstance().succ(true).msg("清空权限成功.");
+				return CommonResponse.getInstance().succ(true).msg("清空权限成功.");
 			}else {
-				return ResponseModel.getInstance().succ(false).msg("貌似您要添加/更新权限?但是你没有选择权限.");
+				return CommonResponse.getInstance().succ(false).msg("貌似您要添加/更新权限?但是你没有选择权限.");
 			}
 		}
 
@@ -108,10 +108,10 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 		if(CollectionUtils.isNotEmpty(dbPvals) && dbPvals.containsAll(pvals)){
 			dbPvals.removeAll(pvals);
 			if(CollectionUtils.isEmpty(dbPvals)){
-				return ResponseModel.getInstance().succ(true).msg("刷新成功.");
+				return CommonResponse.getInstance().succ(true).msg("刷新成功.");
 			}
 			rolePermMapper.delete(new QueryWrapper<SysRolePerm>().in("pval",dbPvals));
-			return ResponseModel.getInstance().succ(true).msg("更新权限成功.");
+			return CommonResponse.getInstance().succ(true).msg("更新权限成功.");
 			// 如果前端传递的权限包含了所有数据库中的原有权限，那么就是增加权限
 		}else if(!dbPvals.isEmpty() && pvals.containsAll(dbPvals)){
 			pvals.removeAll(dbPvals);
@@ -120,7 +120,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 				insertings.add(new SysRolePerm(rid,pval));
 			});
 			rolePermService.saveBatch(insertings);
-			return ResponseModel.getInstance().succ(true).msg("权限添加成功.");
+			return CommonResponse.getInstance().succ(true).msg("权限添加成功.");
 		}
 
 		if(!dbSysRolePerms.isEmpty()){
@@ -131,7 +131,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 			}
 		}
 		if(pvals.isEmpty()){
-			return ResponseModel.getInstance().succ(false).msg("额，当前角色以前已经拥有这些角色了，你不需要再添加了.");
+			return CommonResponse.getInstance().succ(false).msg("额，当前角色以前已经拥有这些角色了，你不需要再添加了.");
 		}
 
 		List<SysRolePerm> insertings = new ArrayList<>();
@@ -140,12 +140,12 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 		}
 		rolePermService.saveBatch(insertings);
 
-		return ResponseModel.getInstance().succ(true).msg("权限添加成功.");
+		return CommonResponse.getInstance().succ(true).msg("权限添加成功.");
 	}
 
 	@Override
 	@Transactional
-	public ResponseModel editEmpDataAuthority(Integer empId, boolean allData, List<Integer> areaGrpIds) {
+	public CommonResponse editEmpDataAuthority(Integer empId, boolean allData, List<Integer> areaGrpIds) {
 		// 删除旧的客户区域分组信息
 		empAreaGrpMapper.delete(
 				new LambdaQueryWrapper<EmpAreaGrp>()
@@ -166,13 +166,13 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 			sysEmp.setAllData(allData);
 			sysEmp.updateById();
 		}
-		return ResponseModel.getInstance().succ(true).msg("编辑成功");
+		return CommonResponse.getInstance().succ(true).msg("编辑成功");
 
 	}
 
 	@Override
 	@Transactional
-	public ResponseModel editEmpRoles(Integer empId, List<Integer> roleIds) {
+	public CommonResponse editEmpRoles(Integer empId, List<Integer> roleIds) {
 		// 获取账号所有角色
 //		List<SysEmpRole> dbEmpRoles = empRoleMapper.selectList(
 //				new LambdaQueryWrapper<SysEmpRole>()
@@ -189,6 +189,6 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 				empRoleMapper.insert(new SysEmpRole(empId,roleId));
 			});
 		}
-		return ResponseModel.getInstance().succ(true).msg("编辑成功");
+		return CommonResponse.getInstance().succ(true).msg("编辑成功");
 	}
 }

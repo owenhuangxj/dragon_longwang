@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.customer.PriceGrp;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.customer.IPriceGrpService;
 import com.trenska.longwang.util.PageUtils;
 import io.swagger.annotations.Api;
@@ -38,9 +38,9 @@ public class PriceGrpController {
 			@ApiImplicitParam(name = "descr", value = "客户价格分组备注", paramType = "body", dataType = "String"),
 			@ApiImplicitParam(name = "priceGrpName", value = "价格分组名称", paramType = "body", required = true, dataType = "String")
 	})
-	public ResponseModel addCustPriceGrp(@RequestBody @Valid PriceGrp priceGrp) {
+	public CommonResponse addCustPriceGrp(@RequestBody @Valid PriceGrp priceGrp) {
 		if (null == priceGrp) {
-			return ResponseModel.getInstance().succ(false).msg("无效的价格分组信息");
+			return CommonResponse.getInstance().succ(false).msg("无效的价格分组信息");
 		}
 		return priceGrpService.savePriceGrp(priceGrp);
 	}
@@ -51,8 +51,8 @@ public class PriceGrpController {
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "PriceGrpId", value = "客户价格分组类型id", paramType = "path", required = true, dataType = "int")
 	})
-	public ResponseModel deletePriceGrp(@PathVariable Integer PriceGrpId) {
-		return ResponseModel.getInstance().succ(priceGrpService.removeById(PriceGrpId)).msg("客户价格分组删除成功");
+	public CommonResponse deletePriceGrp(@PathVariable Integer PriceGrpId) {
+		return CommonResponse.getInstance().succ(priceGrpService.removeById(PriceGrpId)).msg("客户价格分组删除成功");
 	}
 
 	@CheckDuplicateSubmit
@@ -61,8 +61,8 @@ public class PriceGrpController {
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "priceGrpIds", value = "需要批量删除的客户价格分组类型id集合/数组", paramType = "query", required = true, dataType = "int")
 	})
-	public ResponseModel batchDeletePriceGrp(@RequestParam(value = "priceGrpIds") Collection<Integer> priceGrpIds) {
-		return ResponseModel.getInstance().succ(priceGrpService.removeByIds(priceGrpIds)).msg("批量删除客户价格分组成功");
+	public CommonResponse batchDeletePriceGrp(@RequestParam(value = "priceGrpIds") Collection<Integer> priceGrpIds) {
+		return CommonResponse.getInstance().succ(priceGrpService.removeByIds(priceGrpIds)).msg("批量删除客户价格分组成功");
 	}
 
 	@PutMapping("/update")
@@ -73,9 +73,9 @@ public class PriceGrpController {
 			@ApiImplicitParam(name = "priceGrpId", value = "客户价格分组id", paramType = "body", required = true, dataType = "int"),
 			@ApiImplicitParam(name = "priceGrpName", value = "客户价格分组名称", paramType = "body", required = true, dataType = "string")
 	})
-	public ResponseModel updatePriceGrp(@RequestBody PriceGrp priceGrp) {
+	public CommonResponse updatePriceGrp(@RequestBody PriceGrp priceGrp) {
 		boolean succ = priceGrpService.updateById(priceGrp);
-		return ResponseModel.getInstance().succ(succ).msg("客户价格分组信息更新成功");
+		return CommonResponse.getInstance().succ(succ).msg("客户价格分组信息更新成功");
 	}
 
 	@GetMapping("/list/all")
@@ -116,15 +116,15 @@ public class PriceGrpController {
 	@ApiImplicitParams({
 			@ApiImplicitParam(name = "priceGrpName", value = "价格分组名称", paramType = "path", required = true, dataType = "string")
 	})
-	public ResponseModel checkPriceGrpNameExists(@PathVariable("priceGrpName") String priceGrpName) {
+	public CommonResponse checkPriceGrpNameExists(@PathVariable("priceGrpName") String priceGrpName) {
 		if (null == priceGrpName) {
-			return ResponseModel.getInstance().succ(false).msg("无效的价格分组名称");
+			return CommonResponse.getInstance().succ(false).msg("无效的价格分组名称");
 		}
 		PriceGrp priceGrp = priceGrpService.getOne(
 				new LambdaQueryWrapper<PriceGrp>()
 						.eq(PriceGrp::getPriceGrpName, priceGrpName)
 		);
 		boolean exists = null != priceGrp;
-		return ResponseModel.getInstance().succ(exists).msg(exists ? "价格分组名称已经存在" : "价格分组名称不存在，可以使用");
+		return CommonResponse.getInstance().succ(exists).msg(exists ? "价格分组名称已经存在" : "价格分组名称不存在，可以使用");
 	}
 }

@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.goods.Category;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.goods.ICategoryService;
 import com.trenska.longwang.util.NumberUtil;
 import com.trenska.longwang.util.PageUtils;
@@ -33,9 +33,9 @@ import java.util.List;
 @RequestMapping("/category")
 @Api(description = "商品-分类管理接口")
 public class CategoryController {
-
 	@Autowired
 	private ICategoryService categoryService;
+
 	@PostMapping("/add")
 	@CheckDuplicateSubmit
 	@ApiImplicitParams({
@@ -43,30 +43,30 @@ public class CategoryController {
 			@ApiImplicitParam(name = "pid", value = "父级分类的id，如果为主分类此参数设置为 0", paramType = "body", required = true, dataType = "int"),
 	})
 	@ApiOperation("添加主分类/子分类，返回对象中data属性是添加成功的分类的id")
-	public ResponseModel addCategory(@Valid @RequestBody Category category) {
+	public CommonResponse addCategory(@Valid @RequestBody Category category) {
 		if (category == null){
-			return ResponseModel.getInstance().succ(false).msg("无效的分类.");
+			return CommonResponse.getInstance().succ(false).msg("无效的分类.");
 		}
 		@NotNull String catName = category.getCatName();
 		if (catName == null){
-			return ResponseModel.getInstance().succ(false).msg("分类名称不能为空.");
+			return CommonResponse.getInstance().succ(false).msg("分类名称不能为空.");
 		}
 		Category dbCategory = categoryService.getOne(
 				new LambdaQueryWrapper<Category>()
 					.eq(Category::getCatName,catName)
 		);
 		if (dbCategory != null){
-			return ResponseModel.getInstance().succ(false).msg("分类已经存在.");
+			return CommonResponse.getInstance().succ(false).msg("分类已经存在.");
 		}
 		boolean isSuccess = categoryService.save(category);
-		return ResponseModel.getInstance().succ(isSuccess).msg(isSuccess ? "分类添加成功" : "分类添加失败");
+		return CommonResponse.getInstance().succ(isSuccess).msg(isSuccess ? "分类添加成功" : "分类添加失败");
 	}
 
 	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/{catId}")
 	@ApiImplicitParams({@ApiImplicitParam(name = "catId", required = true, paramType = "path", dataType = "int")})
 	@ApiOperation("删除商品分类,参数categoryId必须大于 0 ")
-	public ResponseModel deleteCategory(@ApiParam(name = "catId", value = "商品分类id", required = true) @PathVariable("catId") Integer catId) {
+	public CommonResponse deleteCategory(@ApiParam(name = "catId", value = "商品分类id", required = true) @PathVariable("catId") Integer catId) {
 		if (NumberUtil.isIntegerUsable(catId)) {
 			List<Category> subCategories = categoryService.list(
 				new LambdaQueryWrapper<Category>()
@@ -75,17 +75,17 @@ public class CategoryController {
 			subCategories.forEach(subCategory->subCategory.deleteById());
 			categoryService.removeById(catId);
 		} else {
-			return ResponseModel.getInstance().succ(false).msg("无效的商品分类id.");
+			return CommonResponse.getInstance().succ(false).msg("无效的商品分类id.");
 		}
-		return ResponseModel.getInstance().succ(true).msg("商品分类删除成功.");
+		return CommonResponse.getInstance().succ(true).msg("商品分类删除成功.");
 	}
 
 	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/batch")
 	@ApiOperation("批量删除商品分类,参数categoryIds必须大于 0 ")
-	public ResponseModel batchDeleteCategory(@ApiParam(name = "categoryIds", value = "商品分类id的集合/数组", required = true) @RequestParam("categoryIds") Collection<Integer> categoryIds) {
+	public CommonResponse batchDeleteCategory(@ApiParam(name = "categoryIds", value = "商品分类id的集合/数组", required = true) @RequestParam("categoryIds") Collection<Integer> categoryIds) {
 		if (categoryIds.isEmpty()) {
-			return ResponseModel.getInstance().succ(false).msg("无效的分类");
+			return CommonResponse.getInstance().succ(false).msg("无效的分类");
 		}
 		return categoryService.removeCategoryByIds(categoryIds);
 	}
@@ -98,12 +98,12 @@ public class CategoryController {
 			@ApiImplicitParam(name = "catName", paramType = "body", required = true, dataType = "string")
 	})
 	@ApiOperation("修改商品分类")
-	public ResponseModel updateCategory(@Valid @RequestBody Category category) {
+	public CommonResponse updateCategory(@Valid @RequestBody Category category) {
 		if(null == category){
-			return ResponseModel.getInstance().succ(false).msg("商品分类信息不能为空");
+			return CommonResponse.getInstance().succ(false).msg("商品分类信息不能为空");
 		}
 		if(!NumberUtil.isIntegerUsable(category.getCatId())){
-			return ResponseModel.getInstance().succ(false).msg("商品分类信息id不能为空");
+			return CommonResponse.getInstance().succ(false).msg("商品分类信息id不能为空");
 		}
 		return categoryService.updateCategory(category);
 	}

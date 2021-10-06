@@ -14,7 +14,7 @@ import com.trenska.longwang.entity.stock.Stock;
 import com.trenska.longwang.entity.stock.StockDetail;
 import com.trenska.longwang.enums.IndentStat;
 import com.trenska.longwang.exception.ServiceException;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -111,7 +111,7 @@ public class StockUtil {
 	 * @return
 	 */
 
-	public static ResponseModel stockin(Stock stock, StockMapper stockMapper, GoodsMapper goodsMapper) {
+	public static CommonResponse stockin(Stock stock, StockMapper stockMapper, GoodsMapper goodsMapper) {
 		String stockNo = StockUtil.getStockNo(stock.getPrefix(), DragonConstant.RKD_CHINESE, stockMapper);
 		//入库时间
 		String stockTime = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
@@ -155,7 +155,7 @@ public class StockUtil {
 		synchronized (stockNo) {
 			stockMapper.insert(stock);
 		}
-		return ResponseModel.getInstance().succ(true).msg(DragonConstant.STOCKIN_SUCC);
+		return CommonResponse.getInstance().succ(true).msg(DragonConstant.STOCKIN_SUCC);
 	}
 
 	/**
@@ -164,7 +164,7 @@ public class StockUtil {
 	 * @param goodsMapper
 	 * @return
 	 */
-	public static ResponseModel changeStockin(Stock stock, List<StockDetail> stockDetailList, GoodsMapper goodsMapper) {
+	public static CommonResponse changeStockin(Stock stock, List<StockDetail> stockDetailList, GoodsMapper goodsMapper) {
 
 		//入库时间
 		String stockTime = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
@@ -202,7 +202,7 @@ public class StockUtil {
 		}
 		stock.setStockTime(stockTime);
 		stock.updateById();
-		return ResponseModel.getInstance().succ(true).msg(DragonConstant.STOCKIN_SUCC);
+		return CommonResponse.getInstance().succ(true).msg(DragonConstant.STOCKIN_SUCC);
 	}
 
 	/**
@@ -213,7 +213,7 @@ public class StockUtil {
 	 * @param goodsMapper
 	 * @return
 	 */
-	public static ResponseModel stockout(Stock stock, GoodsMapper goodsMapper) {
+	public static CommonResponse stockout(Stock stock, GoodsMapper goodsMapper) {
 		List<StockDetail> stockoutDetails = stock.getStockouts();
 		String stockNo = stock.getStockNo();
 		String stockTime = stock.getStockTime();
@@ -223,7 +223,7 @@ public class StockUtil {
 			int totalStockoutNumForOneGood = 0;
 			List<StockMadedate> stockMadeDates = stockoutDetail.getStockoutMadedates();
 			if (CollectionUtils.isEmpty(stockMadeDates)) {
-				return ResponseModel.getInstance().succ(false).msg("请选择批次！");
+				return CommonResponse.getInstance().succ(false).msg("请选择批次！");
 			}
 			Integer goodsId = stockoutDetail.getGoodsId();
 			synchronized (goodsId) {
@@ -254,7 +254,7 @@ public class StockUtil {
 			}
 		}
 		stock.insert();
-		return ResponseModel.getInstance().succ(true).msg(DragonConstant.STOCKOUT_SUCC);
+		return CommonResponse.getInstance().succ(true).msg(DragonConstant.STOCKOUT_SUCC);
 	}
 
 
@@ -264,7 +264,7 @@ public class StockUtil {
 	 * @param stockouts
 	 * @return
 	 */
-	public static ResponseModel invalidStockout(List<Stock> stockouts) {
+	public static CommonResponse invalidStockout(List<Stock> stockouts) {
 
 		// 获取所有需要作废的出库单的关联订货单号->以便一次性取出所有订货单和订货单商品详情->以免多次从数据获取订单信息
 		List<String> indentNos = stockouts.stream().map(Stock::getBusiNo).distinct().collect(Collectors.toList());
@@ -283,7 +283,7 @@ public class StockUtil {
 								|| IndentStat.STOCKOUTED.getName().equals(indent.getStat())
 				).collect(Collectors.toList());
 				if (CollectionUtils.isNotEmpty(finishedIndents)) {
-					return ResponseModel.getInstance().succ(false).msg("请先作废关联订单");
+					return CommonResponse.getInstance().succ(false).msg("请先作废关联订单");
 				}
 			}
 		}
@@ -367,7 +367,7 @@ public class StockUtil {
 						.set(Stock::getStat, false)
 		);
 
-		return ResponseModel.getInstance().succ(successful).msg(msg);
+		return CommonResponse.getInstance().succ(successful).msg(msg);
 	}
 
 	/**
@@ -375,7 +375,7 @@ public class StockUtil {
 	 *
 	 * @param stockouts
 	 */
-	public static ResponseModel deleteStockout(List<Stock> stockouts, int empId) {
+	public static CommonResponse deleteStockout(List<Stock> stockouts, int empId) {
 
 		for (Stock stockout : stockouts) {
 			List<StockDetail> stockDetailList = stockout.getStockouts();
@@ -384,7 +384,7 @@ public class StockUtil {
 			}
 			stockout.deleteById();
 		}
-		return ResponseModel.getInstance().succ(true).msg("删除成功");
+		return CommonResponse.getInstance().succ(true).msg("删除成功");
 	}
 
 
@@ -393,10 +393,10 @@ public class StockUtil {
 	 * @param stockType 入库单(作废)/退货单(作废)
 	 * @return
 	 */
-	public static ResponseModel cancelStockin(List<Stock> stockins, String stockType) {
+	public static CommonResponse cancelStockin(List<Stock> stockins, String stockType) {
 		int empIdInToken = SysUtil.getEmpIdInToken();
 		if (Objects.isNull(empIdInToken)) {
-			return ResponseModel.getInstance().succ(false).msg(DragonConstant.ACCESS_TIMEOUT_MSG).code(DragonConstant.ACCESS_TIMEOUT);
+			return CommonResponse.getInstance().succ(false).msg(DragonConstant.ACCESS_TIMEOUT_MSG).code(DragonConstant.ACCESS_TIMEOUT);
 		}
 		String msg = "作废入库单成功";
 		boolean successful = true;
@@ -435,7 +435,7 @@ public class StockUtil {
 
 		}
 
-		return ResponseModel.getInstance().succ(successful).msg(msg);
+		return CommonResponse.getInstance().succ(successful).msg(msg);
 	}
 
 	public static int returnStock(StockDetail stockDetail, int empId) {

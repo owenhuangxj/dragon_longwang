@@ -38,7 +38,7 @@
         <result column="img" property="img" />
         <result column="expir" property="expire" />
         <result column="remarks" property="remarks" />
-        <association property="mainUnit" column="main_unit_id"  select="com.trenska.longwang.dao.goods.UnitMapper.selectUnitNameById" fetchType="lazy" autoMapping="true" />
+        <!--<association property="mainUnit" column="main_unit_id"  select="com.trenska.longwang.dao.goods.UnitMapper.selectUnitNameById" fetchType="lazy" autoMapping="true" />-->
         <collection property="goodsSpecs" column="goods_id" select="com.trenska.longwang.dao.goods.GoodsSpecMapper.selectGoodsSpecByGoodsId" fetchType="lazy" autoMapping="true"/>
     </resultMap>
     <!-- 通用查询映射结果 -->
@@ -81,7 +81,9 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        tg.goods_id, tg.goods_no, tg.barcode, tg.goods_name, tg.cat_id, tg.main_unit_id, tg.sub_unit_id, tg.multi, tg.brand_name, tg.frt_cat_name, tg.scd_cat_name, tg.stat, tg.min_odr_qtt, tg.init_stock, tg.stock, tg.stockin, tg.stockout, tg.price, tg.img, tg.remarks, tg.expir
+        tg.goods_id, tg.goods_no, tg.barcode, tg.goods_name, tg.cat_id, tg.main_unit_id, tg.sub_unit_id,
+        tg.multi, tg.brand_name, tg.frt_cat_name, tg.scd_cat_name, tg.stat, tg.min_odr_qtt, tg.init_stock,
+        tg.stock, tg.stockin, tg.stockout, tg.price, tg.img, tg.remarks, tg.expir
     </sql>
 
     <sql id="Simple_Column_List">
@@ -105,7 +107,9 @@
     </select>
 
     <select id="selectGoodsSimpleInfo" resultMap="simpleInfoResultMap">
-        select <include refid="Base_Column_List"/>
+        select tg.goods_id, tg.goods_no, tg.barcode, tg.goods_name, tg.cat_id, tg.main_unit_id, tg.sub_unit_id,
+               tg.multi, tg.brand_name, tg.frt_cat_name, tg.scd_cat_name, tg.stat, tg.min_odr_qtt, tg.init_stock,
+               tg.stock, tg.stockin, tg.stockout, tg.price, tg.img, tg.remarks, tg.expir
         from t_goods tg
         where tg.goods_id = #{goodsId}
     </select>

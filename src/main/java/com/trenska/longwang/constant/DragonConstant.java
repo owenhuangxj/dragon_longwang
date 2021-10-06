@@ -76,10 +76,10 @@ public class DragonConstant {
 	public static final String ON_SALE = "上架";
 	public static final String OFF_SALE = "下架";
 	public static final String NO_ACCESS_PERMISSION_MSG = "无访问权限";
-	public final static int ACCESS_TIMEOUT = 10401;
+	public final static int ACCESS_TIMEOUT = 10401; /* 认证失败:未登录 */
 	public static final int TOKEN_MISSING = 10402;
-	public static final int LOGGED_OTHER_PLACE = 10403;
-	public static final int ACCESS_FORBIDDEN = 10405;
+	public static final int LOGGED_OTHER_PLACE = 10403; /* 无权限 */
+	public static final int ACCESS_FORBIDDEN = 10405; /* 方法错误 */
 	public static final String TOKEN_MISSING_MSG = "无效的令牌";
 	public static final String CHANGE_SUCC = "修改成功";
 	public static final int INVALID = 0;
@@ -96,4 +96,8 @@ public class DragonConstant {
 	 * 资金的默认精度
 	 */
 	public static final String DFT_CURRENCY_PRECISION_STR = "0.00";
+	/**
+	 * 批量新增数据量
+	 */
+	public static final int BATCH_INSERT_SIZE = 500;
 }

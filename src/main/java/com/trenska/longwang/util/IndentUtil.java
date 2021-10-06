@@ -10,7 +10,7 @@ import com.trenska.longwang.entity.stock.Stock;
 import com.trenska.longwang.entity.stock.StockDetail;
 import com.trenska.longwang.enums.IndentStat;
 import com.trenska.longwang.enums.PaymentStat;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.math.BigDecimal;
@@ -112,9 +112,9 @@ public class IndentUtil {
 	 * @param indent
 	 * @return
 	 */
-	public static ResponseModel refreshIndent(Indent indent){
+	public static CommonResponse refreshIndent(Indent indent){
 		if(Objects.isNull(indent)){
-			return ResponseModel.getInstance().succ(false).msg("订货单不能为空");
+			return CommonResponse.getInstance().succ(false).msg("订货单不能为空");
 		}
 
 		String stat = indent.getStat();
@@ -122,7 +122,7 @@ public class IndentUtil {
 		boolean audited = indent.getAuditStat();
 		boolean finished = IndentStat.FINISHED.getName().equals(stat);
 		if(finished){
-			return ResponseModel.getInstance().succ(false).msg(DragonConstant.INDENT_FORBIDDEN);
+			return CommonResponse.getInstance().succ(false).msg(DragonConstant.INDENT_FORBIDDEN);
 		}
 
 		BigDecimal indentTotal = new BigDecimal(indent.getIndentTotal());
@@ -158,7 +158,7 @@ public class IndentUtil {
 		}
 
 		indent.updateById();
-		return ResponseModel.getInstance().succ(true).msg("successful");
+		return CommonResponse.getInstance().succ(true).msg("successful");
 	}
 
 	/**

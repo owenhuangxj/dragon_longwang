@@ -6,7 +6,7 @@ import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.indent.StockMadedate;
 import com.trenska.longwang.entity.stock.Stock;
 import com.trenska.longwang.model.prints.WebPrintModel;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.goods.IGoodsService;
 import com.trenska.longwang.service.stock.IStockDetailService;
 import com.trenska.longwang.service.stock.IStockService;
@@ -28,7 +28,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -62,16 +61,16 @@ public class StockoutController {
 	@PostMapping("/add")
 	@CheckDuplicateSubmit
 	@ApiOperation("商品出库")
-	public ResponseModel stockout(@RequestBody @ApiParam Stock stock, HttpServletRequest request) {
+	public CommonResponse stockout(@RequestBody @ApiParam Stock stock, HttpServletRequest request) {
 
 		if (Objects.isNull(stock)) {
-			return ResponseModel.getInstance().succ(false).msg("出库失败:请输入有效的库存信息");
+			return CommonResponse.getInstance().succ(false).msg("出库失败:请输入有效的库存信息");
 		}
 		if (Objects.isNull(stock.getStockouts())) {
-			return ResponseModel.getInstance().succ(false).msg("出库信息不能为null");
+			return CommonResponse.getInstance().succ(false).msg("出库信息不能为null");
 		}
 		if (stock.getStockouts().isEmpty()) {
-			return ResponseModel.getInstance().succ(false).msg("出库的商品信息不能为空");
+			return CommonResponse.getInstance().succ(false).msg("出库的商品信息不能为空");
 		}
 		// 出库
 		return stockoutService.stockout(stock, request);
@@ -80,9 +79,9 @@ public class StockoutController {
 	@CheckDuplicateSubmit
 	@PutMapping("/cancel/{stockNo}")
 	@ApiOperation("作废出库单")
-	public ResponseModel cancelStockout(@PathVariable("stockNo") String stockNo) {
+	public CommonResponse cancelStockout(@PathVariable("stockNo") String stockNo) {
 		if (StringUtils.isEmpty(stockNo)) {
-			return ResponseModel.getInstance().succ(false).msg("无效的出库单");
+			return CommonResponse.getInstance().succ(false).msg("无效的出库单");
 		}
 		return stockoutService.cancelStockout(stockNo);
 	}
@@ -184,7 +183,7 @@ public class StockoutController {
 			@ApiImplicitParam(name = "type", value = "单据类型 出库单:CK  入库单:RK  报溢单:BY  报损单:BS", required = true, paramType = "path", dataType = "string")
 
 	})
-	public ResponseModel printCkd(@PathVariable Long stockId, @PathVariable String type) {
+	public CommonResponse printCkd(@PathVariable Long stockId, @PathVariable String type) {
 
 		Map<String, Object> params = stockService.prinAndPdf(stockId);
 
@@ -201,6 +200,6 @@ public class StockoutController {
 
 		WebPrintModel wm = PrintSingleton.INSTNACE.getInstance().retOk(htmlContent, "24.1", "13");
 
-		return ResponseModel.getInstance().succ(true).data(wm);
+		return CommonResponse.getInstance().succ(true).data(wm);
 	}
 }

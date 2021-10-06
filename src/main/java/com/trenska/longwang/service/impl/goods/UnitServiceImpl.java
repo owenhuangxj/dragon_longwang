@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.dao.goods.UnitMapper;
 import com.trenska.longwang.entity.goods.Unit;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.goods.IUnitService;
 import org.springframework.stereotype.Service;
 
@@ -53,9 +53,9 @@ public class UnitServiceImpl extends ServiceImpl<UnitMapper, Unit> implements IU
 	}
 
 	@Override
-	public ResponseModel removeUnitByIds(Collection<Integer> unitIds) {
+	public CommonResponse removeUnitByIds(Collection<Integer> unitIds) {
 
-		return ResponseModel.getInstance().succ(true).msg("商品单位删除成功");
+		return CommonResponse.getInstance().succ(true).msg("商品单位删除成功");
 	}
 
 	@Override

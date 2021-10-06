@@ -14,7 +14,7 @@ import com.trenska.longwang.entity.customer.Customer;
 import com.trenska.longwang.entity.sys.EmpAreaGrp;
 import com.trenska.longwang.entity.sys.SysEmp;
 import com.trenska.longwang.model.customer.AreaGrpModel;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.customer.IAreaGrpService;
 import com.trenska.longwang.service.sys.IEmpAreaGrpService;
 import com.trenska.longwang.util.ObjectCopier;
@@ -74,7 +74,7 @@ public class AreaGrpServiceImpl extends ServiceImpl<AreaGrpMapper, AreaGrp> impl
 
 	@Override
 	@Transactional
-	public ResponseModel addSubAreaGrp(AreaGrp areaGrp) {
+	public CommonResponse addSubAreaGrp(AreaGrp areaGrp) {
 
 		AreaGrp oldAreaGrp = this.getOne(
 				new LambdaQueryWrapper<AreaGrp>()
@@ -82,7 +82,7 @@ public class AreaGrpServiceImpl extends ServiceImpl<AreaGrpMapper, AreaGrp> impl
 		);
 
 		if (null != oldAreaGrp) {
-			return ResponseModel.getInstance().succ(false).msg("区域分组名称已经存在，不能创建");
+			return CommonResponse.getInstance().succ(false).msg("区域分组名称已经存在，不能创建");
 		}
 
 		// 查询父节点id => pid 查询该父节点下最大的子节点的id => area_grp_id并加上 1 作为下一个子节点的area_grp_id
@@ -125,7 +125,7 @@ public class AreaGrpServiceImpl extends ServiceImpl<AreaGrpMapper, AreaGrp> impl
 		}
 		//////////////////////////////////////////////// 处理账号数据权限结束 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
-		return ResponseModel.getInstance().succ(true).msg("区域分组添加成功");
+		return CommonResponse.getInstance().succ(true).msg("区域分组添加成功");
 
 	}
 
@@ -137,7 +137,7 @@ public class AreaGrpServiceImpl extends ServiceImpl<AreaGrpMapper, AreaGrp> impl
 	 */
 	@Override
 	@Transactional
-	public ResponseModel removeAreaGrp(Integer areaId, Integer areaDeep) {
+	public CommonResponse removeAreaGrp(Integer areaId, Integer areaDeep) {
 
 		Set<Integer> subAreaGrpIds = super.baseMapper.selectSubAreaGrpIds(areaId);
 		/************************************如果有客户在该区域，该区域就不能删除************************************/
@@ -147,7 +147,7 @@ public class AreaGrpServiceImpl extends ServiceImpl<AreaGrpMapper, AreaGrp> impl
 		);
 
 		if(Objects.isNull(dbCustomers) && !dbCustomers.isEmpty()){
-			return ResponseModel.getInstance().succ(false).msg("有"+dbCustomers.size()+"属于该区域，不能删除该区域");
+			return CommonResponse.getInstance().succ(false).msg("有"+dbCustomers.size()+"属于该区域，不能删除该区域");
 		}
 
 		switch (areaDeep) {
@@ -175,7 +175,7 @@ public class AreaGrpServiceImpl extends ServiceImpl<AreaGrpMapper, AreaGrp> impl
 						.in(EmpAreaGrp::getAreaGrpId,subAreaGrpIds)
 		);
 
-		return ResponseModel.getInstance().succ(true).msg("区域分组删除成功");
+		return CommonResponse.getInstance().succ(true).msg("区域分组删除成功");
 	}
 
 	@Override

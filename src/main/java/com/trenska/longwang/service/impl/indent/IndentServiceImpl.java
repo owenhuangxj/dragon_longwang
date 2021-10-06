@@ -40,11 +40,12 @@ import com.trenska.longwang.enums.PaymentStat;
 import com.trenska.longwang.model.indent.IndentInfoModel;
 import com.trenska.longwang.model.indent.IndentNoCustIdNameModel;
 import com.trenska.longwang.model.report.*;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.customer.ICustomerService;
 import com.trenska.longwang.service.financing.IReceiptService;
 import com.trenska.longwang.service.goods.IGoodsService;
 import com.trenska.longwang.service.goods.IUnitService;
+import com.trenska.longwang.service.impl.financing.ReceiptService;
 import com.trenska.longwang.service.indent.IIndentService;
 import com.trenska.longwang.service.stock.IStockDetailService;
 import com.trenska.longwang.service.stock.IStockService;
@@ -113,7 +114,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	private DealDetailMapper dealDetailMapper;
 
 	@Autowired
-	private IReceiptService receiptService;
+	private IReceiptService iReceiptService;
 
 	@Resource(name = "redisTemplate")
 	private RedisTemplate redisTemplate;
@@ -140,11 +141,14 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	private IUnitService unitService;
 
 	@Autowired
+	private ReceiptService receiptService;
+
+	@Autowired
 	private GoodsStockMapper goodsStockMapper;
 
 	@Override
 	@Transactional
-	public ResponseModel saveIndent(Indent indent) {
+	public CommonResponse saveIndent(Indent indent) {
 		/**
 		 * 处理订货单
 		 */
@@ -164,7 +168,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		this.save(indent);
 
-		return ResponseModel.getInstance().succ(true).msg("新建订货单成功");
+		return CommonResponse.getInstance().succ(true).msg("新建订货单成功");
 	}
 
 	/**
@@ -175,18 +179,18 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 */
 	@Override
 	@Transactional
-	public ResponseModel removeIndentById(Long indentId, String indentType) {
+	public CommonResponse removeIndentById(Long indentId, String indentType) {
 
 		Indent dbIndent = this.getById(indentId);
 
 		if (null == dbIndent) {
-			return ResponseModel.getInstance().succ(false).msg("删除成功失败 : 无此".concat(indentType));
+			return CommonResponse.getInstance().succ(false).msg("删除成功失败 : 无此".concat(indentType));
 		}
 
 		if (IndentStat.CANCELLED.getName().equals(dbIndent.getStat()) || IndentStat.INVALID.getName().equals(dbIndent.getStat())) {
 			super.baseMapper.deleteById(indentId);
 		} else {
-			return ResponseModel.getInstance().succ(false).msg("已作废或已取消的".concat(indentType).concat("才可被删除"));
+			return CommonResponse.getInstance().succ(false).msg("已作废或已取消的".concat(indentType).concat("才可被删除"));
 		}
 
 		String indentNo = dbIndent.getIndentNo();
@@ -195,7 +199,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		this.deleteRelativeInfos(indentNo);
 
-		return ResponseModel.getInstance().succ(true).msg("删除".concat(indentType).concat("成功"));
+		return CommonResponse.getInstance().succ(true).msg("删除".concat(indentType).concat("成功"));
 
 	}
 
@@ -208,11 +212,11 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 */
 	@Override
 	@Transactional
-	public ResponseModel removeIndentByIds(Collection<Long> indentIds, String indentType) {
+	public CommonResponse removeIndentByIds(Collection<Long> indentIds, String indentType) {
 
 		Collection<Indent> dbIndents = this.listByIds(indentIds);
 		if (dbIndents.isEmpty()) {
-			return ResponseModel.getInstance().succ(false).msg("请选择要删除的".concat(indentType));
+			return CommonResponse.getInstance().succ(false).msg("请选择要删除的".concat(indentType));
 		}
 		// 筛选出已作废或者已取消的订货单
 		List<Indent> indents = dbIndents.stream().filter(indent -> {
@@ -220,7 +224,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		}).collect(Collectors.toList());
 		// 如果两个集合的size不相等代表包括未完成的订货单，不能批量删除
 		if (!(indents.size() == indentIds.size())) {
-			return ResponseModel.getInstance().succ(false).msg("您选择了未完成的".concat(indentType).concat("，已作废或已取消的").concat(indentType).concat("才可被删除."));
+			return CommonResponse.getInstance().succ(false).msg("您选择了未完成的".concat(indentType).concat("，已作废或已取消的").concat(indentType).concat("才可被删除."));
 		}
 		// 删除
 		this.removeByIds(indentIds);
@@ -229,7 +233,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		indentNos.forEach(indentNo -> this.deleteRelativeInfos(indentNo)); // 删除关联记录
 
-		return ResponseModel.getInstance().succ(true).msg("批量删除".concat(indentType).concat("成功"));
+		return CommonResponse.getInstance().succ(true).msg("批量删除".concat(indentType).concat("成功"));
 	}
 
 	/**
@@ -241,18 +245,18 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 */
 	@Override
 	@Transactional
-	public ResponseModel updateIndent(Indent indent) {
+	public CommonResponse updateIndent(Indent indent) {
 
 		Long indentId = indent.getIndentId();
 
 		Indent dbIndent = this.getById(indentId);
 
 		if (Objects.isNull(dbIndent)) {
-			return ResponseModel.getInstance().succ(false).msg("无效的订货单信息!");
+			return CommonResponse.getInstance().succ(false).msg("无效的订货单信息!");
 		}
 
 		if (!IndentStat.WAIT_CONFIRM.getName().equals(dbIndent.getStat())) {
-			return ResponseModel.getInstance().succ(false).msg("待审核的订货单才可编辑!!");
+			return CommonResponse.getInstance().succ(false).msg("待审核的订货单才可编辑!!");
 		}
 
 		indent.setIndentTime(TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT));
@@ -267,7 +271,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		indent.updateById();
 
-		return ResponseModel.getInstance().succ(true).msg("修改订货单成功");
+		return CommonResponse.getInstance().succ(true).msg("修改订货单成功");
 
 	}
 
@@ -281,7 +285,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 */
 	@Override
 	@Transactional
-	public ResponseModel confirmIndent(String indentNo) {
+	public CommonResponse confirmIndent(String indentNo) {
 
 		List<IndentDetail> indentDetails = indentDetailMapper.selectList(
 				new LambdaQueryWrapper<IndentDetail>()
@@ -306,7 +310,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			}
 		}
 		if (shortStockGoods.size() > 0) {
-			return ResponseModel.getInstance().succ(false).data(shortStockGoods).msg("订单中有商品库存不足，不能审核！");
+			return CommonResponse.getInstance().succ(false).data(shortStockGoods).msg("订单中有商品库存不足，不能审核！");
 		}
 
 		// 1.更新订货单状态为待出库
@@ -316,7 +320,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 				new LambdaQueryWrapper<Indent>()
 						.eq(Indent::getIndentNo, indentNo)
 		);
-		return ResponseModel.getInstance().succ(true).msg("订货单审核成功，可以发货了");
+		return CommonResponse.getInstance().succ(true).msg("订货单审核成功，可以发货了");
 
 	}
 
@@ -328,21 +332,21 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 */
 	@Override
 	@Transactional
-	public ResponseModel cancelIndentByNo(String indentNo) {
+	public CommonResponse cancelIndentByNo(String indentNo) {
 		Indent indent = this.getOne(
 				new LambdaQueryWrapper<Indent>()
 						.eq(Indent::getIndentNo, indentNo)
 		);
 		if (Objects.isNull(indent)) {
-			return ResponseModel.getInstance().succ(false).msg("无此订货单");
+			return CommonResponse.getInstance().succ(false).msg("无此订货单");
 		}
 
 		if (!IndentStat.WAIT_CONFIRM.getName().equals(indent.getStat())) {
-			return ResponseModel.getInstance().succ(false).msg("待审核的订货单才能被取消");
+			return CommonResponse.getInstance().succ(false).msg("待审核的订货单才能被取消");
 		}
 
 		if (IndentStat.CANCELLED.getName().equals(indent.getStat())) {
-			return ResponseModel.getInstance().succ(false).msg("订货单已取消，不能撤销");
+			return CommonResponse.getInstance().succ(false).msg("订货单已取消，不能撤销");
 		}
 
 		Long indentId = indent.getIndentId();
@@ -351,7 +355,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		updatingIndent.setReceivedAmnt("0.00");
 		this.updateById(updatingIndent);
 
-		return ResponseModel.getInstance().succ(true).msg("订货单取消成功");
+		return CommonResponse.getInstance().succ(true).msg("订货单取消成功");
 	}
 
 	/**
@@ -386,11 +390,11 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 */
 	@Override
 	@Transactional
-	public ResponseModel repealIndent(long indentId) {
+	public CommonResponse repealIndent(long indentId) {
 
 		Indent dbIndent = this.getById(indentId);
 		if (Objects.isNull(dbIndent)) {
-			return ResponseModel.getInstance().succ(false).msg("无此订货单信息");
+			return CommonResponse.getInstance().succ(false).msg("无此订货单信息");
 		}
 
 //		if(!IndentStat.WAIT_STOCKOUT.getName().equals(dbIndent.getStat())){
@@ -400,19 +404,19 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		String stat = dbIndent.getStat();
 
 		if (IndentStat.INVALID.getName().equals(stat)) {
-			return ResponseModel.getInstance().succ(false).msg("不能撤销已作废的订单");
+			return CommonResponse.getInstance().succ(false).msg("不能撤销已作废的订单");
 		}
 		if (IndentStat.CANCELLED.getName().equals(stat)) {
-			return ResponseModel.getInstance().succ(false).msg("不能撤销已取消的订单");
+			return CommonResponse.getInstance().succ(false).msg("不能撤销已取消的订单");
 		}
 		if (IndentStat.WAIT_CONFIRM.getName().equals(stat)) {
-			return ResponseModel.getInstance().succ(false).msg("不能撤销待审核的订单");
+			return CommonResponse.getInstance().succ(false).msg("不能撤销待审核的订单");
 		}
 		if (IndentStat.STOCKOUTED.getName().equals(stat)) {
-			return ResponseModel.getInstance().succ(false).msg("不能撤销已出库的订单");
+			return CommonResponse.getInstance().succ(false).msg("不能撤销已出库的订单");
 		}
 		if (IndentStat.FINISHED.getName().equals(stat)) {
-			return ResponseModel.getInstance().succ(false).msg("不能撤销已完成的订单");
+			return CommonResponse.getInstance().succ(false).msg("不能撤销已完成的订单");
 		}
 
 		Indent updatingIndent = new Indent();
@@ -493,7 +497,8 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		}
 		if (!updatingReceipts.isEmpty()) {
 			dbCustomer = new Customer().selectById(custId);
-			ReceiptUtil.cancelReceipts(updatingReceipts, dbCustomer); //作废收/付款单 -> 订货单收/付款时会减少客户欠款，作废收/付款单时会增加客户欠款
+			receiptService.cancelReceipts(updatingReceipts, dbCustomer); //作废收/付款单 ->
+			// 订货单收/付款时会减少客户欠款，作废收/付款单时会增加客户欠款
 		}
 		// 3 减少待出库库存
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -506,7 +511,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		if (!Objects.isNull(stockNos) && !stockNos.isEmpty()) {
 			stockNos.forEach(stockNo -> stockDetailService.cancelStockout(stockNo));
 		}
-		return ResponseModel.getInstance().succ(true).msg("订货单撤销成功");
+		return CommonResponse.getInstance().succ(true).msg("订货单撤销成功");
 	}
 
 	/**
@@ -534,31 +539,31 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 */
 	@Override
 	@Transactional
-	public ResponseModel stockoutIndent(Indent indent) {
+	public CommonResponse stockoutIndent(Indent indent) {
 		int custId = indent.getCustId();
 		Long indentId = indent.getIndentId();
 		String indentNo = indent.getIndentNo();
 		Indent dbIndent = super.getById(indentId);
 		if (dbIndent == null) {
-			return ResponseModel.getInstance().succ(false).msg("无效的订单信息，不能出库！");
+			return CommonResponse.getInstance().succ(false).msg("无效的订单信息，不能出库！");
 		}
 
 		synchronized (indentNo) {
 			String stat = dbIndent.getStat();
 			if (IndentStat.FINISHED.getName().equals(stat) || IndentStat.STOCKOUTED.getName().equals(stat)) {
-				return ResponseModel.getInstance().succ(false).msg("订单" + stat + "，不能出库！");
+				return CommonResponse.getInstance().succ(false).msg("订单" + stat + "，不能出库！");
 			}
 		}
-		ResponseModel responseModel = CustomerUtil.checkDebtLimit(indentNo, custId);
-		if (!responseModel.getSucc()) {
-			return responseModel;
+		CommonResponse commonResponse = CustomerUtil.checkDebtLimit(indentNo, custId);
+		if (!commonResponse.getSucc()) {
+			return commonResponse;
 		}
 		String stockTime = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
 		String stockNo = StockUtil.getStockNo(DragonConstant.CK_TITLE, DragonConstant.CKD_CHINESE, stockMapper);
 
 		Integer empIdInToken = SysUtil.getEmpIdInToken();
 		if (null == empIdInToken) {
-			return ResponseModel.getInstance().succ(false).msg(DragonConstant.ACCESS_TIMEOUT_MSG);
+			return CommonResponse.getInstance().succ(false).msg(DragonConstant.ACCESS_TIMEOUT_MSG);
 		}
 		Stock stockout = new Stock();
 		stockout.setStockNo(stockNo);
@@ -619,7 +624,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		/******************************************** 添加出库详情 ********************************************/
 		stockout.setStockouts(stockoutDetails);
 		/******************************************** 出库 ********************************************/
-		ResponseModel stockoutResult = StockUtil.stockout(stockout, goodsMapper);
+		CommonResponse stockoutResult = StockUtil.stockout(stockout, goodsMapper);
 		// 如果出库失败返回出库失败原因
 		Boolean succ = stockoutResult.getSucc();
 		if (!succ) {
@@ -722,7 +727,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 //					lock.unlock();
 //				}
 		}
-		return ResponseModel.getInstance().succ(true).msg("订货单出库成功！");
+		return CommonResponse.getInstance().succ(true).msg("订货单出库成功！");
 	}
 
 	/**
@@ -738,7 +743,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 */
 	@Override
 	@Transactional
-	public ResponseModel saveSalesReturn(Indent indent) {
+	public CommonResponse saveSalesReturn(Indent indent) {
 
 		String currentTime = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
 		indent.setIndentTime(currentTime);
@@ -881,7 +886,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		indent.setSum(sum);
 		indent.insert();
 
-		return ResponseModel.getInstance().succ(true).msg("创建退货单成功.");
+		return CommonResponse.getInstance().succ(true).msg("创建退货单成功.");
 	}
 
 	/**
@@ -894,13 +899,13 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 * @return
 	 */
 	@Override
-	public ResponseModel invalidSalseReturn(Indent indent) {
+	public CommonResponse invalidSalseReturn(Indent indent) {
 		Integer custId = indent.getCustId();
 		String indentNo = indent.getIndentNo();
 		String currentTime = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
 
 		if (Objects.isNull(indentNo)) {
-			return ResponseModel.getInstance().succ(false).msg(DragonConstant.INVALID_INDENT);
+			return CommonResponse.getInstance().succ(false).msg(DragonConstant.INVALID_INDENT);
 		}
 
 		// 获取关联入库单
@@ -919,7 +924,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		);
 
 		if (Objects.isNull(stockinDetails) || stockinDetails.isEmpty()) {
-			return ResponseModel.getInstance().succ(false).msg(DragonConstant.INVALID_INDENT);
+			return CommonResponse.getInstance().succ(false).msg(DragonConstant.INVALID_INDENT);
 		}
 
 		List<Stock> stockins = new ArrayList<>();
@@ -957,40 +962,40 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		// 作废对应付款单
 //		Receipt updatingReceipt = new Receipt();
 //		updatingReceipt.setStat(false);
-//		receiptService.update(
+//		iReceiptService.update(
 //				updatingReceipt,
 //				new LambdaQueryWrapper<Receipt>()
 //						.eq(Receipt::getBusiNo,indentNo)
 //						.eq(Receipt::getType,Constant.FKD_CHINESE)
 //		);
 
-		return ResponseModel.getInstance().succ(true).msg("作废退货单成功");
+		return CommonResponse.getInstance().succ(true).msg("作废退货单成功");
 
 	}
 
 	@Override
-	public ResponseModel removeReturnSalesById(Long indentId) {
+	public CommonResponse removeReturnSalesById(Long indentId) {
 		Indent indent = getById(indentId);
 
 		if (IndentStat.INVALID.getName().equals(indent.getStat()) || IndentStat.CANCELLED.getName().equals(indent.getStat())) {
 			super.baseMapper.deleteById(indentId);
 		} else {
-			return ResponseModel.getInstance().succ(false).msg("已作废或已取消的退货单才可被删除.");
+			return CommonResponse.getInstance().succ(false).msg("已作废或已取消的退货单才可被删除.");
 		}
 		indentDetailMapper.delete(
 				new UpdateWrapper<IndentDetail>()
 						.eq("indent_no", indent.getIndentNo())
 						.eq("stat", indent.getStat())
 		);
-		return ResponseModel.getInstance().succ(true).msg("删除退货单成功.");
+		return CommonResponse.getInstance().succ(true).msg("删除退货单成功.");
 	}
 
 	@Override
-	public ResponseModel removeReturnSalesByIds(Collection<Long> indentIds) {
+	public CommonResponse removeReturnSalesByIds(Collection<Long> indentIds) {
 		for (Long indentId : indentIds) {
 			removeReturnSalesById(indentId);
 		}
-		return ResponseModel.getInstance().succ(true).msg("批量删除退货单成功.");
+		return CommonResponse.getInstance().succ(true).msg("批量删除退货单成功.");
 	}
 
 	/**
@@ -1001,34 +1006,34 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 * @return
 	 */
 	@Override
-	public ResponseModel addIou(Long indentId, String iouAmnt) {
+	public CommonResponse addIou(Long indentId, String iouAmnt) {
 		String msg = "增加欠条成功 ";
 		Indent dbIndent = this.getById(indentId);
 
 		if (null == dbIndent) {
-			return ResponseModel.getInstance().succ(false).msg("无效的订单");
+			return CommonResponse.getInstance().succ(false).msg("无效的订单");
 		}
 
 		/**
 		 * 判断欠条是否为0，保证只能打一次欠条
 		 */
 		if (Double.valueOf(dbIndent.getIouAmnt()) > 0) {
-			return ResponseModel.getInstance().succ(false).msg("欠条不可修改");
+			return CommonResponse.getInstance().succ(false).msg("欠条不可修改");
 		}
 
 		String stat = dbIndent.getStat();
 		String receiptStat = dbIndent.getReceiptStat();
 
 		if (IndentStat.WAIT_CONFIRM.getName().equals(stat)) {
-			return ResponseModel.getInstance().succ(false).msg("待审核的订单不能添加欠条");
+			return CommonResponse.getInstance().succ(false).msg("待审核的订单不能添加欠条");
 		}
 
 		if (IndentStat.FINISHED.getName().equals(stat)) {
-			return ResponseModel.getInstance().succ(false).msg("已完成的订单不能添加欠条");
+			return CommonResponse.getInstance().succ(false).msg("已完成的订单不能添加欠条");
 		}
 
 		if (PaymentStat.RECEIPRED.getName().equals(receiptStat)) {
-			return ResponseModel.getInstance().succ(false).msg("已收款的订单不能添加欠条");
+			return CommonResponse.getInstance().succ(false).msg("已收款的订单不能添加欠条");
 		}
 
 		// 已收款
@@ -1045,7 +1050,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		Indent updatingIndent = new Indent();
 		if (indentTotal.compareTo(receivedAmnt.add(payedAmnt).add(newIouAmnt)) < 0) {
-			return ResponseModel.getInstance().succ(false).msg("欠条金额+收款金额+付款金额不能大于应收金额");
+			return CommonResponse.getInstance().succ(false).msg("欠条金额+收款金额+付款金额不能大于应收金额");
 		} else if (indentTotal.compareTo(receivedAmnt.add(payedAmnt).add(newIouAmnt)) == 0) { // 如果欠条金额+收款金额+付款金额 == 应收金额
 			// 1.设置是否可以财务审核状态为true->表示可以进行财务审核了
 			updatingIndent.setAuditable(true);
@@ -1056,7 +1061,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		updatingIndent.setIouAmnt(iouAmnt);
 		updatingIndent.updateById();
 
-		return ResponseModel.getInstance().succ(true).msg(msg);
+		return CommonResponse.getInstance().succ(true).msg(msg);
 	}
 
 	/**
@@ -1069,12 +1074,12 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 * @return
 	 */
 	@Override
-	public ResponseModel addOrUpdateIou(Long indentId, String iouAmnt, String iouTime, String iouRemarks) {
+	public CommonResponse addOrUpdateIou(Long indentId, String iouAmnt, String iouTime, String iouRemarks) {
 		String msg = "欠条新建成功！";
 		Indent dbIndent = this.getById(indentId);
 
 		if (null == dbIndent) {
-			return ResponseModel.getInstance().succ(false).msg("无效的订单");
+			return CommonResponse.getInstance().succ(false).msg("无效的订单");
 		}
 
 		String stat = dbIndent.getStat();
@@ -1082,10 +1087,10 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		Boolean auditStat = dbIndent.getAuditStat();
 
 		if (true == auditStat) {
-			return ResponseModel.getInstance().succ(false).msg("订单已财审，不能操作欠条！");
+			return CommonResponse.getInstance().succ(false).msg("订单已财审，不能操作欠条！");
 		}
 		if (IndentStat.FINISHED.getName().equals(stat)) {
-			return ResponseModel.getInstance().succ(false).msg("订单已完成，不能操作欠条！");
+			return CommonResponse.getInstance().succ(false).msg("订单已完成，不能操作欠条！");
 		}
 
 		// 已收款
@@ -1126,7 +1131,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		if (StringUtils.isNotEmpty(dbIndent.getIndentTime())) {
 			msg = "欠条更新成功！";
 		}
-		return ResponseModel.getInstance().succ(true).msg(msg);
+		return CommonResponse.getInstance().succ(true).msg(msg);
 	}
 
 	/**
@@ -1139,16 +1144,16 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 */
 	@Override
 	@Transactional
-	public ResponseModel indentPay(Long indentId, String payAmount, String oper, String payway, HttpServletRequest request) {
+	public CommonResponse indentPay(Long indentId, String payAmount, String oper, String payway, HttpServletRequest request) {
 
 		Indent dbIndent = this.getById(indentId);
 
 		if (null == dbIndent) {
-			return ResponseModel.getInstance().succ(false).msg("无效的订单");
+			return CommonResponse.getInstance().succ(false).msg("无效的订单");
 		}
 
 		if (PaymentStat.RECEIPRED.getName().equals(dbIndent.getStat())) {
-			return ResponseModel.getInstance().succ(false).msg("订单已收款");
+			return CommonResponse.getInstance().succ(false).msg("订单已收款");
 		}
 
 		// 已收款
@@ -1164,7 +1169,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		BigDecimal newPayAmount = new BigDecimal(payAmount);
 
 		if (receivedAmnt.add(payedAmnt).add(newPayAmount).compareTo(indentTotal) > 0) {
-			return ResponseModel.getInstance().succ(false).msg("已收款+已付款+新增付款不能大于应收款");
+			return CommonResponse.getInstance().succ(false).msg("已收款+已付款+新增付款不能大于应收款");
 		}
 
 		// 更新订货单的已付金额
@@ -1195,55 +1200,55 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		receipt.setChargemanId(empId);
 		receipt.setEmpId(empId);
 		receipt.setPayway(payway);
-		receiptService.savePayReceipt(receipt);
+		iReceiptService.savePayReceipt(receipt);
 
-		return ResponseModel.getInstance().succ(true).msg("订货单付款成功");
+		return CommonResponse.getInstance().succ(true).msg("订货单付款成功");
 	}
 
 	/*************************************************财务审核订货单****************************************************/
 
 	@Override
-	public ResponseModel auditIndentById(Long indentId) {
+	public CommonResponse auditIndentById(Long indentId) {
 		Indent dbIndent = this.getById(indentId);
 		if (Objects.isNull(dbIndent)) {
-			return ResponseModel.getInstance().succ(false).msg("无效的订货单");
+			return CommonResponse.getInstance().succ(false).msg("无效的订货单");
 		}
 		Boolean iouStat = dbIndent.getIouStat();
 		Boolean auditStat = dbIndent.getAuditStat();
 		if (true == auditStat) {
-			return ResponseModel.getInstance().succ(false).msg("请不要重复进行财务审核");
+			return CommonResponse.getInstance().succ(false).msg("请不要重复进行财务审核");
 		}
 
 		if (IndentStat.FINISHED.getName().equals(dbIndent.getStat())) {
-			return ResponseModel.getInstance().succ(false).msg("已完成的订货单不需要再进行财务审核");
+			return CommonResponse.getInstance().succ(false).msg("已完成的订货单不需要再进行财务审核");
 		}
 		if (false == iouStat) {
-			return ResponseModel.getInstance().succ(false).msg("未交账的订货单不可以进行财务审核");
+			return CommonResponse.getInstance().succ(false).msg("未交账的订货单不可以进行财务审核");
 		}
 		dbIndent.setAuditStat(true);
 
 		boolean successful = IndentUtil.handleIndentStat(dbIndent);
 
-		return ResponseModel.getInstance().succ(successful).msg(successful ? "财务审核成功" : "财务审核失败");
+		return CommonResponse.getInstance().succ(successful).msg(successful ? "财务审核成功" : "财务审核失败");
 	}
 
 	@Override
-	public ResponseModel auditIndentById(Long indentId, String auditRemarks) {
+	public CommonResponse auditIndentById(Long indentId, String auditRemarks) {
 		Indent dbIndent = this.getById(indentId);
 		if (Objects.isNull(dbIndent)) {
-			return ResponseModel.getInstance().succ(false).msg("无效的订货单");
+			return CommonResponse.getInstance().succ(false).msg("无效的订货单");
 		}
 		Boolean iouStat = dbIndent.getIouStat();
 		Boolean auditStat = dbIndent.getAuditStat();
 		if (true == auditStat) {
-			return ResponseModel.getInstance().succ(false).msg("请不要重复进行财务审核");
+			return CommonResponse.getInstance().succ(false).msg("请不要重复进行财务审核");
 		}
 
 		if (IndentStat.FINISHED.getName().equals(dbIndent.getStat())) {
-			return ResponseModel.getInstance().succ(false).msg("已完成的订货单不需要再进行财务审核");
+			return CommonResponse.getInstance().succ(false).msg("已完成的订货单不需要再进行财务审核");
 		}
 		if (false == iouStat) {
-			return ResponseModel.getInstance().succ(false).msg("未交账的订货单不可以进行财务审核");
+			return CommonResponse.getInstance().succ(false).msg("未交账的订货单不可以进行财务审核");
 		}
 //		Integer custId = dbIndent.getCustId();
 		/* 订单进入到财审环节的时候会因为客户超过欠款额度而无法财审。用户要求在财审环节不需要做该限制。 */
@@ -1275,11 +1280,11 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		}
 
 		boolean successful = IndentUtil.handleIndentStat(dbIndent);
-		return ResponseModel.getInstance().succ(successful).msg(successful ? "财务审核成功" : "财务审核失败");
+		return CommonResponse.getInstance().succ(successful).msg(successful ? "财务审核成功" : "财务审核失败");
 	}
 
 	@Override
-	public ResponseModel cancelReceipt(Receipt receipt) {
+	public CommonResponse cancelReceipt(Receipt receipt) {
 
 		/*****************************************处理订单金额 ，减少已收款金额****************************************/
 		String busiNo = receipt.getBusiNo();
@@ -1288,10 +1293,10 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 						.eq(Indent::getIndentNo, busiNo)
 		);
 		if (Objects.isNull(dbIndent)) {
-			return ResponseModel.getInstance().succ(false).msg(DragonConstant.INVALID_INDENT);
+			return CommonResponse.getInstance().succ(false).msg(DragonConstant.INVALID_INDENT);
 		}
 		if (IndentStat.FINISHED.getName().equals(dbIndent.getStat())) {
-			return ResponseModel.getInstance().succ(false).msg(DragonConstant.INDENT_FORBIDDEN);
+			return CommonResponse.getInstance().succ(false).msg(DragonConstant.INDENT_FORBIDDEN);
 		}
 
 		String historyReceivedAmnt = dbIndent.getReceivedAmnt();
@@ -1307,13 +1312,13 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		receipts.add(receipt);
 		int custId = receipt.getCustId();
 		Customer dbCustomer = customerMapper.selectById(custId);
-		ReceiptUtil.cancelReceipts(receipts, dbCustomer);
+		receiptService.cancelReceipts(receipts, dbCustomer);
 
-		return ResponseModel.getInstance().succ(true).msg("作废收款单成功");
+		return CommonResponse.getInstance().succ(true).msg("作废收款单成功");
 	}
 
 	@Override
-	public ResponseModel cancelPayReceipt(Receipt pay) {
+	public CommonResponse cancelPayReceipt(Receipt pay) {
 		/*****************************************处理订单金额 ，减少已付款金额****************************************/
 		String busiNo = pay.getBusiNo();
 		Indent dbIndent = this.getOne(
@@ -1321,10 +1326,10 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 						.eq(Indent::getIndentNo, busiNo)
 		);
 		if (Objects.isNull(dbIndent)) {
-			return ResponseModel.getInstance().succ(false).msg(DragonConstant.INVALID_INDENT);
+			return CommonResponse.getInstance().succ(false).msg(DragonConstant.INVALID_INDENT);
 		}
 		if (IndentStat.FINISHED.getName().equals(dbIndent.getStat())) {
-			return ResponseModel.getInstance().succ(false).msg(DragonConstant.INDENT_FORBIDDEN);
+			return CommonResponse.getInstance().succ(false).msg(DragonConstant.INDENT_FORBIDDEN);
 		}
 
 		String historyPayedAmnt = dbIndent.getPayedAmnt();
@@ -1339,12 +1344,12 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		pays.add(pay);
 		int custId = pay.getCustId();
 		Customer dbCustomer = customerMapper.selectById(custId);
-		ReceiptUtil.cancelReceipts(pays, dbCustomer);
-		return ResponseModel.getInstance().succ(true).msg("作废付款单成功");
+		receiptService.cancelReceipts(pays, dbCustomer);
+		return CommonResponse.getInstance().succ(true).msg("作废付款单成功");
 	}
 
 	@Override
-	public ResponseModel cancelIndentById(Long indentId) {
+	public CommonResponse cancelIndentById(Long indentId) {
 		return null;
 	}
 
@@ -1363,27 +1368,27 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 * @return
 	 */
 
-	public ResponseModel changeIndent(Indent indent) {
+	public CommonResponse changeIndent(Indent indent) {
 		Long indentId = indent.getIndentId();
 
 		if (NumberUtil.isLongNotUsable(indentId)) {
-			return ResponseModel.getInstance().succ(false).msg(DragonConstant.INVALID_INDENT);
+			return CommonResponse.getInstance().succ(false).msg(DragonConstant.INVALID_INDENT);
 		}
 
 		Indent dbIndent = new Indent().selectById(indentId);
 
 		if (null == dbIndent) {
-			return ResponseModel.getInstance().succ(false).msg(DragonConstant.INVALID_INDENT);
+			return CommonResponse.getInstance().succ(false).msg(DragonConstant.INVALID_INDENT);
 		}
 
 		Boolean auditStat = dbIndent.getAuditStat();
 
 		if (true == auditStat) {
-			return ResponseModel.getInstance().succ(false).msg("订单已财审，不能核改");
+			return CommonResponse.getInstance().succ(false).msg("订单已财审，不能核改");
 		}
 
 		if (IndentStat.FINISHED.getName().equals(dbIndent.getStat())) {
-			return ResponseModel.getInstance().succ(false).msg("订单已完成，不能核改");
+			return CommonResponse.getInstance().succ(false).msg("订单已完成，不能核改");
 		}
 
 		String indentNo = dbIndent.getIndentNo();
@@ -1448,7 +1453,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		updatingIndent.updateById(); // 更新订货单
 
-		return ResponseModel.getInstance().succ(true).msg("修改订货单成功");
+		return CommonResponse.getInstance().succ(true).msg("修改订货单成功");
 	}
 
 	@Override
@@ -1474,14 +1479,14 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 * @return
 	 */
 	@Override
-	public ResponseModel updateAuditRemarks(String indentNo, String auditRemarks) {
+	public CommonResponse updateAuditRemarks(String indentNo, String auditRemarks) {
 		this.update(
 				new LambdaUpdateWrapper<Indent>()
 						.eq(Indent::getIndentNo, indentNo)
 						.set(Indent::getAuditRemarks, auditRemarks)
 		);
 		DealDetailUtil.saveOrUpdateAuditRemarks(auditRemarks, indentNo);
-		return ResponseModel.getInstance().succ(true).msg(DragonConstant.CHANGE_SUCC);
+		return CommonResponse.getInstance().succ(true).msg(DragonConstant.CHANGE_SUCC);
 	}
 
 	@Override
@@ -2043,18 +2048,18 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	/**
 	 * 客户销售汇总
 	 *
-	 * @param params
+	 * @param searchModel
 	 * @param page
 	 * @return
 	 */
 	@Override
 	@DataAuthVerification
-	public Page<CustSalesSummarizingModel> getCustSalesSummarizing(Map<String, Object> params, Page page) {
+	public Page<CustSalesSummarizingModel> getCustSalesSummarizing(CustSalesSummarizingSearchModel searchModel, Page page) {
 
 		int retain = SysUtil.getSysConfigRetain();
 
 		//获取数据
-		List<CustSalesSummarizingModel> records = super.baseMapper.selectCustSalesSummarizingPageSelective(params, page);
+		List<CustSalesSummarizingModel> records = super.baseMapper.selectCustSalesSummarizingPageSelective(searchModel, page);
 
 		for (CustSalesSummarizingModel record : records) {
 
@@ -2076,7 +2081,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			record.setAvgPrice(avgPrice.toString());
 		}
 
-		int total = super.baseMapper.selectCustSalesSummarizingCountSelective(params);
+		int total = super.baseMapper.selectCustSalesSummarizingCountSelective(searchModel);
 		page.setRecords(records);
 		page.setTotal(total);
 		return page;
@@ -2587,9 +2592,9 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	}
 
 	@Override
-	public CustSalesSummationModel getCustSalesSummation(Map<String, Object> params) {
+	public CustSalesSummationModel getCustSalesSummation(CustSalesSummarizingSearchModel searchModel) {
 
-		CustSalesSummationModel custSalesSummationModel = super.baseMapper.selectCustSalesSummation(params);
+		CustSalesSummationModel custSalesSummationModel = super.baseMapper.selectCustSalesSummation(searchModel);
 
 		int retain = SysUtil.getSysConfigRetain();
 
@@ -2691,13 +2696,13 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	 */
 	@Override
 	@Transactional
-	public ResponseModel invalidIndent(Indent indent) {
+	public CommonResponse invalidIndent(Indent indent) {
 
 		Integer custId = indent.getCustId();
 		Long indentId = indent.getIndentId();
 		String indentNo = indent.getIndentNo();
 
-		receiptService.update(
+		iReceiptService.update(
 				new LambdaUpdateWrapper<Receipt>()
 						.eq(Receipt::getBusiNo, indentNo)
 						.set(Receipt::getStat, false)
@@ -2712,9 +2717,9 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 //
 //		for (Receipt receipt : receipts) {
 //			if (receipt.getType().equals(Constant.FKD_CHINESE)){
-//				receiptService.cancelPayReceiptById(receipt.getReceiptId());
+//				iReceiptService.cancelPayReceiptById(receipt.getReceiptId());
 //			}else{
-//				receiptService.cancelReceipt(receipt,request);
+//				iReceiptService.cancelReceipt(receipt,request);
 //			}
 //		}
 
@@ -2731,7 +2736,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		updatingIndent.setReceiptStat(PaymentStat.INVALID.getName());
 		this.updateById(updatingIndent);
 
-		return ResponseModel.getInstance().succ(true).msg("作废订货单成功");
+		return CommonResponse.getInstance().succ(true).msg("作废订货单成功");
 	}
 
 	/**

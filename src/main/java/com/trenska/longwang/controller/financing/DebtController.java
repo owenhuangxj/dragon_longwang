@@ -4,7 +4,7 @@ package com.trenska.longwang.controller.financing;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.financing.DealDetail;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.financing.IDealDetailService;
 import com.trenska.longwang.util.NumberUtil;
 import com.trenska.longwang.util.PageUtils;
@@ -38,21 +38,21 @@ public class DebtController {
 
 	@PostMapping(value = "/item")
 	@ApiOperation("新建欠款单")
-	public ResponseModel add(@RequestBody @ApiParam DealDetail dealDetail) {
+	public CommonResponse add(@RequestBody @ApiParam DealDetail dealDetail) {
 		if (dealDetail == null) {
-			return ResponseModel.getInstance().succ(false).msg("无效的欠款单！");
+			return CommonResponse.getInstance().succ(false).msg("无效的欠款单！");
 		}
 		if (NumberUtil.isIntegerNotUsable(dealDetail.getCustId())) {
-			return ResponseModel.getInstance().succ(false).msg("无效的客户信息！");
+			return CommonResponse.getInstance().succ(false).msg("无效的客户信息！");
 		}
 		if (!StringUtil.isNumeric(dealDetail.getAmount(), false)) {
-			return ResponseModel.getInstance().succ(false).msg("无效的欠款金额！");
+			return CommonResponse.getInstance().succ(false).msg("无效的欠款金额！");
 		}
 		if (StringUtils.isEmpty(dealDetail.getOper())) {
-			return ResponseModel.getInstance().succ(false).msg("操作类型不能为空！");
+			return CommonResponse.getInstance().succ(false).msg("操作类型不能为空！");
 		}
 		dealDetailService.addDebt(dealDetail);
-		return ResponseModel.getInstance().succ(true).msg("客户欠款增加成功！");
+		return CommonResponse.getInstance().succ(true).msg("客户欠款增加成功！");
 	}
 
 	@RequestMapping(value = "/page/{current}/{size}", method = RequestMethod.GET)

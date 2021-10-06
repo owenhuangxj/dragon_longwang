@@ -9,7 +9,7 @@ import com.trenska.longwang.entity.indent.IndentDetail;
 import com.trenska.longwang.model.indent.IndentInfoModel;
 import com.trenska.longwang.model.indent.IndentNoCustIdNameModel;
 import com.trenska.longwang.model.report.*;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
@@ -24,45 +24,45 @@ import java.util.Map;
  */
 public interface IIndentService extends IService<Indent> {
 
-	ResponseModel saveIndent(Indent indent);
+	CommonResponse saveIndent(Indent indent);
 
-	ResponseModel removeIndentById(Long indentId, String indentType);
+	CommonResponse removeIndentById(Long indentId, String indentType);
 
-	ResponseModel removeIndentByIds(Collection<Long> indentIds, String indentType);
+	CommonResponse removeIndentByIds(Collection<Long> indentIds, String indentType);
 
 	IndentInfoModel getIndentInfoModel(Integer custId, Integer goodsId);
 
-	ResponseModel updateIndent(Indent indent);
+	CommonResponse updateIndent(Indent indent);
 
 	Page<Indent> getIndentPageSelective(Map<String, Object> params, Page page);
 
-	ResponseModel confirmIndent(String indentNo);
+	CommonResponse confirmIndent(String indentNo);
 
-	ResponseModel cancelIndentByNo(String indentNo);
+	CommonResponse cancelIndentByNo(String indentNo);
 
-	ResponseModel repealIndent(long indentId);
+	CommonResponse repealIndent(long indentId);
 
-	ResponseModel stockoutIndent(Indent indent);
+	CommonResponse stockoutIndent(Indent indent);
 
 	Indent getIndentInfo(String indentNo);
 
-	ResponseModel invalidIndent(Indent indent);
+	CommonResponse invalidIndent(Indent indent);
 
 	List<IndentDetail> getIndentDetails(String indentNo);
 
-	ResponseModel saveSalesReturn(Indent indent);
+	CommonResponse saveSalesReturn(Indent indent);
 
-	ResponseModel invalidSalseReturn(Indent indent);
+	CommonResponse invalidSalseReturn(Indent indent);
 
-	ResponseModel removeReturnSalesById(Long indentId);
+	CommonResponse removeReturnSalesById(Long indentId);
 
-	ResponseModel removeReturnSalesByIds(Collection<Long> indentIds);
+	CommonResponse removeReturnSalesByIds(Collection<Long> indentIds);
 
-	ResponseModel addIou(Long indentId, String iouAmnt);
+	CommonResponse addIou(Long indentId, String iouAmnt);
 
-	ResponseModel addOrUpdateIou(Long indentId, String iouAmnt, String iouTime, String iouRemarks);
+	CommonResponse addOrUpdateIou(Long indentId, String iouAmnt, String iouTime, String iouRemarks);
 
-	ResponseModel indentPay(Long indentId, String iouAmnt, String oper, String payway, HttpServletRequest request);
+	CommonResponse indentPay(Long indentId, String iouAmnt, String oper, String payway, HttpServletRequest request);
 
 	Map<String, Object> pdfAndPrint(Long indentId);
 
@@ -70,7 +70,7 @@ public interface IIndentService extends IService<Indent> {
 
 	Page<CustSalesBillModel> getCustSales(Map<String, Object> params, Page page);
 
-	Page<CustSalesSummarizingModel> getCustSalesSummarizing(Map<String, Object> params, Page page);
+	Page<CustSalesSummarizingModel> getCustSalesSummarizing(CustSalesSummarizingSearchModel params, Page page);
 
 	CustSalesStatisticsSummationModel selectCustSalesStatisticsSummation(Map<String, Object> params);
 
@@ -104,25 +104,25 @@ public interface IIndentService extends IService<Indent> {
 
 	CustSalesDetailSummarizingModel getCustSalesDetailSummarizing(Map<String, Object> params);
 
-	CustSalesSummationModel getCustSalesSummation(Map<String, Object> params);
+	CustSalesSummationModel getCustSalesSummation(CustSalesSummarizingSearchModel searchModel);
 
-	ResponseModel auditIndentById(Long indentId);
+	CommonResponse auditIndentById(Long indentId);
 
-	ResponseModel auditIndentById(Long indentId, String auditRemarks);
+	CommonResponse auditIndentById(Long indentId, String auditRemarks);
 
-	ResponseModel cancelReceipt(Receipt receipt);
+	CommonResponse cancelReceipt(Receipt receipt);
 
-	ResponseModel cancelPayReceipt(Receipt pay);
+	CommonResponse cancelPayReceipt(Receipt pay);
 
-	ResponseModel cancelIndentById(Long indentId);
+	CommonResponse cancelIndentById(Long indentId);
 
-	ResponseModel changeIndent(Indent indent);
+	CommonResponse changeIndent(Indent indent);
 
 	Page<String> getDiscounts(Page page, Map<String, Object> params);
 
 	DealDetailSummarizing getDealDetailSummarizingForAdd(Map<String, Object> params);
 
-	ResponseModel updateAuditRemarks(String indentNo, String auditRemarks);
+	CommonResponse updateAuditRemarks(String indentNo, String auditRemarks);
 
 	Page<DeliveryStaticsModel> getGoodsDeliveryStatics(Page page, Map<String, Object> params);
 

@@ -18,11 +18,9 @@ import java.util.Map;
  */
 //@CacheNamespace(implementation = RedisCacheMybatis.class, eviction = RedisCacheMybatis.class)
 public interface ReceiptMapper extends BaseMapper<Receipt> {
+	List<Receipt> selectReceiptPageSelective(Map<String, Object> params, Pagination page);
 
-
-    List<Receipt> selectReceiptPageSelective(Map<String,Object> params,Pagination page);
-
-    Integer selectReceiptCountSelective(Map<String,Object> params);
+	Integer selectReceiptCountSelective(Map<String, Object> params);
 
 	Receipt selectReceiptById(Long receiptId);
 
@@ -40,11 +38,11 @@ public interface ReceiptMapper extends BaseMapper<Receipt> {
 
 	Receipt selectRecordOfMaxId(String type);
 
-	DealDetailSummarizing selectDealDetailSummarizingForDecrease(Map<String,Object> params);
+	DealDetailSummarizing selectDealDetailSummarizingForDecrease(Map<String, Object> params);
 
-	List<Map<String, String>> selectReceiptStatics(Map<String,Object> params, Pagination page);
+	List<Map<String, String>> selectReceiptStatics(Map<String, Object> params, Pagination page);
 
-	int selectReceiptStaticsCount(Map<String,Object> params);
+	int selectReceiptStaticsCount(Map<String, Object> params);
 
 	CommonReceiptSummation selectReceiptSelectiveSummation(Map<String, Object> params);
 }

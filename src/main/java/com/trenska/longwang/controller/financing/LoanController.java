@@ -2,7 +2,7 @@ package com.trenska.longwang.controller.financing;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.financing.Loan;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.financing.ILoanService;
 import com.trenska.longwang.util.PageUtils;
 import io.swagger.annotations.ApiImplicitParam;
@@ -13,7 +13,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,18 +33,18 @@ public class LoanController {
 
 	@PostMapping(value = "/add")
 	@ApiOperation("新建调账单")
-	public ResponseModel addLoan(@RequestBody @ApiParam Loan loan) {
+	public CommonResponse addLoan(@RequestBody @ApiParam Loan loan) {
 		if(ObjectUtils.isEmpty(loan)){
-			return ResponseModel.getInstance().succ(false).msg("无效的调帐单");
+			return CommonResponse.getInstance().succ(false).msg("无效的调帐单");
 		}
 		return loanService.addLoan(loan);
 	}
 
 	@PutMapping(value = "/invalid/{loanId}")
 	@ApiOperation("作废调账单")
-	public ResponseModel invalidLoan(@PathVariable("loanId") Long loanId) {
+	public CommonResponse invalidLoan(@PathVariable("loanId") Long loanId) {
 		if(ObjectUtils.isEmpty(loanId)){
-			return ResponseModel.getInstance().succ(false).msg("无效的调帐单");
+			return CommonResponse.getInstance().succ(false).msg("无效的调帐单");
 		}
 		return loanService.invalidLoanById(loanId);
 	}

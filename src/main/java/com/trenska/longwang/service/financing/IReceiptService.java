@@ -8,8 +8,7 @@ import com.trenska.longwang.entity.financing.Receipt;
 import com.trenska.longwang.model.finaning.AccountCheckingModel;
 import com.trenska.longwang.model.report.AccountCheckingSummationModel;
 import com.trenska.longwang.model.report.CommonReceiptSummation;
-import com.trenska.longwang.model.report.CommonSummation;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -23,15 +22,15 @@ public interface IReceiptService extends IService<Receipt> {
 
     Page<Receipt> getReceiptPageSelective(Map<String,Object> params, Page page);
 
-    ResponseModel saveReceipt(Receipt receipt);
+    CommonResponse saveReceipt(Receipt receipt);
 
-    ResponseModel cancelReceipt(Receipt receipt, HttpServletRequest request);
+    CommonResponse cancelReceipt(Receipt receipt, HttpServletRequest request);
 
     Receipt getReceiptById(Long receiptId);
 
-    ResponseModel savePayReceipt(Receipt pay);
+    CommonResponse savePayReceipt(Receipt pay);
 
-    ResponseModel cancelPayReceiptById(Long receiptId);
+    CommonResponse cancelPayReceiptById(Long receiptId);
 
 	Page<AccountCheckingModel> getAccountChecking(Map<String, Object> params, Page page);
 

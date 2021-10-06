@@ -78,7 +78,8 @@
     </select>
     <!--stockout用于计算可用库存-->
     <select id="selectStockStatusPage" resultMap="com.trenska.longwang.dao.goods.GoodsMapper.simpleInfoResultMap">
-        select tg.goods_id,tg.goods_name,tg.goods_no,tg.brand_name,tg.frt_cat_name,tg.scd_cat_name,tg.main_unit_id,tg.stock,tg.stockout
+        select tg.goods_id,tg.goods_name,tg.goods_no,tg.brand_name,tg.frt_cat_name,tg.scd_cat_name,
+        (select unit_name from t_unit where unit_id = tg.main_unit_id) as mainUnit,tg.stock,tg.stockout
         from t_goods as tg
         <if test="propName != null and propName != ''">
             ,t_goods_spec as tgs

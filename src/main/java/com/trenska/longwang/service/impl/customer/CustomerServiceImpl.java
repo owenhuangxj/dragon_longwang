@@ -19,7 +19,7 @@ import com.trenska.longwang.entity.indent.Indent;
 import com.trenska.longwang.enums.IndentStat;
 import com.trenska.longwang.model.report.CustomerInfoModel;
 import com.trenska.longwang.model.customer.GoodsActiveInfoModel;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.customer.ICustomerService;
 import com.trenska.longwang.util.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -120,7 +120,7 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
 
 	@Override
 	@Transactional
-	public ResponseModel addCustomer(Customer customer) {
+	public CommonResponse addCustomer(Customer customer) {
 		List<Customer> dbCustomers = this.list(
 				new LambdaQueryWrapper<Customer>()
 						.eq(Customer::getCustName, customer.getCustName())
@@ -132,12 +132,12 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
 			Set<Customer> sameCustNameCustomers =
 					dbCustomers.stream().filter(cust -> customer.getCustName().equals(cust.getCustName())).collect(Collectors.toSet());
 			if (!sameCustNameCustomers.isEmpty()) {
-				return ResponseModel.getInstance().succ(false).msg("客户名称已经存在，不能创建");
+				return CommonResponse.getInstance().succ(false).msg("客户名称已经存在，不能创建");
 			} else {
 				Set<Customer> sameCustNoCustomers =
 						dbCustomers.stream().filter(cust -> customer.getCustNo().equals(cust.getCustNo())).collect(Collectors.toSet());
 				if (!sameCustNoCustomers.isEmpty()) {
-					return ResponseModel.getInstance().succ(false).msg("客户编号已经存在，不能创建");
+					return CommonResponse.getInstance().succ(false).msg("客户编号已经存在，不能创建");
 				}
 			}
 		}
@@ -172,7 +172,7 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
 
 		// 处理拥有所有数据权限的账号不能看到新建的客户信息的bug
 
-		return ResponseModel.getInstance().succ(true).msg("添加客户成功");
+		return CommonResponse.getInstance().succ(true).msg("添加客户成功");
 	}
 
 	@Override
@@ -208,10 +208,10 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
 	 */
 	@Override
 	@Transactional
-	public ResponseModel deleteCustomerById(Integer custId) {
+	public CommonResponse deleteCustomerById(Integer custId) {
 		Customer customer = this.getById(custId);
 		if (null == customer) {
-			return ResponseModel.getInstance().succ(false).msg("无此客户");
+			return CommonResponse.getInstance().succ(false).msg("无此客户");
 		}
 
 		Integer validIndentCount = indentMapper.selectCount(
@@ -221,7 +221,7 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
 		);
 
 		if (validIndentCount > 0) {
-			return ResponseModel.getInstance().succ(false).msg("客户关联了未作废的订单，不能删除");
+			return CommonResponse.getInstance().succ(false).msg("客户关联了未作废的订单，不能删除");
 		}
 
 		Integer invalidReceiptCount = receiptMapper.selectCount(
@@ -231,7 +231,7 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
 		);
 
 		if (invalidReceiptCount > 0) {
-			return ResponseModel.getInstance().succ(false).msg("客户关联了未作废的收款或付款单，不能删除");
+			return CommonResponse.getInstance().succ(false).msg("客户关联了未作废的收款或付款单，不能删除");
 		}
 
 
@@ -241,12 +241,12 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
 						.eq(GoodsCustSpecify::getCustId, custId)
 		);
 		this.removeById(custId);
-		return ResponseModel.getInstance().succ(true).msg("客户删除成功");
+		return CommonResponse.getInstance().succ(true).msg("客户删除成功");
 	}
 
 	@Override
 	@Transactional
-	public ResponseModel deleteCustomerByIds(Collection<Integer> custIds) {
+	public CommonResponse deleteCustomerByIds(Collection<Integer> custIds) {
 		// 删除客户特价信息
 		goodsCustSpecialMapper.delete(
 				new LambdaQueryWrapper<GoodsCustSpecify>()
@@ -254,7 +254,7 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
 		);
 
 		this.removeByIds(custIds);
-		return ResponseModel.getInstance().succ(true).msg("客户删除成功");
+		return CommonResponse.getInstance().succ(true).msg("客户删除成功");
 	}
 
 	/**

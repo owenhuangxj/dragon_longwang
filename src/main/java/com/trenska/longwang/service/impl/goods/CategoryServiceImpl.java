@@ -8,7 +8,7 @@ import com.trenska.longwang.dao.goods.CategoryMapper;
 import com.trenska.longwang.dao.goods.GoodsMapper;
 import com.trenska.longwang.entity.goods.Category;
 import com.trenska.longwang.entity.goods.Goods;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.goods.ICategoryService;
 import com.trenska.longwang.service.goods.IGoodsService;
 import org.apache.commons.lang3.StringUtils;
@@ -52,7 +52,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
 
 	@Override
 	@Transactional
-	public ResponseModel removeCategoryByIds(Collection<Integer> categoryIds) {
+	public CommonResponse removeCategoryByIds(Collection<Integer> categoryIds) {
 
 		Collection<Category> categories = this.listByIds(categoryIds);
 
@@ -61,7 +61,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
 
 		// 如果所有分类都在使用，提示
 		if (!categorySet.isEmpty() && categories.size() == categoryIds.size()) {
-			return ResponseModel.getInstance().succ(false).msg("不能删除正在使用的分类");
+			return CommonResponse.getInstance().succ(false).msg("不能删除正在使用的分类");
 		}
 
 		this.remove(
@@ -70,7 +70,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
 						.in(Category::getCatId, categoryIds)
 		);
 
-		return ResponseModel.getInstance().succ(true).msg("批量删除分类信息成功");
+		return CommonResponse.getInstance().succ(true).msg("批量删除分类信息成功");
 	}
 
 	@Override
@@ -116,12 +116,12 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
 	}
 
 	@Override
-	public ResponseModel updateCategory(Category category) {
+	public CommonResponse updateCategory(Category category) {
 
 		Category oldCategory = this.getById(category.getCatId());
 
 		if (null == oldCategory) {
-			return ResponseModel.getInstance().succ(false).msg("无效的商品分类信息");
+			return CommonResponse.getInstance().succ(false).msg("无效的商品分类信息");
 		}
 
 		if (StringUtils.isNotEmpty(category.getCatName()) && !category.getCatName().equals(oldCategory.getCatName())) {
@@ -161,7 +161,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
 		}
 		this.updateById(category);
 
-		return ResponseModel.getInstance().succ(true).msg("更新商品分类信息成功");
+		return CommonResponse.getInstance().succ(true).msg("更新商品分类信息成功");
 
 	}
 

@@ -3,7 +3,7 @@ package com.trenska.longwang.service.goods;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.entity.goods.Active;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 
 import java.util.Collection;
 
@@ -14,11 +14,11 @@ import java.util.Collection;
  */
 public interface IActiveService extends IService<Active> {
 
-	ResponseModel saveActive(Active active);
+	CommonResponse saveActive(Active active);
 
-	ResponseModel removeActiveById(Integer activeId);
+	CommonResponse removeActiveById(Integer activeId);
 
-	ResponseModel removeActiveByIds(Collection<Integer> activeIds);
+	CommonResponse removeActiveByIds(Collection<Integer> activeIds);
 
 	Active getInfoById(Integer activeId);
 

@@ -1,0 +1,9 @@
+jasypt:
+  encryptor:
+    property:
+      prefix: "ENC(" #配置prefix和suffix后，加密后的字符串就需要每次都用ENC()进行包围
+      suffix: ")"
+    password: dragon-erp #必须要有这个，加解密秘钥
+    algorithm: PBEWITHHMACSHA512ANDAES_256
+    string-output-type: base64
+    provider-name: SunJCE

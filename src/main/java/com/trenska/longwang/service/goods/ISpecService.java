@@ -3,7 +3,7 @@ package com.trenska.longwang.service.goods;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.entity.goods.Spec;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 
 import java.util.Collection;
 import java.util.Map;
@@ -14,11 +14,11 @@ import java.util.Map;
  */
 public interface ISpecService extends IService<Spec> {
 
-	ResponseModel saveSpec(Spec spec);
+	CommonResponse saveSpec(Spec spec);
 
-	ResponseModel removeSpecById(Integer specId);
+	CommonResponse removeSpecById(Integer specId);
 
-	ResponseModel removeSpecByIds(Collection<Integer> specIds);
+	CommonResponse removeSpecByIds(Collection<Integer> specIds);
 
 	Page<Spec> getSpecPageByStat(Page pageParam, Boolean stat);
 
@@ -30,5 +30,5 @@ public interface ISpecService extends IService<Spec> {
 
 	Page<Spec> getSpecPageSelective(Page page, Map<String, Object> params);
 
-	ResponseModel updateSpecById(Spec spec);
+	CommonResponse updateSpecById(Spec spec);
 }

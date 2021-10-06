@@ -6,7 +6,7 @@ import com.trenska.longwang.dao.customer.AreaGrpMapper;
 import com.trenska.longwang.entity.customer.Customer;
 import com.trenska.longwang.entity.indent.Indent;
 import com.trenska.longwang.entity.sys.EmpAreaGrp;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.customer.IAreaGrpService;
 
 import java.io.IOException;
@@ -170,16 +170,16 @@ public class CustomerUtil {
 	/**
 	 * 判断客户欠款额度,没有设置额度或者超过额度都不能审核
 	 */
-	public static ResponseModel checkDebtLimit(String indentNo, int custId){
+	public static CommonResponse checkDebtLimit(String indentNo, int custId){
 		Customer customer = new Customer(custId).selectById();
 		if (customer == null) {
-			return ResponseModel.getInstance().succ(false).msg(DragonConstant.CUSTOMER_NOT_EXISTS_MSG);
+			return CommonResponse.getInstance().succ(false).msg(DragonConstant.CUSTOMER_NOT_EXISTS_MSG);
 		}
 
 		/**如果创建客户时没有设置debtLimit，客户就没有欠款额度的限制*/
 		boolean hasNotSetLimit = DragonConstant.NO_DEBT_LIMIT_LABEL.equals(customer.getDebtLimit());
 		if(hasNotSetLimit){
-			return ResponseModel.getInstance().succ(true).msg("没有设置客户欠款额度,无限额度！");
+			return CommonResponse.getInstance().succ(true).msg("没有设置客户欠款额度,无限额度！");
 		}
 		Indent dbIndent = new Indent().selectOne(
 				new LambdaQueryWrapper<Indent>()
@@ -191,8 +191,8 @@ public class CustomerUtil {
 						.compareTo(new BigDecimal(customer.getDebtLimit())) >= 0;
 
 		if (isOutOfLimit) {
-			return ResponseModel.getInstance().succ(false).msg(DragonConstant.CUSTOMER_OUT_OF_DEBT_MSG);
+			return CommonResponse.getInstance().succ(false).msg(DragonConstant.CUSTOMER_OUT_OF_DEBT_MSG);
 		}
-		return ResponseModel.getInstance().succ(true);
+		return CommonResponse.getInstance().succ(true);
 	}
 }

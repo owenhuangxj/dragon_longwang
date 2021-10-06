@@ -1,27 +1,23 @@
 package com.trenska.longwang.service.impl.goods;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.plugins.Page;
-import com.baomidou.mybatisplus.plugins.pagination.Pagination;
 import com.trenska.longwang.dao.goods.GoodsSpecMapper;
 import com.trenska.longwang.dao.goods.SpecMapper;
 import com.trenska.longwang.dao.goods.SpecPropertyMapper;
 import com.trenska.longwang.entity.goods.GoodsSpec;
 import com.trenska.longwang.entity.goods.Spec;
 import com.trenska.longwang.entity.goods.SpecProperty;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.goods.ISpecService;
-import com.trenska.longwang.util.NumberUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.validation.constraints.Min;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +39,7 @@ public class SpecServiceImpl extends ServiceImpl<SpecMapper, Spec> implements IS
 
 	@Override
 	@Transactional
-	public ResponseModel saveSpec(Spec spec) {
+	public CommonResponse saveSpec(Spec spec) {
 
 		int insertedSpecId = 0;
 		if (null == spec.getSpecId()){ // 如果传入的specId为null表示需要保存商品规格信息
@@ -61,7 +57,7 @@ public class SpecServiceImpl extends ServiceImpl<SpecMapper, Spec> implements IS
 				specPropertyMapper.insert(specProperty);
 			});
 		}
-		return ResponseModel.getInstance().succ(true).msg("保存成功");
+		return CommonResponse.getInstance().succ(true).msg("保存成功");
 	}
 
 	@Override
@@ -71,7 +67,7 @@ public class SpecServiceImpl extends ServiceImpl<SpecMapper, Spec> implements IS
 	 * 		1.查询规格是否被商品使用
 	 * 		2.根据查询结果判断是否是物理删除还是逻辑删除
 	 */
-	public ResponseModel removeSpecById(Integer specId) {
+	public CommonResponse removeSpecById(Integer specId) {
 
 		List<GoodsSpec> goodsSpecs = goodsSpecMapper.selectList(
 				new LambdaQueryWrapper<GoodsSpec>()
@@ -92,13 +88,13 @@ public class SpecServiceImpl extends ServiceImpl<SpecMapper, Spec> implements IS
 			super.baseMapper.deleteSpecById(specId);
 		}
 
-		return ResponseModel.getInstance().succ(true).msg("规格删除成功");
+		return CommonResponse.getInstance().succ(true).msg("规格删除成功");
 
 	}
 
 	@Override
 	@Transactional
-	public ResponseModel removeSpecByIds(Collection<Integer> specIds) {
+	public CommonResponse removeSpecByIds(Collection<Integer> specIds) {
 
 		Collection<Spec> specs = this.listByIds(specIds);
 
@@ -108,15 +104,15 @@ public class SpecServiceImpl extends ServiceImpl<SpecMapper, Spec> implements IS
 		if(CollectionUtils.isNotEmpty(unusingSpecs)){
 			List<Integer> unusingSpecIds = unusingSpecs.stream().map(Spec::getSpecId).collect(Collectors.toList());
 			unusingSpecIds.forEach(specId->removeSpecById(specId));
-			return ResponseModel.getInstance().succ(true).msg("规格删除成功");
+			return CommonResponse.getInstance().succ(true).msg("规格删除成功");
 		}else{
-			return ResponseModel.getInstance().succ(true).msg("规格正在使用");
+			return CommonResponse.getInstance().succ(true).msg("规格正在使用");
 		}
 	}
 
 	@Override
 	@Transactional
-	public ResponseModel updateSpecById(Spec spec) {
+	public CommonResponse updateSpecById(Spec spec) {
 
 		if (StringUtils.isNotEmpty(spec.getSpecName())) {
 
@@ -126,7 +122,7 @@ public class SpecServiceImpl extends ServiceImpl<SpecMapper, Spec> implements IS
 			);
 
 			if(null != oldSpec){
-				return ResponseModel.getInstance().succ(false).msg( "规格已经存在");
+				return CommonResponse.getInstance().succ(false).msg( "规格已经存在");
 			}
 
 			GoodsSpec goodsSpec = new GoodsSpec();
@@ -137,7 +133,7 @@ public class SpecServiceImpl extends ServiceImpl<SpecMapper, Spec> implements IS
 			);
 		}
 		updateById(spec);
-		return ResponseModel.getInstance().succ(true).msg( "规格修改成功");
+		return CommonResponse.getInstance().succ(true).msg( "规格修改成功");
 	}
 
 

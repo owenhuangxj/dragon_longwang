@@ -60,7 +60,7 @@ public class BillsUtil {
 	/**
 	 * 根据单据 获取流水号
 	 */
-	public static Integer getSerialNumberOfBillNo(Optional<String> billNo) {
+	public static int getSerialNumberOfBillNo(Optional<String> billNo) {
 		if (billNo.get().length() >= 5) {
 			return NumberUtils.toInt(billNo.get().substring(billNo.get().length() - 5));
 		}

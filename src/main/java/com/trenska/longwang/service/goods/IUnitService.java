@@ -3,7 +3,7 @@ package com.trenska.longwang.service.goods;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.entity.goods.Unit;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 
 import java.util.Collection;
 
@@ -20,7 +20,7 @@ public interface IUnitService extends IService<Unit> {
 
 	Page<Unit> getUnitPageSelective(Page page, Unit unit);
 
-	ResponseModel removeUnitByIds(Collection<Integer> unitIds);
+	CommonResponse removeUnitByIds(Collection<Integer> unitIds);
 
 	Unit getUnit(String unitName);
 

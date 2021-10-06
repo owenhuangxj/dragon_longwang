@@ -1,6 +1,5 @@
 package com.trenska.longwang.controller.financing;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.dao.customer.AreaGrpMapper;
 import com.trenska.longwang.dao.customer.CustomerMapper;
@@ -16,7 +15,7 @@ import com.trenska.longwang.model.finaning.AccountCheckingModel;
 import com.trenska.longwang.model.prints.WebPrintModel;
 import com.trenska.longwang.model.report.AccountCheckingSummationModel;
 import com.trenska.longwang.model.report.CommonReceiptSummation;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.customer.ICustomerService;
 import com.trenska.longwang.service.financing.IDealDetailService;
 import com.trenska.longwang.service.financing.ILoanService;
@@ -38,7 +37,6 @@ import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 2019/4/30
@@ -84,18 +82,18 @@ public class ReceiptController {
 
 	@PostMapping("/receipt/add")
 	@ApiOperation("新建收款单")
-	public ResponseModel addReceipt(@ApiParam(name = "receipt", value = "收款单", required = true) @RequestBody Receipt receipt) {
-		if (receipt == null){
-			return ResponseModel.getInstance().succ(false).msg("收款单不能为空！");
+	public CommonResponse addReceipt(@ApiParam(name = "receipt", value = "收款单", required = true) @RequestBody Receipt receipt) {
+		if (receipt == null) {
+			return CommonResponse.getInstance().succ(false).msg("收款单不能为空！");
 		}
 		return receiptService.saveReceipt(receipt);
 	}
 
 	@PostMapping("/pay/add")
 	@ApiOperation("新建付款单")
-	public ResponseModel addPayReceipt(@ApiParam(name = "pay", value = "付款单", required = true) @RequestBody Receipt pay) {
-		if (pay == null){
-			return ResponseModel.getInstance().succ(false).msg("付款单不能为空！");
+	public CommonResponse addPayReceipt(@ApiParam(name = "pay", value = "付款单", required = true) @RequestBody Receipt pay) {
+		if (pay == null) {
+			return CommonResponse.getInstance().succ(false).msg("付款单不能为空！");
 		}
 		return receiptService.savePayReceipt(pay);
 	}
@@ -106,16 +104,16 @@ public class ReceiptController {
 			@ApiImplicitParam(name = "history", value = "本次收款金额", required = true, dataType = "double")
 	})
 	@ApiOperation("检查收款金额是否超过了剩余订货单应收金额")
-	public ResponseModel checkAmount(Integer indentId, Double amount) {
+	public CommonResponse checkAmount(Integer indentId, Double amount) {
 		if (null == indentId) {
-			return ResponseModel.getInstance().succ(false).msg("订单ID不能为null");
+			return CommonResponse.getInstance().succ(false).msg("订单ID不能为null");
 		}
 		Indent indent = indentService.getById(indentId);
 		if (null == indent) {
-			return ResponseModel.getInstance().succ(false).msg("无此订货单信息");
+			return CommonResponse.getInstance().succ(false).msg("无此订货单信息");
 		}
 		if (null == amount || amount < 0) {
-			return ResponseModel.getInstance().succ(false).msg("收款金额不能为空或者为负数");
+			return CommonResponse.getInstance().succ(false).msg("收款金额不能为空或者为负数");
 		}
 
 		//已收 订货单金额
@@ -123,9 +121,9 @@ public class ReceiptController {
 		Double indentTotal = Double.valueOf(indent.getIndentTotal());  //订货单总金额
 
 		if ((receivedAmnt + amount) > indentTotal) {
-			return ResponseModel.getInstance().succ(false).msg("收款金额已超过订货单应收金额");
+			return CommonResponse.getInstance().succ(false).msg("收款金额已超过订货单应收金额");
 		}
-		return ResponseModel.getInstance().succ(true);
+		return CommonResponse.getInstance().succ(true);
 	}
 
 	@RequestMapping(value = "/list/{current}/{size}", method = RequestMethod.GET)
@@ -183,51 +181,51 @@ public class ReceiptController {
 
 	@RequestMapping(value = "/info/{receiptId}", method = RequestMethod.GET)
 	@ApiOperation("收款/付款单详情")
-	public ResponseModel info(@PathVariable("receiptId") Long receiptId) {
-		return ResponseModel.getInstance().succ(true).data(receiptService.getReceiptById(receiptId));
+	public CommonResponse info(@PathVariable("receiptId") Long receiptId) {
+		return CommonResponse.getInstance().succ(true).data(receiptService.getReceiptById(receiptId));
 	}
 
 	@RequestMapping(value = "/receipt/invalid/{receiptId}", method = RequestMethod.PUT)
 	@ApiOperation("作废收款单")
-	public ResponseModel cancelReceipt(@PathVariable("receiptId") Long receiptId, HttpServletRequest request) {
+	public CommonResponse cancelReceipt(@PathVariable("receiptId") Long receiptId, HttpServletRequest request) {
 		Receipt receipt = receiptService.getById(receiptId);
 		if (null == receipt) {
-			return ResponseModel.getInstance().succ(false).msg("无此收款单信息.");
+			return CommonResponse.getInstance().succ(false).msg("无此收款单信息.");
 		}
 		if (receipt.getStat() == false) {
-			return ResponseModel.getInstance().succ(false).msg("收款单已作废,请勿重新操作.");
+			return CommonResponse.getInstance().succ(false).msg("收款单已作废,请勿重新操作.");
 		}
-		if (StringUtils.isNotEmpty(receipt.getBusiNo())){
-			return ResponseModel.getInstance().succ(false).msg("关联订货单的收款单请到订货单处作废.");
+		if (StringUtils.isNotEmpty(receipt.getBusiNo())) {
+			return CommonResponse.getInstance().succ(false).msg("关联订货单的收款单请到订货单处作废.");
 		}
 		return receiptService.cancelReceipt(receipt, request);
 	}
 
 	@RequestMapping(value = "/pay/invalid/{receiptId}", method = RequestMethod.PUT)
 	@ApiOperation("作废付款单")
-	public ResponseModel cancelPayReceipt(@PathVariable("receiptId") Long receiptId) {
+	public CommonResponse cancelPayReceipt(@PathVariable("receiptId") Long receiptId) {
 		return receiptService.cancelPayReceiptById(receiptId);
 	}
 
 	@RequestMapping(value = "/delete/{receiptId}", method = RequestMethod.DELETE)
 	@ApiOperation("删除付款/收款单")
-	public ResponseModel delete(@PathVariable("receiptId") Long receiptId) {
+	public CommonResponse delete(@PathVariable("receiptId") Long receiptId) {
 
 		if (!NumberUtil.isLongUsable(receiptId)) {
-			return ResponseModel.getInstance().succ(false).msg("删除失败:无此单据");
+			return CommonResponse.getInstance().succ(false).msg("删除失败:无此单据");
 		}
 		Receipt receipt = receiptService.getById(receiptId);
 
 		if (null == receipt) {
-			return ResponseModel.getInstance().succ(false).msg("删除失败:无此单据");
+			return CommonResponse.getInstance().succ(false).msg("删除失败:无此单据");
 		}
 
 		Boolean stat = receipt.getStat();
 		if (stat) {
-			return ResponseModel.getInstance().succ(false).msg("删除失败:作废的".concat(receipt.getType()).concat("才可删除."));
+			return CommonResponse.getInstance().succ(false).msg("删除失败:作废的".concat(receipt.getType()).concat("才可删除."));
 		}
 		receiptService.removeById(receiptId);
-		return ResponseModel.getInstance().succ(true).msg(receipt.getType().concat("删除成功."));
+		return CommonResponse.getInstance().succ(true).msg(receipt.getType().concat("删除成功."));
 	}
 
 	@RequestMapping(value = "/account/checking/{current}/{size}", method = RequestMethod.GET)
@@ -268,11 +266,12 @@ public class ReceiptController {
 		List<AccountCheckingModel> records = pageInfo.getRecords();
 		AccountCheckingSummationModel dbSummation = new AccountCheckingSummationModel();
 		// 没有满足条件的记录就不去做统计了
-		if(CollectionUtils.isNotEmpty(records)){
+		if (CollectionUtils.isNotEmpty(records)) {
 			dbSummation = receiptService.getAccountCheckingSummation(params);
 		}
 		// 保证数据库无数据时返回的各统计为 0
-		AccountCheckingSummationModel summarizing = dbSummation != null ? dbSummation : new AccountCheckingSummationModel();
+		AccountCheckingSummationModel summarizing =
+				(dbSummation != null) ? dbSummation : new AccountCheckingSummationModel();
 
 		return PageHelper.getInstance().pageData(pageInfo).summarizing(summarizing);
 	}
@@ -319,10 +318,10 @@ public class ReceiptController {
 
 		String needCollect =
 				new BigDecimal(lastSurplusDebt)
-				.add(plusDebt)
-				.subtract(receiptDebt)
-				.subtract(cutDebt)
-				.toString();
+						.add(plusDebt)
+						.subtract(receiptDebt)
+						.subtract(cutDebt)
+						.toString();
 
 		// 处理应收欠款
 		dealDetailSummarizing.setNeedCollect(needCollect);
@@ -331,7 +330,7 @@ public class ReceiptController {
 
 	@ApiOperation(value = "打印收款单")
 	@RequestMapping(value = "/printSkd/{receiptId}", method = RequestMethod.GET)
-	public ResponseModel printSkd(@PathVariable Long receiptId) {
+	public CommonResponse printSkd(@PathVariable Long receiptId) {
 
 		Map<String, Object> params = new HashMap<>();
 		Receipt receipt = receiptService.getById(receiptId);
@@ -368,12 +367,12 @@ public class ReceiptController {
 
 		WebPrintModel wm = PrintSingleton.INSTNACE.getInstance().retOk(htmlContent, "24.1", "9.31");
 
-		return ResponseModel.getInstance().succ(true).data(wm);
+		return CommonResponse.getInstance().succ(true).data(wm);
 	}
 
 	@ApiOperation(value = "打印付款单")
 	@RequestMapping(value = "/printFkd/{receiptId}", method = RequestMethod.GET)
-	public ResponseModel printFkd(@PathVariable Long receiptId) {
+	public CommonResponse printFkd(@PathVariable Long receiptId) {
 		Map<String, Object> params = new HashMap<>();
 		Receipt receipt = receiptService.getById(receiptId);
 		params.put("receipt_no", receipt.getReceiptNo());
@@ -396,6 +395,6 @@ public class ReceiptController {
 		}
 		String htmlContent = PDFUtil.freemarkerRender(params, templatePath + File.separator + "fkdpdftpl/fkd.ftl");
 		WebPrintModel wm = PrintSingleton.INSTNACE.getInstance().retOk(htmlContent, "24.1", "9.31");
-		return ResponseModel.getInstance().succ(true).data(wm);
+		return CommonResponse.getInstance().succ(true).data(wm);
 	}
 }

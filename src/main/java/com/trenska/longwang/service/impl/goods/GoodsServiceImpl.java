@@ -14,7 +14,7 @@ import com.trenska.longwang.entity.goods.*;
 import com.trenska.longwang.entity.indent.IndentDetail;
 import com.trenska.longwang.entity.sys.SysConfig;
 import com.trenska.longwang.model.goods.GoodsExportModel;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.goods.*;
 import com.trenska.longwang.util.GoodsUtil;
 import com.trenska.longwang.util.NumberUtil;
@@ -89,7 +89,7 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
 
 	@Override
 	@Transactional
-	public ResponseModel saveGoods(Goods goods) {
+	public CommonResponse saveGoods(Goods goods) {
 
 		if (StringUtils.isEmpty(goods.getFrtCatName())){
 			goods.setFrtCatName("无分类");
@@ -110,27 +110,27 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
 		}
 		// 处理商品的期初库存
 		if(initStock > 0 && ObjectUtils.isEmpty(goods.getInitMadeDate())){
-			return ResponseModel.getInstance().succ(false).msg("生产批次不能为空.");
+			return CommonResponse.getInstance().succ(false).msg("生产批次不能为空.");
 		}
 		//GoodsUtil.dealGoodsInitStock(goods, stockMapper, request);
 		if(initStock > 0) { // 如果客户选择了期初入库
-			ResponseModel responseModel = GoodsUtil.initGoodsStock(goods, stockMapper);
-			if (!responseModel.getSucc()) {
-				return responseModel;
+			CommonResponse commonResponse = GoodsUtil.initGoodsStock(goods, stockMapper);
+			if (!commonResponse.getSucc()) {
+				return commonResponse;
 			}
 		}
-		return ResponseModel.getInstance().succ(true).msg("新建商品成功.");
+		return CommonResponse.getInstance().succ(true).msg("新建商品成功.");
 	}
 
 	@Override
 	@Transactional
-	public ResponseModel removeGoodsById(Integer goodsId) {
+	public CommonResponse removeGoodsById(Integer goodsId) {
 
 		// 如果商品还有没有完成的订单，商品不能被删除
 		List<IndentDetail> indentDetails = indentDetailMapper.selectUndeletable(goodsId);
 
 		if (CollectionUtils.isNotEmpty(indentDetails)) {
-			return ResponseModel.getInstance().succ(false).msg("商品还有没有完成的订单，不能删除.");
+			return CommonResponse.getInstance().succ(false).msg("商品还有没有完成的订单，不能删除.");
 		}
 
 		goodsCustSpecialMapper.delete(
@@ -146,7 +146,7 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
 
 		this.setDeletable();
 
-		return ResponseModel.getInstance().succ(true).msg("删除商品成功");
+		return CommonResponse.getInstance().succ(true).msg("删除商品成功");
 
 	}
 
@@ -209,20 +209,20 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
 
 	@Override
 	@Transactional
-	public ResponseModel updateGoods(Goods goods) {
+	public CommonResponse updateGoods(Goods goods) {
 
 		if (goods == null) {
-			ResponseModel.getInstance().succ(false).msg("商品信息不能为空");
+			CommonResponse.getInstance().succ(false).msg("商品信息不能为空");
 		}
 
 		Integer goodsId = goods.getGoodsId();
 		if (!NumberUtil.isIntegerUsable(goodsId)) {
-			ResponseModel.getInstance().succ(false).msg("无效的商品信息");
+			CommonResponse.getInstance().succ(false).msg("无效的商品信息");
 		}
 
 		Goods oldGoods = this.getGoodsByGoodsId(goodsId);
 		if (null == oldGoods) {
-			ResponseModel.getInstance().succ(false).msg("无效的商品信息");
+			CommonResponse.getInstance().succ(false).msg("无效的商品信息");
 		}
 
 		// 期初库存不可修改 需要保留旧值
@@ -268,7 +268,7 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
 
 		setDeletable();
 
-		return ResponseModel.getInstance().succ(true).msg("修改商品成功");
+		return CommonResponse.getInstance().succ(true).msg("修改商品成功");
 
 	}
 
@@ -346,7 +346,7 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
 
 	@Override
 	@Transactional
-	public ResponseModel batchImportGoods(List<Goods> goods) {
+	public CommonResponse batchImportGoods(List<Goods> goods) {
 
 		List<Unit> usedUnits = new ArrayList<>();
 		List<Category> usedCategories = new ArrayList<>();
@@ -441,7 +441,7 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
 			if(NumberUtil.isIntegerNotUsable(expire))
 				good.setExpire(null);
 		}
-		return ResponseModel.getInstance().succ(true).msg("导入成功！");
+		return CommonResponse.getInstance().succ(true).msg("导入成功！");
 	}
 
 
@@ -476,7 +476,7 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
 	 * @param goods
 	 * @return
 	 */
-	private ResponseModel dealGoodsParams(Goods goods){
+	private CommonResponse dealGoodsParams(Goods goods){
 
 		if (null == goods.getRemarks()){
 			goods.setRemarks("");
@@ -558,7 +558,7 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
 			goodsCustSpecialService.saveBatch(insertingGoodsCustSpecifies);
 		}
 
-		return ResponseModel.getInstance().succ(true).msg("OK");
+		return CommonResponse.getInstance().succ(true).msg("OK");
 	}
 
 }

@@ -8,7 +8,7 @@ import com.trenska.longwang.dao.goods.BrandMapper;
 import com.trenska.longwang.dao.goods.GoodsMapper;
 import com.trenska.longwang.entity.goods.Brand;
 import com.trenska.longwang.entity.goods.Goods;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.goods.IBrandService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,12 +46,12 @@ public class BrandServiceImpl extends ServiceImpl<BrandMapper, Brand> implements
 	}
 
 	@Override
-	public ResponseModel updateBrand(Brand brand) {
+	public CommonResponse updateBrand(Brand brand) {
 
 		Brand oldBrand = this.getById(brand.getBrandId());
 
 		if(null == oldBrand){
-			return ResponseModel.getInstance().succ(false).msg("无效的品牌信息");
+			return CommonResponse.getInstance().succ(false).msg("无效的品牌信息");
 		}
 
 		// 如果更新品牌的名称，需要同步商品的品牌名称
@@ -66,12 +66,12 @@ public class BrandServiceImpl extends ServiceImpl<BrandMapper, Brand> implements
 		}
 
 		this.updateById(brand);
-		return ResponseModel.getInstance().succ(true).msg("修改品牌成功");
+		return CommonResponse.getInstance().succ(true).msg("修改品牌成功");
 
 	}
 
 	@Override
-	public ResponseModel removeBrandByIds(Collection<Integer> brandIds) {
+	public CommonResponse removeBrandByIds(Collection<Integer> brandIds) {
 
 		Collection<Brand> brands = this.listByIds(brandIds);
 
@@ -79,7 +79,7 @@ public class BrandServiceImpl extends ServiceImpl<BrandMapper, Brand> implements
 		Set<Brand> brandSet = brands.stream().filter(brand -> brand.getDeletable() == false).collect(Collectors.toSet());
 
 		if(!brandSet.isEmpty() && brandSet.size() == brandIds.size()){
-			return ResponseModel.getInstance().succ(false).msg("不可删除正在使用的品牌");
+			return CommonResponse.getInstance().succ(false).msg("不可删除正在使用的品牌");
 		}
 
 		this.remove(
@@ -87,7 +87,7 @@ public class BrandServiceImpl extends ServiceImpl<BrandMapper, Brand> implements
 						.eq(Brand::getDeletable,true)
 						.in(Brand::getBrandId,brandIds)
 		);
-		return ResponseModel.getInstance().succ(true).msg("商品品牌删除成功");
+		return CommonResponse.getInstance().succ(true).msg("商品品牌删除成功");
 	}
 
 	@Override

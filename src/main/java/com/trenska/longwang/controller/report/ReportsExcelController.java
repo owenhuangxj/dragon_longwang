@@ -149,114 +149,16 @@ public class ReportsExcelController {
 	}
 
 	@GetMapping("/cust-sales-summarizing-excel/{current}/{size}")
-	@ApiImplicitParams({
-			@ApiImplicitParam(name = "current", value = "当前页", required = true, paramType = "path", dataType = "int"),
-			@ApiImplicitParam(name = "size", value = "每页记录数", required = true, paramType = "path", dataType = "int"),
-			@ApiImplicitParam(name = "endTime", value = "时间段-结束", dataType = "string", paramType = "query"),
-			@ApiImplicitParam(name = "beginTime", value = "时间段-开始", dataType = "string", paramType = "query"),
-			@ApiImplicitParam(name = "areaGrpId", value = "区域id", dataType = "int", paramType = "query"),
-			@ApiImplicitParam(name = "areaGrpName", value = "区域名称", dataType = "string", paramType = "query"),
-			@ApiImplicitParam(name = "goodsScope", value = "正品/赠品/所有", dataType = "int", paramType = "query"),
-			@ApiImplicitParam(name = "custId", value = "客户id", dataType = "int", paramType = "query"),
-			@ApiImplicitParam(name = "custName", value = "客户名称", dataType = "string", paramType = "query"),
-			@ApiImplicitParam(name = "salesman", value = "业务员名称", dataType = "string", paramType = "query"),
-			@ApiImplicitParam(name = "salesmanId", value = "业务员id", dataType = "int", paramType = "query"),
-			@ApiImplicitParam(name = "shipman", value = "送货人名称", dataType = "string", paramType = "query"),
-			@ApiImplicitParam(name = "shipmanId", value = "送货人id", dataType = "int", paramType = "query"),
-			@ApiImplicitParam(name = "frtCatName", value = "一级分类名称", dataType = "string", paramType = "query"),
-			@ApiImplicitParam(name = "scdCatName", value = "二级分类名称", dataType = "string", paramType = "query"),
-			@ApiImplicitParam(name = "brandId", value = "品牌id", dataType = "int", paramType = "query"),
-			@ApiImplicitParam(name = "brandName", value = "品牌名称", dataType = "string", paramType = "query"),
-			@ApiImplicitParam(name = "remarks", value = "商品备注", dataType = "string", paramType = "query")
-	})
 	@ApiOperation("客户销售汇总excel导出")
 	public ResponseEntity<byte[]> custSalesSummarizingExcel(
-			HttpServletRequest request,
-			@RequestParam(required = false, name = "remarks") String remarks,
-			@RequestParam(required = false, name = "endTime") String endTime,
-			@RequestParam(required = false, name = "custId") Integer custId,
-			@RequestParam(required = false, name = "custName") String custName,
-			@RequestParam(required = false, name = "brandId") Integer brandId,
-			@RequestParam(required = false, name = "brandName") String brandName,
-			@RequestParam(required = false, value = "beginTime") String beginTime,
-			@RequestParam(required = false, name = "frtCatName") String frtCatName,
-			@RequestParam(required = false, name = "scdCatName") String scdCatName,
-			@RequestParam(required = false, name = "shipman") String shipman,
-			@RequestParam(required = false, name = "shipmanId") Integer shipmanId,
-			@RequestParam(required = false, name = "salesman") String salesman,
-			@RequestParam(required = false, name = "salesmanId") Integer salesmanId,
-			@RequestParam(required = false, name = "areaGrpId") Integer areaGrpId,
-			@RequestParam(required = false, name = "goodsScope") Integer goodsScope,
-			@RequestParam(required = false, name = "areaGrpName") String areaGrpName,
+			CustSalesSummarizingSearchModel searchModel,
 			@PathVariable(value = "current") Integer current, @PathVariable(value = "size") Integer size
 	) throws NoSuchFieldException, IllegalAccessException, IOException {
-
-		Map<String, Object> query = new LinkedHashMap<>();
-
-		if (StringUtils.isNotEmpty(beginTime) && StringUtils.isNotEmpty(endTime)) {
-			query.put("时间周期", beginTime.concat("至").concat(endTime));
-		}
-
-		if (StringUtils.isNotEmpty(brandName)) {
-			query.put("品牌", brandName);
-		}
-
-		if (StringUtils.isNotEmpty(areaGrpName)) {
-			query.put("区域分组", areaGrpName);
-		}
-		if (StringUtils.isNotEmpty(custName)) {
-			query.put("客户", custName);
-		}
-
-		if (StringUtils.isNotEmpty(salesman)) {
-			query.put("业务员", salesman);
-		}
-
-		if (StringUtils.isNotEmpty(shipman)) {
-			query.put("送货人", shipman);
-		}
-
-		if (StringUtils.isNotEmpty(frtCatName)) {
-			query.put("一级分类", frtCatName);
-		}
-		if (StringUtils.isNotEmpty(scdCatName)) {
-			query.put("二级分类", scdCatName);
-		}
-
-		if (StringUtils.isNotEmpty(remarks)) {
-			query.put("备注", remarks);
-		}
-
-		if ( null != goodsScope) {
-			switch (goodsScope){
-				case 1 :
-					query.put("包含赠品", "是");
-					break;
-				case 0 :
-					query.put("不包含赠品","是");
-					break;
-				case -1 :
-					query.put("只看赠品", "是");
-					break;
-			}
-		}
+		searchModel.setEmployeeId(SysUtil.getEmpIdInToken());
+		Map<String, Object> query = assembleCustomerSasleSummarizingQuery(searchModel);
 
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
-		Map<String, Object> params = new HashMap<>();
-		params.put("custId", custId);
-		params.put("custName", custName);
-		params.put("remarks", remarks);
-		params.put("endTime", endTime);
-		params.put("areaGrpId", areaGrpId);
-		params.put("beginTime", beginTime);
-		params.put("brandName", brandName);
-		params.put("salesmanId", salesmanId);
-		params.put("shipmanId", shipmanId);
-		params.put("frtCatName", frtCatName);
-		params.put("scdCatName", scdCatName);
-		params.put("goodsScope", goodsScope);
-
-		Page<CustSalesSummarizingModel> pageInfo = indentService.getCustSalesSummarizing(params, page);
+		Page<CustSalesSummarizingModel> pageInfo = indentService.getCustSalesSummarizing(searchModel, page);
 		List<CustSalesSummarizingModel> contents = pageInfo.getRecords();
 
 		Map<String, String> title = new LinkedHashMap<>();
@@ -271,7 +173,7 @@ public class ReportsExcelController {
 		title.put("amount", "实收金额");
 
 		Map<String, String> summarizing = new LinkedHashMap<>();
-		CustSalesSummationModel custSalesSummation = indentService.getCustSalesSummation(params);
+		CustSalesSummationModel custSalesSummation = indentService.getCustSalesSummation(searchModel);
 		summarizing.put("销售金额合计", custSalesSummation.getSalesAmntSum());
 		summarizing.put("实收金额合计", custSalesSummation.getReceivableAmntSum());
 		summarizing.put("销售数量合计", custSalesSummation.getSalesNumSum());
@@ -284,6 +186,52 @@ public class ReportsExcelController {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		wb.write(baos);
 		return new ResponseEntity<byte[]>(baos.toByteArray(), headers, HttpStatus.CREATED);
+	}
+
+	private Map<String, Object> assembleCustomerSasleSummarizingQuery(CustSalesSummarizingSearchModel searchModel) {
+		Map<String, Object> query = new LinkedHashMap<>();
+		if (searchModel.getBeginTime() != null && searchModel.getEndTime() != null) {
+			query.put("时间周期",
+					searchModel.getBeginTime().toString().concat("至").concat(searchModel.getEndTime().toString()));
+		}
+		if (StringUtils.isNotEmpty(searchModel.getBrandName())) {
+			query.put("品牌", searchModel.getBrandName());
+		}
+		if (StringUtils.isNotEmpty(searchModel.getAreaGrpName())) {
+			query.put("区域分组", searchModel.getAreaGrpName());
+		}
+		if (StringUtils.isNotEmpty(searchModel.getCustName())) {
+			query.put("客户", searchModel.getCustName());
+		}
+		if (StringUtils.isNotEmpty(searchModel.getSalesman())) {
+			query.put("业务员", searchModel.getSalesman());
+		}
+		if (StringUtils.isNotEmpty(searchModel.getSalesman())) {
+			query.put("送货人", searchModel.getShipman());
+		}
+		if (StringUtils.isNotEmpty(searchModel.getFrtCatName())) {
+			query.put("一级分类", searchModel.getFrtCatName());
+		}
+		if (StringUtils.isNotEmpty(searchModel.getScdCatName())) {
+			query.put("二级分类", searchModel.getScdCatName());
+		}
+		if (StringUtils.isNotEmpty(searchModel.getRemarks())) {
+			query.put("备注", searchModel.getRemarks());
+		}
+		if (null != searchModel.getGoodsScope()) {
+			switch (searchModel.getGoodsScope()) {
+				case 1:
+					query.put("包含赠品", "是");
+					break;
+				case 0:
+					query.put("不包含赠品", "是");
+					break;
+				case -1:
+					query.put("只看赠品", "是");
+					break;
+			}
+		}
+		return query;
 	}
 
 	@GetMapping("/cust-sales-statistic-excel/{current}/{size}")
@@ -319,7 +267,7 @@ public class ReportsExcelController {
 		params.put("endTime", endTime);
 		params.put("beginTime", beginTime);
 		params.put("shipmanId", shipmanId);
-		params.put("goodsScope",goodsScope);
+		params.put("goodsScope", goodsScope);
 		params.put("frtCatName", frtCatName);
 		params.put("scdCatName", scdCatName);
 		CustSalesStatisticsSummationModel custSalesStatisticsSummarizing = indentService.selectCustSalesStatisticsSummation(params);
@@ -349,15 +297,15 @@ public class ReportsExcelController {
 		}
 		// -1：只看赠品 0：只看商品 1：所有商品
 
-		switch (goodsScope){
-			case -1 :
-				query.put("只看赠品","yes");
+		switch (goodsScope) {
+			case -1:
+				query.put("只看赠品", "yes");
 				break;
-			case 0 :
-				query.put("只看商品","yes");
+			case 0:
+				query.put("只看商品", "yes");
 				break;
-			case 1 :
-				query.put("所有商品","yes");
+			case 1:
+				query.put("所有商品", "yes");
 				break;
 		}
 
@@ -452,8 +400,8 @@ public class ReportsExcelController {
 		}
 		Map<String, String> title = new LinkedHashMap<>();
 
-		title.put("indentTime","下单日期");
-		title.put("indentNo","订单号");
+		title.put("indentTime", "下单日期");
+		title.put("indentNo", "订单号");
 		title.put("goodsNo", "商品编号");
 		title.put("goodsName", "商品名称");
 		title.put("propNames", "规格");
@@ -544,16 +492,16 @@ public class ReportsExcelController {
 		if (StringUtils.isNotEmpty(salesman)) {
 			query.put("业务员", salesman);
 		}
-		if(byAmount){
+		if (byAmount) {
 			query.put("排序方式", "销售金额");
-		}else{
+		} else {
 			query.put("排序方式", "销售数量");
 		}
 		Map<String, String> title = new LinkedHashMap<>();
 
-		title.put("rankNum","排名");
+		title.put("rankNum", "排名");
 		title.put("custName", "客户名称");
-		title.put("salesAmnt","销售金额");
+		title.put("salesAmnt", "销售金额");
 		title.put("indentTotal", "实收金额");
 		title.put("salesNum", "销售数量");
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
@@ -912,14 +860,14 @@ public class ReportsExcelController {
 			@RequestParam(required = false, name = "frtCatName") String frtCatName,
 			@RequestParam(required = false, name = "scdCatName") String scdCatName,
 			@RequestParam(required = false, name = "salesmanId") Integer salesmanId,
-			@RequestParam(required = false, name = "byAmount", defaultValue = "true" ) boolean byAmount,
+			@RequestParam(required = false, name = "byAmount", defaultValue = "true") boolean byAmount,
 			@PathVariable(value = "current") Integer current, @PathVariable(value = "size") Integer size,
 			@RequestParam(required = false, name = "statisticsWay", defaultValue = "1") Integer statisticsWay
 	) throws NoSuchFieldException, IllegalAccessException, IOException {
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
 		Map<String, Object> params = new HashMap<>();
 		params.put("endTime", endTime);
-		params.put("byAmount",byAmount);
+		params.put("byAmount", byAmount);
 		params.put("custName", custName);
 		params.put("beginTime", beginTime);
 		params.put("areaGrpId", areaGrpId);
@@ -937,8 +885,8 @@ public class ReportsExcelController {
 		if (StringUtils.isNotEmpty(areaGrpName)) {
 			query.put("区域分组", areaGrpName);
 		}
-		if(StringUtils.isNotEmpty(custName)){
-			query.put("客户名称",custName);
+		if (StringUtils.isNotEmpty(custName)) {
+			query.put("客户名称", custName);
 		}
 		if (StringUtils.isNotEmpty(salesman)) {
 			query.put("业务员", salesman);
@@ -949,26 +897,25 @@ public class ReportsExcelController {
 		if (StringUtils.isNotEmpty(scdCatName)) {
 			query.put("二级分类", scdCatName);
 		}
-		if(byAmount){
+		if (byAmount) {
 			query.put("排序方式", "销售金额");
-		}else{
+		} else {
 			query.put("排序方式", "销售数量");
 		}
-		if(statisticsWay == 1){
+		if (statisticsWay == 1) {
 			query.put("统计方式", "按商品");
-		}else if(statisticsWay == 2){
+		} else if (statisticsWay == 2) {
 			query.put("统计方式", "按品牌");
-		}
-		else if(statisticsWay == 3){
+		} else if (statisticsWay == 3) {
 			query.put("统计方式", "按分类");
 		}
 		Map<String, String> title = new LinkedHashMap<>();
 
-		title.put("rankNum","排名");
+		title.put("rankNum", "排名");
 		title.put("goodsNo", "商品编号");
 		title.put("goodsName", "商品名称");
-		title.put("brandName","品牌");
-		title.put("catName","分类");
+		title.put("brandName", "品牌");
+		title.put("catName", "分类");
 		title.put("salesAmnt", "销售金额");
 		title.put("indentTotal", "实收金额");
 		title.put("salesNum", "销售数量");
@@ -1169,8 +1116,8 @@ public class ReportsExcelController {
 
 		////////////////////////////////////////////// 处理统计数据 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 		Map<String, String> summarizing = new LinkedHashMap<>();
-		summarizing.put("入库数量合计",summation.getStockinNumSum());
-		summarizing.put("入库金额合计",summation.getStockinAmntSum());
+		summarizing.put("入库数量合计", summation.getStockinNumSum());
+		summarizing.put("入库金额合计", summation.getStockinAmntSum());
 		////////////////////////////////////////////// 处理统计数据结束 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 		List<GoodsStockinStatisticsModel> records = pageInfo.getRecords();
@@ -1469,12 +1416,12 @@ public class ReportsExcelController {
 		title.put("time", " 时间 ");
 		title.put("nameNo", "单据名称-编号");
 		title.put("oper", " 业务类型 ");
-		title.put("payway","账户");
+		title.put("payway", "账户");
 		title.put("buy", "增加欠款");
 		title.put("pay", "减少欠款");
 		title.put("debt", " 欠款余额 ");
 		title.put("remarks", "备注");
-		title.put("auditRemarks","财审备注");
+		title.put("auditRemarks", "财审备注");
 
 		List<DealDetailModel> contents = new ArrayList<>();
 		List<DealDetail> records = pageInfo.getRecords();
@@ -1483,13 +1430,13 @@ public class ReportsExcelController {
 			if (dealDetail.getAmount().startsWith(DragonConstant.PLUS)) {
 				contents.add(
 						new DealDetailModel(dealDetail.getTime().substring(0, 11), dealDetail.getAmount().substring(1), " ",
-								dealDetail.getNewDebt(), dealDetail.getOper(), dealDetail.getNameNo(),dealDetail.getPayway(),dealDetail.getRemarks(),dealDetail.getAuditRemarks())
+								dealDetail.getNewDebt(), dealDetail.getOper(), dealDetail.getNameNo(), dealDetail.getPayway(), dealDetail.getRemarks(), dealDetail.getAuditRemarks())
 				);
 
 			} else if (dealDetail.getAmount().startsWith(DragonConstant.MINUS)) {
 				contents.add(
 						new DealDetailModel(dealDetail.getTime().substring(0, 11), " ", dealDetail.getAmount().substring(1),
-								dealDetail.getNewDebt(), dealDetail.getOper(), dealDetail.getNameNo(),dealDetail.getPayway(), dealDetail.getRemarks(),dealDetail.getAuditRemarks())
+								dealDetail.getNewDebt(), dealDetail.getOper(), dealDetail.getNameNo(), dealDetail.getPayway(), dealDetail.getRemarks(), dealDetail.getAuditRemarks())
 				);
 			}
 		});
@@ -1535,7 +1482,7 @@ public class ReportsExcelController {
 			@ApiImplicitParam(name = "shipman", value = "送货人", paramType = "query", dataType = "string"),
 	})
 	@ApiOperation("商品送货统计")
-	public ResponseEntity<byte[]>goodsDeliveryStaticsExcel(
+	public ResponseEntity<byte[]> goodsDeliveryStaticsExcel(
 			@RequestParam(required = false, name = "shipman") String shipman,
 			@RequestParam(required = false, name = "endTime") String endTime,
 			@RequestParam(required = false, name = "custName") String custName,
@@ -1550,7 +1497,7 @@ public class ReportsExcelController {
 		params.put("beginTime", beginTime);
 		params.put("shipmanId", shipmanId);
 		CommonSummation summation = indentService.getGoodsDeliveryStaticsSummarizing(params);
-		Page<DeliveryStaticsModel> pageInfo = indentService.getGoodsDeliveryStatics(page,params);
+		Page<DeliveryStaticsModel> pageInfo = indentService.getGoodsDeliveryStatics(page, params);
 		List<DeliveryStaticsModel> records = pageInfo.getRecords();
 		////////////////////////////////////////////// 处理列标题 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 		Map<String, String> title = new LinkedHashMap<>();

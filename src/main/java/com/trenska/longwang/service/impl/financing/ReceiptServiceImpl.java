@@ -21,7 +21,7 @@ import com.trenska.longwang.entity.sys.SysConfig;
 import com.trenska.longwang.model.finaning.AccountCheckingModel;
 import com.trenska.longwang.model.report.AccountCheckingSummationModel;
 import com.trenska.longwang.model.report.CommonReceiptSummation;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.financing.IDealDetailService;
 import com.trenska.longwang.service.financing.IReceiptService;
 import com.trenska.longwang.util.*;
@@ -50,7 +50,6 @@ import java.util.stream.Collectors;
 @Service
 @SuppressWarnings("all")
 public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> implements IReceiptService {
-
 	@Autowired
 	private CustomerMapper customerMapper;
 
@@ -70,10 +69,10 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 	private AreaGrpMapper areaGrpMapper;
 
 	@Autowired
-	private ReceiptMapper receiptMapper;
+	private LoanMapper loanMapper;
 
 	@Autowired
-	private LoanMapper loanMapper;
+	private ReceiptService receiptService;
 
 	@Resource(name = DragonConstant.REDIS_JSON_TEMPLATE_NAME)
 	private RedisTemplate<String, Object> jsonRedisTemplate;
@@ -105,8 +104,8 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 	 */
 	@Override
 	@Transactional
-	public ResponseModel saveReceipt(Receipt receipt) {
-		return ReceiptUtil.saveReceipt(receipt, receiptMapper, DragonConstant.SKD_CHINESE, DragonConstant.SK_CHINESE);
+	public CommonResponse saveReceipt(Receipt receipt) {
+		return receiptService.saveReceipt(receipt, DragonConstant.SKD_CHINESE, DragonConstant.SK_CHINESE);
 	}
 
 	/**
@@ -118,8 +117,8 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 	 */
 	@Override
 	@Transactional
-	public ResponseModel savePayReceipt(Receipt pay) {
-		return ReceiptUtil.saveReceipt(pay, receiptMapper, DragonConstant.FKD_CHINESE, DragonConstant.FK_CHINESE);
+	public CommonResponse savePayReceipt(Receipt pay) {
+		return receiptService.saveReceipt(pay, DragonConstant.FKD_CHINESE, DragonConstant.FK_CHINESE);
 	}
 
 	/**
@@ -132,14 +131,14 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 	 */
 	@Override
 	@Transactional
-	public ResponseModel cancelReceipt(Receipt receipt, HttpServletRequest request) {
+	public CommonResponse cancelReceipt(Receipt receipt, HttpServletRequest request) {
 
 		List<Receipt> receipts = new ArrayList<>();
 		receipts.add(receipt);
 		int custId = receipt.getCustId();
 		Customer dbCustomer = customerMapper.selectById(custId);
-		ReceiptUtil.cancelReceipts(receipts, dbCustomer);
-		return ResponseModel.getInstance().succ(true).msg("作废收款单成功");
+		receiptService.cancelReceipts(receipts, dbCustomer);
+		return CommonResponse.getInstance().succ(true).msg("作废收款单成功");
 	}
 
 	@Override
@@ -161,17 +160,17 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 	 */
 	@Override
 	@Transactional
-	public ResponseModel cancelPayReceiptById(Long receiptId) {
+	public CommonResponse cancelPayReceiptById(Long receiptId) {
 
 		Receipt dbPayReceipt = this.getById(receiptId);
 		if (null == dbPayReceipt) {
-			return ResponseModel.getInstance().succ(false).msg("无此付款单信息");
+			return CommonResponse.getInstance().succ(false).msg("无此付款单信息");
 		}
 		if (dbPayReceipt.getStat() == false) {
-			return ResponseModel.getInstance().succ(false).msg("付款单已作废,请勿重新操作.");
+			return CommonResponse.getInstance().succ(false).msg("付款单已作废,请勿重新操作.");
 		}
 		if (StringUtils.isNotEmpty(dbPayReceipt.getBusiNo())){
-			return ResponseModel.getInstance().succ(false).msg("关联订货单的付款单请到订货单处作废.");
+			return CommonResponse.getInstance().succ(false).msg("关联订货单的付款单请到订货单处作废.");
 		}
 		// 付款单金额
 		String receiptAmount = dbPayReceipt.getReceiptAmount();
@@ -204,7 +203,7 @@ public class ReceiptServiceImpl extends ServiceImpl<ReceiptMapper, Receipt> impl
 		// 客户欠款增加 ，加前缀 +
 		DealDetailUtil.saveDealDetail(custId, nameNo, currentTime, amount, debt, oper, payway, remarks);
 
-		return ResponseModel.getInstance().succ(true).msg("作废付款单成功.");
+		return CommonResponse.getInstance().succ(true).msg("作废付款单成功.");
 	}
 
 	/**

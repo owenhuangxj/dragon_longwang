@@ -3,7 +3,7 @@ package com.trenska.longwang.service.goods;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.entity.goods.SpecProperty;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 
 import java.util.Collection;
 
@@ -32,5 +32,5 @@ public interface ISpecPropertyService extends IService<SpecProperty> {
 
 	boolean updateSpecPropertyById(SpecProperty specProperty);
 
-	ResponseModel removeSpecPropertyByIds(Collection<Integer> specPropIds);
+	CommonResponse removeSpecPropertyByIds(Collection<Integer> specPropIds);
 }

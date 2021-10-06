@@ -1,39 +1,23 @@
-package com.trenska.longwang.util;
+package com.trenska.longwang.config;
 
 import com.sun.crypto.provider.SunJCE;
-import org.jasypt.encryption.pbe.PooledPBEStringEncryptor;
 import org.jasypt.encryption.pbe.config.SimpleStringPBEConfig;
 import org.jasypt.salt.RandomSaltGenerator;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-public class JasyptUtil {
-	/**
-	 * 加密
-	 *
-	 * @param salt  密盐
-	 * @param text 明文
-	 * @return 密文
-	 */
-	public static String encypt(String salt, String text) {
-		PooledPBEStringEncryptor encryptor = new PooledPBEStringEncryptor();
-		encryptor.setConfig(cryptor(salt));
-		return encryptor.encrypt(text);
-	}
+/**
+ * 2021/9/1
+ * 创建人:Owen
+ */
+@Configuration
+public class SecurityConfiguration {
 
-	/**
-	 * 解密
-	 *
-	 * @param password   密盐
-	 * @param ciphertext 密文
-	 * @return 明文
-	 */
-	public static String decrypt(String password, String ciphertext) {
-		PooledPBEStringEncryptor encryptor = new PooledPBEStringEncryptor();
-		encryptor.setConfig(cryptor(password));
-		String plaintext = encryptor.decrypt(ciphertext);
-		return plaintext;
-	}
-
-	public static SimpleStringPBEConfig cryptor(String password) {
+	@Value("${jasypt.encryptor.password}")
+	private String password;
+	@Bean
+	public SimpleStringPBEConfig cryptor() {
 		SimpleStringPBEConfig config = new SimpleStringPBEConfig();
 		config.setPoolSize(1);
 		config.setPassword(password);

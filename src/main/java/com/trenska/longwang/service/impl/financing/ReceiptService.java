@@ -1,4 +1,4 @@
-package com.trenska.longwang.util;
+package com.trenska.longwang.service.impl.financing;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.trenska.longwang.constant.DragonConstant;
@@ -10,34 +10,48 @@ import com.trenska.longwang.entity.indent.Indent;
 import com.trenska.longwang.enums.IndentStat;
 import com.trenska.longwang.enums.PaymentStat;
 import com.trenska.longwang.model.finaning.ReceiptModel;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
+import com.trenska.longwang.service.financing.IDealDetailService;
+import com.trenska.longwang.service.financing.IReceiptService;
+import com.trenska.longwang.util.*;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static com.trenska.longwang.constant.DragonConstant.FKD_CHINESE;
+
 /**
  * 2019/4/19
  * 创建人:Owen
  */
-public class ReceiptUtil {
+@Service
+public class ReceiptService  {
+	@Autowired
+	private ReceiptMapper receiptMapper;
+
+	@Autowired
+	private IDealDetailService dealDetailService;
 
 	/**
 	 * @param type 收款单/付款单
 	 * @return
 	 */
-	public static String getReceiptNo(String prefix, String type, ReceiptMapper receiptMapper) {
+	private String getReceiptNo(String prefix, String type) {
 
 		Receipt lastReceiptRecord = receiptMapper.selectRecordOfMaxId(type);
 
 		String receiptNo;
 		/**
 		 * 处理流水号的问题
-		 * 如果库存表中还没有任何记录，则需要生成第一个单号 或者 如果有记录，需要比较最后一条记录的日期是否是当天，如果不是则流水号需要从1开始
+		 * 如果库存表中还没有任何记录，则需要生成第一个单号 或者 如果有记录，
+		 * 需要比较最后一条记录的日期是否是当天，如果不是则流水号需要从1开始
 		 */
-		boolean isLastReceiptRecordNull = lastReceiptRecord == null;
+		boolean isLastReceiptRecordNull = (lastReceiptRecord == null);
 		//当前时间yyyyMMdd格式的日期字符串
 		String currentDateStr = new SimpleDateFormat(DragonConstant.BILL_TIME_FORMAT).format(new Date());
 		String dbReceiptNo;
@@ -68,7 +82,7 @@ public class ReceiptUtil {
 	 * @param dbCustomer
 	 * @return
 	 */
-	public static boolean cancelReceipts(List<Receipt> receipts, Customer dbCustomer) {
+	public boolean cancelReceipts(List<Receipt> receipts, Customer dbCustomer) {
 		BigDecimal increasingDebt = new BigDecimal(dbCustomer.getDebt());
 		Integer custId = dbCustomer.getCustId();
 		for (Receipt receipt : receipts) {
@@ -98,19 +112,17 @@ public class ReceiptUtil {
 	 * 批量收/付款
 	 *
 	 * @param receipt
-	 * @param receiptMapper
-	 * @param billType      订货单/退货单
-	 * @param receiptType   收款/付款
+	 * @param billType    订货单/退货单
+	 * @param receiptType 收款/付款
 	 * @return
 	 */
-	public static synchronized ResponseModel saveReceipt(Receipt receipt, ReceiptMapper receiptMapper, String billType,
-											String receiptType) {
+	public synchronized CommonResponse saveReceipt(Receipt receipt, String billType, String receiptType) {
 		// 获取收/付款金额和收/付款方式集合
 		//Set<ReceiptModel> receiptSet = receipt.getReceiptSet();
 
 		for (ReceiptModel receiptModel : receipt.getReceiptSet()) {
 			if (!StringUtil.isNumeric(receiptModel.getReceiptAmount(), false)) {
-				return ResponseModel.getInstance().succ(false).msg("收款中包含无效的金额！");
+				return CommonResponse.getInstance().succ(false).msg("收款中包含无效的金额！");
 			}
 		}
 		int custId = receipt.getCustId();
@@ -125,13 +137,12 @@ public class ReceiptUtil {
 		BigDecimal currentPayed = BigDecimal.ZERO;
 
 		// 计算收/付款总额
-		for (ReceiptModel receiptModel : receipt.getReceiptSet()) {
-			BigDecimal receiptAmount = new BigDecimal(receiptModel.getReceiptAmount());
-			if (DragonConstant.SK_CHINESE.equals(receiptType)) {
-				currentReceived = currentReceived.add(receiptAmount);
-			} else if (DragonConstant.FK_CHINESE.equals(receiptType)) {
-				currentPayed = currentPayed.add(receiptAmount);
-			}
+		BigDecimal amount = receipt.getReceiptSet().stream().map(ReceiptModel::getReceiptAmount)
+				.map(BigDecimal::new).reduce(BigDecimal.ZERO, BigDecimal::add);
+		if (DragonConstant.SK_CHINESE.equals(receiptType)) {
+			currentReceived = currentReceived.add(amount);
+		} else if (DragonConstant.FK_CHINESE.equals(receiptType)) {
+			currentPayed = currentPayed.add(amount);
 		}
 
 		String busiNo = StringUtils.trim(receipt.getBusiNo());
@@ -151,25 +162,73 @@ public class ReceiptUtil {
 			String stat = dbIndent.getStat();
 
 			if (IndentStat.WAIT_CONFIRM.getName().equals(stat)) {
-				return ResponseModel.getInstance().succ(false).msg("订单未审核！");
+				return CommonResponse.getInstance().succ(false).msg("订单未审核！");
 			}
 			if (IndentStat.CANCELLED.getName().equals(stat)) {
-				return ResponseModel.getInstance().succ(false).msg("订单已取消！");
+				return CommonResponse.getInstance().succ(false).msg("订单已取消！");
 			}
 			if (IndentStat.INVALID.getName().equals(stat)) {
-				return ResponseModel.getInstance().succ(false).msg("订单已作废！");
+				return CommonResponse.getInstance().succ(false).msg("订单已作废！");
 			}
 			dealWithIndent(currentReceived, currentPayed, dbIndent);
 		}
 
-		BigDecimal newDebt = doSaveReceipt(receipt, receiptMapper, receiptType, oldDebt);
+		BigDecimal newDebt = doSaveReceipt(receipt, receiptType, oldDebt);
 		// 多个收/付款->但是客户表更新一次即可
 		new Customer(custId, newDebt.toString()).updateById();
-		return ResponseModel.getInstance().succ(true).msg(billType + receiptType.concat("成功！"));
+		return CommonResponse.getInstance().succ(true).msg(billType + receiptType.concat("成功！"));
 	}
 
-	private static BigDecimal doSaveReceipt(Receipt receipt, ReceiptMapper receiptMapper,
-											String receiptType, BigDecimal oldDebt) {
+	/**
+	 * 批量付款：客户欠款减少
+	 *
+	 * @param receipt Receipt
+	 * @return CommonResponse
+	 */
+	public synchronized CommonResponse savePayment(Receipt receipt) {
+		for (ReceiptModel receiptModel : receipt.getReceiptSet()) {
+			if (!StringUtil.isNumeric(receiptModel.getReceiptAmount(), false)) {
+				return CommonResponse.getInstance().succ(false).msg("付款中包含无效的金额！");
+			}
+		}
+		int custId = receipt.getCustId();
+		Customer customer = new Customer().selectById(custId);
+		// 获取客户欠款
+		BigDecimal oldDebt = new BigDecimal(customer.getDebt());
+
+		Indent dbIndent = null;
+		if (StringUtils.isNotEmpty(StringUtils.trim(receipt.getBusiNo()))) {
+			//订货单信息
+			dbIndent = new Indent().selectOne(
+					new LambdaQueryWrapper<Indent>()
+							.eq(Indent::getIndentNo, StringUtils.trim(receipt.getBusiNo()))
+			);
+		}
+		//判断是否是对关联订货单进行付款
+		//新建付款单 有两种方式 1 手动新建  2 通过订货单号新建
+		//对订货单进行收款--> 需要 到客户表debt-本次收/付款数  订货单表(received_amnt + 收款金额 )
+		if (null != dbIndent) {
+			//订单状态
+			String stat = dbIndent.getStat();
+			if (IndentStat.WAIT_CONFIRM.getName().equals(stat)) {
+				return CommonResponse.getInstance().succ(false).msg("订单未审核！");
+			}
+			if (IndentStat.INVALID.getName().equals(stat)) {
+				return CommonResponse.getInstance().succ(false).msg("订单已作废！");
+			}
+			if (IndentStat.CANCELLED.getName().equals(stat)) {
+				return CommonResponse.getInstance().succ(false).msg("订单已取消！");
+			}
+		}
+		BigDecimal newDebt = doSavePayment(receipt);
+
+		// 多个收/付款->但是客户表更新一次即可
+		new Customer(custId, newDebt.toString()).updateById();
+
+		return CommonResponse.getInstance().succ(true).msg("billType".concat("付款成功！"));
+	}
+
+	private BigDecimal doSaveReceipt(Receipt receipt, String receiptType, BigDecimal oldDebt) {
 		/**
 		 * 	一次多个收/付款
 		 * 		1.一个收/付款一个单号
@@ -181,7 +240,7 @@ public class ReceiptUtil {
 		if (DragonConstant.FK_CHINESE.equals(receiptType)) {
 			title = DragonConstant.FK_TITLE;
 		}
-		String receiptNo = ReceiptUtil.getReceiptNo(title, receiptType.concat("单"), receiptMapper);
+		String receiptNo = getReceiptNo(title, receiptType.concat("单"));
 		int startNumber = BillsUtil.getSerialNumberOfBillNo(Optional.of(receiptNo));
 		// 收/付款时间
 		String currentTime = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
@@ -217,11 +276,62 @@ public class ReceiptUtil {
 		return newDebt;
 	}
 
+	/**
+	 * 一次多个付款
+	 * 1.一个付款一个单号
+	 * 2.每个付款时间相同
+	 */
+	private BigDecimal doSavePayment(Receipt receipt) {
+		// 付款单号
+		String title = DragonConstant.FK_TITLE;
+		String receiptNo = getReceiptNo(title, FKD_CHINESE);
+		int startNumber = BillsUtil.getSerialNumberOfBillNo(Optional.of(receiptNo));
+		// 付款时间
+		String paymentTime = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
+		BigDecimal newDebt = receipt.getReceiptSet().stream().map(ReceiptModel::getReceiptAmount)
+				.map(BigDecimal::new).reduce(BigDecimal.ZERO, BigDecimal::add); // 计算付款总额
+		Set<ReceiptModel> receiptModels = receipt.getReceiptSet();
+		List<DealDetail> dealDetails = new ArrayList<>();
+		List<Receipt> receipts = new ArrayList<>();
+		int empIdInToken = SysUtil.getEmpIdInToken();
+		for (ReceiptModel receiptModel : receiptModels) {
+			String thisReceiptAmount = receiptModel.getReceiptAmount();
+			Receipt insertingReceipt = new Receipt();
+			// 复制公共信息
+			ObjectCopier.copyProperties(receipt, insertingReceipt);
+			insertingReceipt.setStat(true); // 收/付款单 新建后 直接完成
+			insertingReceipt.setEmpId(empIdInToken);
+			insertingReceipt.setReceiptNo(receiptNo);
+			insertingReceipt.setCreateTime(paymentTime); // 创建收款单的时间为系统时间
+			insertingReceipt.setReceiptTime(paymentTime); // 龙旺的收款时间和创建时间一样，都是系统时间
+			insertingReceipt.setPayway(receiptModel.getPayway());
+			//收/付款金额
+			insertingReceipt.setReceiptAmount(thisReceiptAmount);
+			receipts.add(insertingReceipt);
+
+			// 保存交易明细,客户欠款减少 加 - 前缀 ->每个收/付款单号都对应一个交易明细
+			DealDetail dealDetail = new DealDetail();
+			dealDetail.setCustId(receipt.getCustId());
+			dealDetail.setTime(paymentTime);
+			dealDetail.setOper(receipt.getAccountType());
+			dealDetail.setPayway(receiptModel.getPayway());
+			dealDetail.setRemarks(receipt.getReceiptRemarks());
+			dealDetail.setNameNo(StringUtil.makeNameNo(receipt.getType(), receiptNo));
+			dealDetail.setAmount(DragonConstant.MINUS.concat(receiptModel.getReceiptAmount()));
+			dealDetail.setNewDebt(newDebt.subtract(new BigDecimal(thisReceiptAmount)).toString());
+			dealDetails.add(dealDetail);
+			receiptNo = BillsUtil.makeBillNo(title, startNumber);
+		}
+//		receiptService.saveBatch(receipts, DragonConstant.BATCH_INSERT_SIZE);
+		dealDetailService.saveBatch(dealDetails, DragonConstant.BATCH_INSERT_SIZE);
+		return newDebt;
+	}
+
 	@NotNull
-	private static void dealWithIndent(BigDecimal currentReceived, BigDecimal currentPayed, Indent dbIndent) {
+	private void dealWithIndent(BigDecimal currentReceived, BigDecimal currentPayed, Indent dbIndent) {
 
 		// 财审状态
-		Boolean audited = dbIndent.getAuditStat();
+		boolean audited = dbIndent.getAuditStat();
 
 		// 历史已收金额
 		BigDecimal historyReceivedAmnt = new BigDecimal(dbIndent.getReceivedAmnt());
@@ -234,7 +344,7 @@ public class ReceiptUtil {
 		// 欠条金额
 		BigDecimal iouAmnt = new BigDecimal(dbIndent.getIouAmnt());
 
-		// 本次收款款后的的收款总额
+		// 本次收款后的的收款总额
 		BigDecimal totalReceivedAmnt = currentReceived.add(historyReceivedAmnt);
 
 		// 本次付款后的的付款总额

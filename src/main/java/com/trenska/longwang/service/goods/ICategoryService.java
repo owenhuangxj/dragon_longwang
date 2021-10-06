@@ -3,7 +3,7 @@ package com.trenska.longwang.service.goods;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.entity.goods.Category;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 
 import java.util.Collection;
 
@@ -19,7 +19,7 @@ public interface ICategoryService extends IService<Category> {
 
 	Boolean removeCategoryById(Integer categoryId);
 
-	ResponseModel removeCategoryByIds(Collection<Integer> categoryIds);
+	CommonResponse removeCategoryByIds(Collection<Integer> categoryIds);
 
 	Page<Category> getSubCategoryPageByCatId(Page page, Integer catId,Boolean stat);
 
@@ -31,6 +31,6 @@ public interface ICategoryService extends IService<Category> {
 
 	Page<Category> getCategoryPage(Page page);
 
-	ResponseModel updateCategory(Category category);
+	CommonResponse updateCategory(Category category);
 }
 

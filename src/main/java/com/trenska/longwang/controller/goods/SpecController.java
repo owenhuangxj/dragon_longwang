@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.goods.Spec;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.goods.ISpecService;
 import com.trenska.longwang.util.NumberUtil;
 import com.trenska.longwang.util.PageUtils;
@@ -29,7 +29,6 @@ import java.util.Map;
 @RequestMapping("/spec")
 @Api(description = "规格管理")
 public class SpecController {
-
 	@Autowired
 	private ISpecService specService;
 
@@ -50,9 +49,9 @@ public class SpecController {
 			"    }\n" +
 			"  ]\n" +
 			"}")
-	public ResponseModel addSpec(@Valid @RequestBody Spec spec) {
+	public CommonResponse addSpec(@Valid @RequestBody Spec spec) {
 		if(null == spec){
-			return ResponseModel.getInstance().succ(false).msg("规格添加成功");
+			return CommonResponse.getInstance().succ(false).msg("规格添加成功");
 		}
 		return specService.saveSpec(spec);
 	}
@@ -61,9 +60,9 @@ public class SpecController {
 	@DeleteMapping("/delete/{specId}")
 	@ApiImplicitParams({@ApiImplicitParam(name = "specId", required = true, paramType = "path", dataType = "int")})
 	@ApiOperation("删除规格 ")
-	public ResponseModel deleteSpec(@ApiParam(name = "specId", value = "商品规格id", required = true) @PathVariable("specId") Integer specId) {
+	public CommonResponse deleteSpec(@ApiParam(name = "specId", value = "商品规格id", required = true) @PathVariable("specId") Integer specId) {
 		if (NumberUtil.isIntegerNotUsable(specId)) {
-			return ResponseModel.getInstance().succ(false).msg("无效的规格信息");
+			return CommonResponse.getInstance().succ(false).msg("无效的规格信息");
 		}
 		return specService.removeSpecById(specId);
 	}
@@ -71,9 +70,9 @@ public class SpecController {
 	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/batch")
 	@ApiOperation("批量删除商品规格,参数specId必须大于 0 ")
-	public ResponseModel batchDeleteSpec(@ApiParam(name = "specIds", value = "商品规格id的集合/数组", required = true) @RequestParam("specIds") Collection<Integer> specIds) {
+	public CommonResponse batchDeleteSpec(@ApiParam(name = "specIds", value = "商品规格id的集合/数组", required = true) @RequestParam("specIds") Collection<Integer> specIds) {
 		if (specIds.isEmpty()) {
-			return ResponseModel.getInstance().succ(false).msg("无效的规格信息");
+			return CommonResponse.getInstance().succ(false).msg("无效的规格信息");
 		}
 		return  specService.removeSpecByIds(specIds);
 	}
@@ -86,10 +85,10 @@ public class SpecController {
 			@ApiImplicitParam(name = "specName", paramType = "body", required = true, dataType = "string")
 	})
 	@ApiOperation("修改商品规格")
-	public ResponseModel updateSpec(@Valid @RequestBody Spec spec) {
+	public CommonResponse updateSpec(@Valid @RequestBody Spec spec) {
 
 		if(null == spec || NumberUtil.isIntegerNotUsable(spec.getSpecId())) {
-			return ResponseModel.getInstance().succ(false).msg("不存在的规格信息");
+			return CommonResponse.getInstance().succ(false).msg("不存在的规格信息");
 		}
 		return specService.updateSpecById(spec);
 	}
@@ -134,7 +133,7 @@ public class SpecController {
 
 	@GetMapping("/exists/{specName}")
 	@ApiOperation("查询规格名称是否存在")
-	public ResponseModel checkSpec(@PathVariable("specName") String specName) {
+	public CommonResponse checkSpec(@PathVariable("specName") String specName) {
 		Spec dbSpec = specService.getOne(
 				new LambdaQueryWrapper<Spec>()
 						.eq(Spec::getSpecName, specName)
@@ -143,7 +142,7 @@ public class SpecController {
 		Map<String, Object> data = new HashMap<>();
 		data.put("exists", false);
 		if(null == dbSpec) {
-			return ResponseModel.getInstance().succ(true).msg(msg).data(data);
+			return CommonResponse.getInstance().succ(true).msg(msg).data(data);
 		}
 		data.put("exists",true);
 
@@ -152,6 +151,6 @@ public class SpecController {
 		}else{
 			msg = "规格已经存在,不需要重新创建";
 		}
-		return ResponseModel.getInstance().succ(false).msg(msg).data(data);
+		return CommonResponse.getInstance().succ(false).msg(msg).data(data);
 	}
 }

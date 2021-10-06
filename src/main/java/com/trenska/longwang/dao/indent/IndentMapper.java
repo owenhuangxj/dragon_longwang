@@ -38,11 +38,11 @@ public interface IndentMapper extends BaseMapper<Indent> {
 
 	int selectCustSalesBillCountSelective(Map<String, Object> params);
 
-	List<CustSalesSummarizingModel> selectCustSalesSummarizingPageSelective(Map<String, Object> params, Pagination page);
+	List<CustSalesSummarizingModel> selectCustSalesSummarizingPageSelective(CustSalesSummarizingSearchModel searchModel, Pagination page);
 
-	CustSalesSummationModel selectCustSalesSummation(Map<String, Object> params);
+	CustSalesSummationModel selectCustSalesSummation(CustSalesSummarizingSearchModel searchModel);
 
-	int selectCustSalesSummarizingCountSelective(Map<String, Object> params);
+	int selectCustSalesSummarizingCountSelective(CustSalesSummarizingSearchModel searchModel);
 
 	CustSalesStatisticsSummationModel selectCustSalesStatisticsSummation(Map<String, Object> params);
 

@@ -5,7 +5,7 @@ import com.trenska.longwang.annotation.CheckDuplicateSubmit;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.stock.Shift;
 import com.trenska.longwang.model.sys.ExistModel;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.stock.IShiftService;
 import com.trenska.longwang.util.NumberUtil;
 import com.trenska.longwang.util.PageUtils;
@@ -36,54 +36,54 @@ public class ShiftController {
 			@ApiImplicitParam(name = "shiftName", value = "库存班次名称", paramType = "body", required = true, dataType = "string")
 	})
 	@ApiOperation("添加班次")
-	public ResponseModel addBrand(@RequestBody Shift shift) {
+	public CommonResponse addBrand(@RequestBody Shift shift) {
 		if(Objects.isNull(shift)){
-			return ResponseModel.getInstance().succ(false).msg("无效的班次");
+			return CommonResponse.getInstance().succ(false).msg("无效的班次");
 		}
 		String shiftName = shift.getShiftName();
 
 		if(StringUtils.isEmpty(shiftName)){
-			return ResponseModel.getInstance().succ(false).msg("无效的班次");
+			return CommonResponse.getInstance().succ(false).msg("无效的班次");
 		}
 
 		ExistModel existModel = checkShift(shiftName);
 		if(existModel.isExists()){
-			return ResponseModel.getInstance().succ(false).msg("班次已经存在");
+			return CommonResponse.getInstance().succ(false).msg("班次已经存在");
 		}
 		shiftService.save(shift);
-		return ResponseModel.getInstance().succ(true).msg("班次添加成功");
+		return CommonResponse.getInstance().succ(true).msg("班次添加成功");
 	}
 
 	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/{shiftId}")
 	@ApiOperation("删除库存班次")
-	public ResponseModel deleteBrand(@ApiParam(name = "shiftId", required = true) @PathVariable("shiftId") int shiftId) {
+	public CommonResponse deleteBrand(@ApiParam(name = "shiftId", required = true) @PathVariable("shiftId") int shiftId) {
 		if(shiftId < 0){
-			return ResponseModel.getInstance().succ(false).msg("无此库存班次");
+			return CommonResponse.getInstance().succ(false).msg("无此库存班次");
 		}
 		Shift dbShift = shiftService.getById(shiftId);
 		if(Objects.isNull(dbShift)){
-			return ResponseModel.getInstance().succ(false).msg("无此库存班次");
+			return CommonResponse.getInstance().succ(false).msg("无此库存班次");
 		}
 		shiftService.removeById(shiftId);
-		return ResponseModel.getInstance().succ(true).msg("库存班次删除成功");
+		return CommonResponse.getInstance().succ(true).msg("库存班次删除成功");
 	}
 	@CheckDuplicateSubmit
 	@DeleteMapping("/delete/batch")
 	@ApiOperation("批量删除库存班次")
-	public ResponseModel batchDeleteBrand(
+	public CommonResponse batchDeleteBrand(
 			@ApiParam(name = "shiftIds", value = "需要批量删除的库存班次id集合/数组", required = true) @RequestParam(value = "shiftIds") Collection<Integer> shiftIds) {
 		if (shiftIds.isEmpty()) {
-			return ResponseModel.getInstance().succ(false).msg("无效的班次信息");
+			return CommonResponse.getInstance().succ(false).msg("无效的班次信息");
 		}
 
 		Collection<Shift> shifts = shiftService.listByIds(shiftIds);
 		if (Objects.isNull(shifts) || shifts.isEmpty()){
-			return ResponseModel.getInstance().succ(false).msg("无效的班次信息");
+			return CommonResponse.getInstance().succ(false).msg("无效的班次信息");
 		}
 
 		shiftService.removeByIds(shiftIds);
-		return ResponseModel.getInstance().succ(true).msg("批量删除成功");
+		return CommonResponse.getInstance().succ(true).msg("批量删除成功");
 	}
 
 	@PutMapping("/update")
@@ -93,18 +93,18 @@ public class ShiftController {
 			@ApiImplicitParam(name = "shiftName", paramType = "body", dataType = "string")
 	})
 	@ApiOperation("修改批次名称")
-	public ResponseModel updateBrand(@RequestBody Shift shift) {
+	public CommonResponse updateBrand(@RequestBody Shift shift) {
 		if(Objects.isNull(shift)){
-			return ResponseModel.getInstance().succ(false).msg("无效的批次");
+			return CommonResponse.getInstance().succ(false).msg("无效的批次");
 		}
 		if(NumberUtil.isIntegerNotUsable(shift.getShiftId())){
-			return ResponseModel.getInstance().succ(false).msg("无效的批次");
+			return CommonResponse.getInstance().succ(false).msg("无效的批次");
 		}
 		if(StringUtils.isEmpty(shift.getShiftName())){
-			return ResponseModel.getInstance().succ(false).msg("批次名称不能为空");
+			return CommonResponse.getInstance().succ(false).msg("批次名称不能为空");
 		}
 		shiftService.updateById(shift);
-		return ResponseModel.getInstance().succ(true).msg("批次更新成功");
+		return CommonResponse.getInstance().succ(true).msg("批次更新成功");
 	}
 
 	@GetMapping("/list/page/{current}/{size}")

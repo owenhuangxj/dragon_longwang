@@ -3,7 +3,7 @@ package com.trenska.longwang.controller.financing;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.trenska.longwang.entity.PageHelper;
 import com.trenska.longwang.entity.financing.Payway;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.financing.IPaywayService;
 import com.trenska.longwang.util.NumberUtil;
 import com.trenska.longwang.util.PageUtils;
@@ -28,7 +28,6 @@ import java.util.List;
 @RequestMapping("/payway")
 @Api(description = "账户、收/付款方式接口 : 现金、转账、返利、运费")
 public class PaywayController {
-
 	@Autowired
 	private IPaywayService paywayService;
 
@@ -58,23 +57,23 @@ public class PaywayController {
 			@ApiImplicitParam(name = "type", value = "收款/付款", required = true, paramType = "query", dataType = "string")
 	})
 	@ApiOperation("增加收/付款方式")
-	public ResponseModel addPayway(
+	public CommonResponse addPayway(
 			@RequestParam("payway") String payway,
 			@RequestParam("type") String type,
 			@RequestParam(value = "pdesc" ,defaultValue = "") String pdesc
 	) {
 		if (StringUtils.isEmpty(payway)) {
-			return ResponseModel.getInstance().succ(false).msg("请输入" + type.substring(0,2) + "方式");
+			return CommonResponse.getInstance().succ(false).msg("请输入" + type.substring(0,2) + "方式");
 		}
 		// 验证收/付款方式是否已经存在
 		boolean exists = checkPayway(payway, type);
 
 		if (exists) {
-			return ResponseModel.getInstance().succ(true).msg( type.substring(0,2) + "方式已经存在，不需要创建");
+			return CommonResponse.getInstance().succ(true).msg( type.substring(0,2) + "方式已经存在，不需要创建");
 		}
 		paywayService.save(new Payway(payway, type, pdesc));
 
-		return ResponseModel.getInstance().succ(true).msg("增加" +  type.substring(0,2) + "方式成功");
+		return CommonResponse.getInstance().succ(true).msg("增加" +  type.substring(0,2) + "方式成功");
 	}
 
 	@PostMapping(value = "/update/{paywayId}")
@@ -85,17 +84,17 @@ public class PaywayController {
 			@ApiImplicitParam(name = "type", value = "收/付款方式", paramType = "query", dataType = "string")
 	})
 	@ApiOperation("更新收/付款方式")
-	public ResponseModel updatePayway(
+	public CommonResponse updatePayway(
 			@RequestParam(value = "type") String type,
 			@PathVariable("paywayId") Integer paywayId,
 			@RequestParam(value = "pdesc") String pdesc,
 			@RequestParam(value = "payway") String payway
 	) {
 		if (checkPayway(payway, type)) {
-			return ResponseModel.getInstance().succ(false).msg( type.substring(0,2) + "方式重名");
+			return CommonResponse.getInstance().succ(false).msg( type.substring(0,2) + "方式重名");
 		}
 		paywayService.saveOrUpdate(new Payway(paywayId, payway, type, pdesc));
-		return ResponseModel.getInstance().succ(true).msg("修改" +  type.substring(0,2) + "方式成功");
+		return CommonResponse.getInstance().succ(true).msg("修改" +  type.substring(0,2) + "方式成功");
 	}
 
 	@DeleteMapping(value = "/delete/{id}")
@@ -103,18 +102,18 @@ public class PaywayController {
 			@ApiImplicitParam(name = "id", value = "收/付款方式id", required = true, paramType = "path", dataType = "int")
 	})
 	@ApiOperation("删除收/付款方式")
-	public ResponseModel deletePayway(@PathVariable Integer id) {
+	public CommonResponse deletePayway(@PathVariable Integer id) {
 		if (!NumberUtil.isIntegerUsable(id)) {
-			return ResponseModel.getInstance().succ(false).msg("无此收/付款方式");
+			return CommonResponse.getInstance().succ(false).msg("无此收/付款方式");
 		}
 		Payway payway = paywayService.getById(id);
 		if (null == payway) {
-			return ResponseModel.getInstance().succ(false).msg("无此收/付款方式");
+			return CommonResponse.getInstance().succ(false).msg("无此收/付款方式");
 		}
 		if(!payway.getDeletable()){
-			return ResponseModel.getInstance().succ(false).msg("系统预留方式，不可删除");
+			return CommonResponse.getInstance().succ(false).msg("系统预留方式，不可删除");
 		}
-		return ResponseModel.getInstance().succ(paywayService.removeById(id))
+		return CommonResponse.getInstance().succ(paywayService.removeById(id))
 				.msg("删除" + payway.getType().substring(0,2) + "方式成功.");
 	}
 
@@ -124,19 +123,19 @@ public class PaywayController {
 			@ApiImplicitParam(name = "type", value = "收/付款", paramType = "query", required = true, dataType = "string")
 	})
 	@ApiOperation("查询收/付款方式名称是否存在")
-	public ResponseModel checkPaywayExists(
+	public CommonResponse checkPaywayExists(
 			@RequestParam("payway") String payway,
 			@RequestParam("type") String type
 	) {
 		if (StringUtils.isEmpty(payway)) {
-			return ResponseModel.getInstance().succ(false).msg("收/付款名称不能为空");
+			return CommonResponse.getInstance().succ(false).msg("收/付款名称不能为空");
 		}
 		if (StringUtils.isEmpty(type)) {
-			return ResponseModel.getInstance().succ(false).msg("收/付款方式不能为空");
+			return CommonResponse.getInstance().succ(false).msg("收/付款方式不能为空");
 		}
 		boolean eixts = this.checkPayway(payway, type);
 
-		return ResponseModel.getInstance().succ(!eixts).msg(eixts ? "已经存在" : "可以创建");
+		return CommonResponse.getInstance().succ(!eixts).msg(eixts ? "已经存在" : "可以创建");
 	}
 
 	/**

@@ -4,10 +4,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.entity.goods.Goods;
 import com.trenska.longwang.model.goods.GoodsExportModel;
-import com.trenska.longwang.model.goods.GoodsQueryModel;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -22,9 +20,9 @@ import java.util.Map;
  */
 public interface IGoodsService extends IService<Goods> {
 
-	ResponseModel saveGoods(Goods goods);
+	CommonResponse saveGoods(Goods goods);
 
-	ResponseModel removeGoodsById(Integer goodsId);
+	CommonResponse removeGoodsById(Integer goodsId);
 
 	Boolean removeGoodsByIds(Collection<Integer> goodsIds);
 
@@ -40,7 +38,7 @@ public interface IGoodsService extends IService<Goods> {
 
 	Goods getGoodsByGoodsId(Integer goodsId);
 
-	ResponseModel updateGoods(Goods goods);
+	CommonResponse updateGoods(Goods goods);
 
 	String getGoodsPropsByGoodsId(Integer goodsId);
 
@@ -50,6 +48,6 @@ public interface IGoodsService extends IService<Goods> {
 
 	Page<GoodsExportModel> getGoodsExcelPageSelective(Page page, Map<String, Object> params);
 
-	ResponseModel batchImportGoods(List<Goods> goods);
+	CommonResponse batchImportGoods(List<Goods> goods);
 }
 

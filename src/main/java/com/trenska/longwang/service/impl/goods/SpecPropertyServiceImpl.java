@@ -9,7 +9,7 @@ import com.trenska.longwang.dao.goods.GoodsSpecMapper;
 import com.trenska.longwang.dao.goods.SpecPropertyMapper;
 import com.trenska.longwang.entity.goods.GoodsSpec;
 import com.trenska.longwang.entity.goods.SpecProperty;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.goods.ISpecPropertyService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,14 +69,14 @@ public class SpecPropertyServiceImpl extends ServiceImpl<SpecPropertyMapper, Spe
 	}
 
 	@Override
-	public ResponseModel removeSpecPropertyByIds(Collection<Integer> specPropIds) {
+	public CommonResponse removeSpecPropertyByIds(Collection<Integer> specPropIds) {
 
 		Collection<SpecProperty> specProperties = this.listByIds(specPropIds);
 
 		Set<SpecProperty> specPropertySet = specProperties.stream().filter(specProperty -> specProperty.getDeletable() == false).collect(Collectors.toSet());
 
 		if(!specPropertySet.isEmpty() && specPropertySet.size() == specPropIds.size()){
-			return ResponseModel.getInstance().succ(false).msg("不能删除正在使用的商品规格属性");
+			return CommonResponse.getInstance().succ(false).msg("不能删除正在使用的商品规格属性");
 		}
 
 		this.remove(
@@ -85,7 +85,7 @@ public class SpecPropertyServiceImpl extends ServiceImpl<SpecPropertyMapper, Spe
 						.in(SpecProperty::getSpecPropId,specPropIds)
 		);
 
-		return ResponseModel.getInstance().succ(true).msg("商品规格属性删除成功");
+		return CommonResponse.getInstance().succ(true).msg("商品规格属性删除成功");
 
 	}
 

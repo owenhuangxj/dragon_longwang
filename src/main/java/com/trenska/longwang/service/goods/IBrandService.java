@@ -3,7 +3,7 @@ package com.trenska.longwang.service.goods;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.entity.goods.Brand;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 
 import java.util.Collection;
 
@@ -21,8 +21,8 @@ public interface IBrandService extends IService<Brand> {
 
 	Page<Brand> getBrandPageSelective(Page page, Brand brand);
 
-	ResponseModel updateBrand(Brand brand);
+	CommonResponse updateBrand(Brand brand);
 
-	ResponseModel removeBrandByIds(Collection<Integer> brandIds);
+	CommonResponse removeBrandByIds(Collection<Integer> brandIds);
 
 }

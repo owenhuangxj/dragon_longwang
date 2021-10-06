@@ -41,7 +41,7 @@
             <if test="stat != null ">
                 and ta.stat = #{stat}
             </if>
-            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+            <if test="beginTime != null and endTime != null">
                 and DATE_FORMAT(ta.begin_time,'%Y-%m-%d %H:%i:%s') <![CDATA[ >= ]]> #{beginTime}
                 and DATE_FORMAT(ta.end_time,'%Y-%m-%d %H:%i:%s') <![CDATA[ <= ]]> #{endTime}
             </if>
@@ -57,7 +57,7 @@
             <if test="stat != null ">
                 and ta.stat = #{stat}
             </if>
-            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+            <if test="beginTime != null and endTime != null">
                 and DATE_FORMAT(ta.begin_time,'%Y-%m-%d %H:%i:%s') <![CDATA[ >= ]]> #{beginTime}
                 and DATE_FORMAT(ta.end_time,'%Y-%m-%d %H:%i:%s') <![CDATA[ <= ]]> #{endTime}
             </if>

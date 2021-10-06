@@ -13,7 +13,7 @@ import com.trenska.longwang.entity.sys.SysConfig;
 import com.trenska.longwang.entity.sys.SysEmp;
 import com.trenska.longwang.exception.AccountDuplicatedException;
 import com.trenska.longwang.model.sys.LoginResultModel;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 import com.trenska.longwang.service.sys.ISysEmpService;
 import com.trenska.longwang.util.*;
 import io.swagger.annotations.*;
@@ -143,10 +143,13 @@ public class SysUserController {
 	@CheckDuplicateSubmit
 	@ApiOperation("退出登录")
 	@PostMapping(value = "/logout")
-	public ResponseModel loginOut() {
+	public CommonResponse loginOut() {
 		log.debug("principal :    {}", SecurityUtils.getSubject().getPrincipal());
 		SecurityUtils.getSubject().logout();
-		return ResponseModel.getInstance().succ(true).msg("退出登录成功");
+		redisTemplate.delete(DragonConstant.EMP_ID_IDENTIFIER + SysUtil.getEmpIdInToken());
+		redisTemplate.delete(DragonConstant.SYS_CONFIG_IDENTIFIER + SysUtil.getEmpIdInToken());
+
+		return CommonResponse.getInstance().succ(true).msg("退出登录成功");
 	}
 
 	////////////////////////////////////////////////////////////增删改查\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -163,24 +166,24 @@ public class SysUserController {
 
 	})
 	@ApiOperation("添加账号")
-	public ResponseModel add(@ApiParam(name = "emp", required = true) @RequestBody SysEmp emp) {
+	public CommonResponse add(@ApiParam(name = "emp", required = true) @RequestBody SysEmp emp) {
 
 		if (Objects.isNull(emp)) {
-			return ResponseModel.getInstance().succ(false).msg("请输入有效的账号信息");
+			return CommonResponse.getInstance().succ(false).msg("请输入有效的账号信息");
 		}
 
 		if (StringUtils.isEmpty(emp.getEmpAcct())) {
-			return ResponseModel.getInstance().succ(false).msg("帐号不能为空");
+			return CommonResponse.getInstance().succ(false).msg("帐号不能为空");
 		}
 		if (StringUtils.isEmpty(emp.getEmpPwd())) {
-			return ResponseModel.getInstance().succ(false).msg("密码不能为空");
+			return CommonResponse.getInstance().succ(false).msg("密码不能为空");
 		}
 		SysEmp sysEmp = userService.getOne(
 				new LambdaQueryWrapper<SysEmp>()
 						.eq(SysEmp::getEmpAcct, emp.getEmpAcct().trim())
 		);
 		if (!Objects.isNull(sysEmp)) {
-			return ResponseModel.getInstance().succ(false).msg("用户已注册");
+			return CommonResponse.getInstance().succ(false).msg("用户已注册");
 		}
 		//密码加密
 		RandomNumberGenerator saltGenerator = new SecureRandomNumberGenerator();
@@ -200,9 +203,9 @@ public class SysUserController {
 			@ApiImplicitParam(name = "empId", value = "员工账号", paramType = "path", required = true, dataType = "int")
 	})
 	@ApiOperation("根据账号id删除账号")
-	public ResponseModel delete(@ApiParam(name = "empId", required = true) @PathVariable Integer empId) {
+	public CommonResponse delete(@ApiParam(name = "empId", required = true) @PathVariable Integer empId) {
 		boolean success = userService.removeById(empId);
-		return ResponseModel.getInstance().succ(success).msg(success ? "删除账号成功" : "删除账号失败");
+		return CommonResponse.getInstance().succ(success).msg(success ? "删除账号成功" : "删除账号失败");
 	}
 
 	@CheckDuplicateSubmit
@@ -212,24 +215,24 @@ public class SysUserController {
 			@ApiImplicitParam(name = "empId", value = "员工id", paramType = "path", required = true, dataType = "int"),
 			@ApiImplicitParam(name = "empPwd", value = "员工账号密码", paramType = "query", required = true, dataType = "String")
 	})
-	public ResponseModel update(@PathVariable("empId") Integer empId, @RequestParam String empPwd) {
+	public CommonResponse update(@PathVariable("empId") Integer empId, @RequestParam String empPwd) {
 
 		if (empId < 0) {
-			return ResponseModel.getInstance().succ(false).msg("无效的用户id");
+			return CommonResponse.getInstance().succ(false).msg("无效的用户id");
 		}
 
 		if (StringUtils.isEmpty(empPwd)) {
-			return ResponseModel.getInstance().succ(false).msg("密码不能为空");
+			return CommonResponse.getInstance().succ(false).msg("密码不能为空");
 		}
 
 		SysEmp oldUser = userService.getById(empId);
 
 		if (null == oldUser) {
-			return ResponseModel.getInstance().succ(false).msg("用户不存在");
+			return CommonResponse.getInstance().succ(false).msg("用户不存在");
 		}
 
 		if (empPwd.equals(oldUser.getEmpPwd())) {
-			return ResponseModel.getInstance().succ(false).msg("新密码与旧密码相同，不需要更新");
+			return CommonResponse.getInstance().succ(false).msg("新密码与旧密码相同，不需要更新");
 		}
 
 		//密码加密
@@ -240,7 +243,7 @@ public class SysUserController {
 		SysEmp sysEmp = new SysEmp(empId, hashedPwd, salt, TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT));
 
 		userService.updateById(sysEmp);
-		return ResponseModel.getInstance().succ(true).msg("密码更新成功");
+		return CommonResponse.getInstance().succ(true).msg("密码更新成功");
 	}
 
 	@CheckDuplicateSubmit
@@ -253,22 +256,22 @@ public class SysUserController {
 			@ApiImplicitParam(name = "empId", value = "员工id", paramType = "path", required = true, dataType = "int")
 	})
 	@Transactional
-	public ResponseModel updateEmpAcctNamePwd(@PathVariable("empId") Integer empId, @RequestBody SysEmp data) throws AccountDuplicatedException {
+	public CommonResponse updateEmpAcctNamePwd(@PathVariable("empId") Integer empId, @RequestBody SysEmp data) throws AccountDuplicatedException {
 		@NotNull String empAcct = data.getEmpAcct();
 		String empName = data.getEmpName();
 		@NotNull String empPwd = data.getEmpPwd();
 		SysEmp updatingSysEmp = new SysEmp();
 
 		if (empId < 0) {
-			return ResponseModel.getInstance().succ(false).msg("无效的用户id");
+			return CommonResponse.getInstance().succ(false).msg("无效的用户id");
 		}
 		if (Objects.isNull(empPwd) && Objects.isNull(empAcct) && Objects.isNull(empName)) {
-			return ResponseModel.getInstance().succ(false).msg("无效的变更信息");
+			return CommonResponse.getInstance().succ(false).msg("无效的变更信息");
 		}
 		SysEmp dbUser = userService.getById(empId);
 
 		if (null == dbUser) {
-			return ResponseModel.getInstance().succ(false).msg("用户不存在");
+			return CommonResponse.getInstance().succ(false).msg("用户不存在");
 		}
 
 		String hashedPwd = null;
@@ -282,7 +285,7 @@ public class SysUserController {
 		}
 
 		if (hashedPwd.equals(dbUser.getEmpPwd())) {
-			return ResponseModel.getInstance().succ(false).msg("新密码与旧密码相同，不需要更新");
+			return CommonResponse.getInstance().succ(false).msg("新密码与旧密码相同，不需要更新");
 		}
 
 		String currentTime = TimeUtil.getCurrentTime(DragonConstant.TIME_FORMAT);
@@ -306,7 +309,7 @@ public class SysUserController {
 				throw new AccountDuplicatedException("用户重名");
 			}
 		}
-		return ResponseModel.getInstance().succ(true).msg("账号更新成功");
+		return CommonResponse.getInstance().succ(true).msg("账号更新成功");
 	}
 
 	@GetMapping("/list/all")
@@ -358,9 +361,9 @@ public class SysUserController {
 //		sysEmp.setEmpAcct(empAcct);
 //
 //		RandomNumberGenerator numberGenerator = new SecureRandomNumberGenerator();
-//		String salt = numberGenerator.nextBytes().toBase64();
-//		sysEmp.setSalt(salt);
-//		Sha256Hash hashedPwd = new Sha256Hash(empPwd, salt, 1024);
+//		String password = numberGenerator.nextBytes().toBase64();
+//		sysEmp.setSalt(password);
+//		Sha256Hash hashedPwd = new Sha256Hash(empPwd, password, 1024);
 //		sysEmp.setEmpPwd(hashedPwd.toBase64());
 //		Boolean succ = userService.saveUser(sysEmp);
 //		return ResponseModel.getInstance().succ(succ).msg(succ ? "注册账号成功":"注册账号失败");

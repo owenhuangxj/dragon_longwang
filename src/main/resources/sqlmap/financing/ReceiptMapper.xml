@@ -315,7 +315,7 @@
     <select id="selectReceiptCountForCustomerDealDetailSelective" resultType="java.lang.Integer">
         SELECT COUNT(1) FROM t_receipt tr
         WHERE tr.cust_id = #{custId}
-        <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+        <if test="beginTime != null and endTime != null">
             AND tr.create_time BETWEEN #{beginTime} and #{endTime}
         </if>
     </select>
@@ -333,7 +333,7 @@
         where tr.stat = 1
         and tr.cust_id = #{custId}
         <trim prefix="and" prefixOverrides="and">
-            <if test="beginTime != null and beginTime != '' and endTime != null and endTime != ''">
+            <if test="beginTime != null and endTime != null">
                 AND tr.create_time BETWEEN #{beginTime} AND #{endTime}
             </if>
             <if test="oper != null and oper != ''">
@@ -462,6 +462,7 @@
         ) as tc
         left join(select * from t_deal_detail where deal_time between #{beginTime} and #{endTime}) as tdd
         on tdd.cust_id = tc.cust_id
+        order by tc.cust_id
     </select>
     <select id="selectReceiptSelectiveSummation" resultType="com.trenska.longwang.model.report.CommonReceiptSummation">
         select ifnull(sum( tr.receipt_amount ),0) as receiptSum

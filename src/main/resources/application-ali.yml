@@ -1,20 +1,23 @@
 server:
-#  port: 80
+  #  port: 80
   port: 8888
 #  servlet:
 #    context-path: /xx_admin
+magic-api:
+  web: /magic/web
+  resource:
+  location: /data/magic-api
 spring:
-#  main:
-#    allow-bean-definition-overriding: true
+  #  main:
+  #    allow-bean-definition-overriding: true
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://rm-m5ehuh0rsc7p80mx3wo.mysql.rds.aliyuncs.com:3306/longwang?useUnicode=true&characterEncoding=UTF-8&userSSL=false&tinyIntlisBit=true&serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL
     username: longke
     password: Longke123
-#    password: JKgry6o7hOXAgpwtHlMx/cBtsfKmTpGK
+  #    password: JKgry6o7hOXAgpwtHlMx/cBtsfKmTpGK
   redis:
     host: localhost
-#    host: 192.168.31.61
     password: xxlw
     port: 6379
     ##redis统一timeout 缓存有效期，毫秒
@@ -30,6 +33,7 @@ mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
     cache-enabled: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   global-config:
     db-config:
       logic-delete-value: 1  #配置逻辑删除字段为1是删除

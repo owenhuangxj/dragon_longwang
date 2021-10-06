@@ -6,7 +6,7 @@ import com.trenska.longwang.constant.WarningLevel;
 import com.trenska.longwang.entity.goods.Unit;
 import com.trenska.longwang.entity.stock.StockDetail;
 import com.trenska.longwang.entity.stock.StockDetails;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 
 /**
  * 2019/8/7
@@ -20,7 +20,7 @@ public class StockDetailsUtil {
 	 * @param stockDetail 库存变更信息
 	 * @return 成功返回 true,OK
 	 */
-	public static ResponseModel dbLogStockDetail(StockDetail stockDetail) {
+	public static CommonResponse dbLogStockDetail(StockDetail stockDetail) {
 		StockDetails stockDetails = new StockDetails();
 		ObjectCopier.copyProperties(stockDetail, stockDetails);
 		Integer unitId = stockDetail.getUnitId();
@@ -44,7 +44,7 @@ public class StockDetailsUtil {
 		stockDetails.setTimestamp(System.currentTimeMillis());
 		stockDetails.insert();
 
-		return ResponseModel.getInstance().succ(true).msg("Ok");
+		return CommonResponse.getInstance().succ(true).msg("Ok");
 	}
 
 	/**

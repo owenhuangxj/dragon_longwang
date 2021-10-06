@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.trenska.longwang.entity.customer.AreaGrp;
 import com.trenska.longwang.model.customer.AreaGrpModel;
-import com.trenska.longwang.model.sys.ResponseModel;
+import com.trenska.longwang.model.sys.CommonResponse;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -21,8 +21,8 @@ public interface IAreaGrpService extends IService<AreaGrp> {
 	List<AreaGrp> getSubAreaGrp(Integer areaId);
 	Page<AreaGrp> getAreaGrpPage(Page page);
 	Page<AreaGrp> getThirdClassAreaGrpPage(Page page);
-	ResponseModel addSubAreaGrp(AreaGrp area);
-	ResponseModel removeAreaGrp(Integer areaId, Integer areaDeep);
+	CommonResponse addSubAreaGrp(AreaGrp area);
+	CommonResponse removeAreaGrp(Integer areaId, Integer areaDeep);
 	Boolean updateAreaGrp(AreaGrp area);
 
 	Page<AreaGrp> getAreaGrpPageByName(Page page, String areaGrpName);
