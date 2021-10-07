@@ -679,9 +679,9 @@
     </select>
     <!--客户销售统计平均单价部分-->
     <select id="selectCustSalesStatisticsAvgPrice" resultType="java.lang.String">
-        select sum(cast(case when ti.indent_type = '订货单' then tid.amount
-          else -tid.amount end as decimal(13,4))/sum(case when ti.indent_type = '订货单'
-            then tid.num*tid.multi else -tid.num*tid.multi end)
+        select ifnull(sum(cast(case when ti.indent_type = '订货单' then tid.amount
+          else -tid.amount end as decimal(13,4)))/sum(case when ti.indent_type = '订货单'
+            then tid.num*tid.multi else -tid.num*tid.multi end),"0")
         from t_customer tc , t_indent ti , t_indent_detail tid, t_goods tg,t_unit tu
         <if test="shipmanId != null">
             , t_stock ts
