@@ -430,7 +430,10 @@ public class ReportsController {
 		params.put("salesmanId", salesmanId);
 		params.put("frtCatName", frtCatName);
 		params.put("scdCatName", scdCatName);
-
+		if (areaGrpId != null) {
+			List<Integer> areaGrpIds = areaGrpMapper.selectAllChildrenByAreaGrpId(areaGrpId);
+			params.put("areaGrpIds",areaGrpIds);
+		}
 		/**
 		 * 实际上外层只有一条记录，内层的订货单信息为分页信息
 		 */
@@ -483,6 +486,10 @@ public class ReportsController {
 		params.put("frtCatName", frtCatName);
 		params.put("scdCatName", scdCatName);
 		params.put("statisticsWay", statisticsWay);
+		if (areaGrpId != null) {
+			List<Integer> areaGrpIds = areaGrpMapper.selectAllChildrenByAreaGrpId(areaGrpId);
+			params.put("areaGrpIds",areaGrpIds);
+		}
 		Page<GoodsSalesRankModel> pageInfo = indentService.getGoodsSalesRank(params, page);
 		CommonSummation summation = indentService.getGoodsSalesRankSummation(params);
 		return PageHelper.getInstance().pageData(pageInfo).summarizing(summation);

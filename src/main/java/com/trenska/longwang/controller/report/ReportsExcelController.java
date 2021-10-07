@@ -883,7 +883,10 @@ public class ReportsExcelController {
 		params.put("frtCatName", frtCatName);
 		params.put("scdCatName", scdCatName);
 		params.put("statisticsWay", statisticsWay);
-
+		if (areaGrpId != null) {
+			List<Integer> areaGrpIds = areaGrpMapper.selectAllChildrenByAreaGrpId(areaGrpId);
+			params.put("areaGrpIds",areaGrpIds);
+		}
 		Map<String, Object> query = new LinkedHashMap<>();
 
 		if (StringUtils.isNotEmpty(beginTime) && StringUtils.isNotEmpty(endTime)) {

@@ -41,76 +41,62 @@
     </select>
 
     <select id="selectSingleGoodsIndentDetail" resultMap="SingleGoodsSalesIndentDetailResultMap">
-        select tid.goods_id as goodsId,tid.indent_no as indentNo, DATE_FORMAT(ti.indent_time,'%Y/%c/%e %T') as indentTime,tid.num as num,tid.price as price,
-               tc.cust_name as custName,tid.discount as discount,tid.discount_amount as discountAmount,tid.amount as indentTotal,ifnull(tid.remarks,'') as remarks
-        from t_indent_detail tid, t_indent ti,t_customer tc ,t_goods tg
+        select tid.goods_id as goodsId,tid.indent_no as indentNo,
+               DATE_FORMAT(ti.indent_time,'%Y/%c/%e %T') as indentTime,
+               tid.num as num,tid.price as price,tc.cust_name as custName,tid.discount as discount,
+               tid.discount_amount as discountAmount,tid.amount as indentTotal,ifnull(tid.remarks,'') as remarks
+        from t_goods tg
+        join t_indent ti on ti.stat in ('已出库','已完成')
+        <if test="beginTime != null and endTime != null">
+            and ti.indent_time between #{beginTime} and #{endTime}
+        </if>
+        <if test="custId != null">
+            and ti.cust_id = #{custId}
+        </if>
+        <if test="salesmanId != null">
+            and ti.salesman_id = #{salesmanId}
+        </if>
+        <if test="empId != null">
+            and ti.emp_id = #{empId}
+        </if>
+        join t_indent_detail tid on tid.indent_no = ti.indent_no and tid.goods_id = tg.goods_id
+        <if test="discount != null">
+            and tid.discount = #{discount}
+        </if>
+        <choose>
+            <when test="goodsScope != null and goodsScope == -1">
+                and tid.is_gift = 1
+            </when>
+            <when test="goodsScope != null and goodsScope == 0">
+                and tid.is_gift = 0
+            </when>
+            <otherwise/>
+        </choose>
+        join t_customer tc on tc.cust_id = ti.cust_id
+        <if test="areaGrpIds != null and areaGrpIds.size() > 0">
+            and tc.area_grp_id in (
+            <foreach item="agid" collection="areaGrpIds" separator=",">
+                #{agid}
+            </foreach>
+            )
+        </if>
         <if test="specPropId != null">
-            , t_goods_spec tgs
+            join t_goods_spec tgs on tgs.spec_prop_id = #{specPropId}
         </if>
         <if test="shipmanId != null">
-            , t_stock ts
+            join t_stock ts on ts.busi_no = ti.indent_no and ts.shipman_id = #{shipmanId}
         </if>
         where tg.goods_id=#{goodsId}
-        and tid.goods_id = tg.goods_id
-        and tc.cust_id = ti.cust_id
-        and ti.indent_no = tid.indent_no
-        and ti.stat in ('已出库','已完成')
         <trim prefixOverrides="and" prefix="and">
-            <if test="(frtCatName != null and frtCatName != '')
-            or (scdCatName != null and scdCatName != '')
-            or (brandName != null and brandName !='')">
-                and tg.goods_id = tid.goods_id
-                <if test="frtCatName != null and frtCatName != ''">
-                    and tg.frt_cat_name = #{frtCatName}
-                </if>
-                <if test="scdCatName != null and scdCatName != ''">
-                    and tg.scd_cat_name = #{scdCatName}
-                </if>
+            <if test="frtCatName != null and frtCatName != ''">
+                and tg.frt_cat_name = #{frtCatName}
+            </if>
+            <if test="scdCatName != null and scdCatName != ''">
+                and tg.scd_cat_name = #{scdCatName}
             </if>
             <if test="brandName != null and brandName != ''">
                 and tg.brand_name = #{brandName}
             </if>
-            <if test="specPropId != null">
-                and tgs.spec_prop_id = #{specPropId}
-                and tgs.goods_id = tid.goods_id
-            </if>
-            <if test="discount != null">
-                and tid.discount = #{discount}
-            </if>
-            <if test="areaGrpId != null">
-                and ti.cust_id in (
-                    select tc.cust_id from t_customer tc
-                    where tc.area_grp_id in (
-                      select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
-                    )
-                )
-            </if>
-            <if test="beginTime != null and endTime != null">
-                and ti.indent_time between #{beginTime} and #{endTime}
-            </if>
-            <if test="custId != null">
-                and ti.cust_id = #{custId}
-            </if>
-            <if test="salesmanId != null">
-                and ti.salesman_id = #{salesmanId}
-            </if>
-            <if test="shipmanId != null">
-                and ts.busi_no = ti.indent_no
-                and ts.shipman_id = #{shipmanId}
-            </if>
-            <if test="empId != null">
-                and ti.emp_id = #{empId}
-            </if>
-            <choose>
-                <when test="goodsScope != null and goodsScope == -1">
-                    and tid.is_gift = 1
-                </when>
-                <when test="goodsScope != null and goodsScope == 0">
-                    and tid.is_gift = 0
-                </when>
-                <otherwise>
-                </otherwise>
-            </choose>
         </trim>
         order by ti.indent_time,ti.indent_no
     </select>
@@ -130,82 +116,59 @@
     </resultMap>
 
     <select id="selectSingleGoodsIndentDetailCount" resultType="int">
-        select count(1)
-        from t_indent_detail tid, t_indent ti,t_customer tc
-        <if test="(frtCatName != null and frtCatName != '')
-        or (scdCatName != null and scdCatName != '')
-        or (brandName != null and brandName !='')">
-            ,t_goods tg
+        select count(1) from t_goods tg
+        join t_indent ti on ti.stat in ('已出库','已完成')
+        <if test="beginTime != null and endTime != null">
+            and ti.indent_time between #{beginTime} and #{endTime}
+        </if>
+        <if test="custId != null">
+            and ti.cust_id = #{custId}
+        </if>
+        <if test="salesmanId != null">
+            and ti.salesman_id = #{salesmanId}
+        </if>
+        <if test="empId != null">
+            and ti.emp_id = #{empId}
+        </if>
+        join t_indent_detail tid on tid.indent_no = ti.indent_no and tid.goods_id = tg.goods_id
+        <if test="discount != null">
+            and tid.discount = #{discount}
+        </if>
+        <choose>
+            <when test="goodsScope != null and goodsScope == -1">
+                and tid.is_gift = 1
+            </when>
+            <when test="goodsScope != null and goodsScope == 0">
+                and tid.is_gift = 0
+            </when>
+            <otherwise/>
+        </choose>
+        join t_customer tc on tc.cust_id = ti.cust_id
+        <if test="areaGrpIds != null and areaGrpIds.size() > 0">
+            and tc.area_grp_id in (
+            <foreach item="agid" collection="areaGrpIds" separator=",">
+                #{agid}
+            </foreach>
+            )
         </if>
         <if test="specPropId != null">
-            , t_goods_spec tgs
+            join t_goods_spec tgs on tgs.spec_prop_id = #{specPropId}
         </if>
         <if test="shipmanId != null">
-            , t_stock ts
+            join t_stock ts on ts.busi_no = ti.indent_no and ts.shipman_id = #{shipmanId}
         </if>
-        where tid.goods_id=#{goodsId}
-        and tc.cust_id = ti.cust_id
-        and ti.indent_no = tid.indent_no
-        and ti.indent_type = '订货单'
-        and ti.stat in ('已出库','已完成')
+        where tg.goods_id=#{goodsId}
         <trim prefixOverrides="and" prefix="and">
-            <if test="(frtCatName != null and frtCatName != '')
-            or (scdCatName != null and scdCatName != '')">
-                and tg.goods_id = tid.goods_id
-                <if test="frtCatName != null and frtCatName != ''">
-                    and tg.frt_cat_name = #{frtCatName}
-                </if>
-                <if test="scdCatName != null and scdCatName != ''">
-                    and tg.scd_cat_name = #{scdCatName}
-                </if>
-            </if>
-            <if test="brandName != null and brandName != ''">
-                and tg.brand_name = #{brandName}
-            </if>
-            <if test="specPropId != null">
-                and tgs.spec_prop_id = #{specPropId}
-                and tgs.goods_id = tid.goods_id
-            </if>
-            <if test="discount != null">
-                and tid.discount = #{discount}
-            </if>
-            <if test="areaGrpId != null">
-                and ti.cust_id in (
-                    select tc.cust_id from t_customer tc
-                    where tc.area_grp_id in (
-                      select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
-                    )
-                )
-            </if>
-            <if test="beginTime != null and beginTime != ''
-            and endTime != null and endTime != ''">
-                and ti.indent_time between #{beginTime} and #{endTime}
-            </if>
-            <if test="custId != null">
-                and ti.cust_id = #{custId}
-            </if>
-            <if test="salesmanId != null">
-                and ti.salesman_id = #{salesmanId}
-            </if>
-            <if test="shipmanId != null">
-                and ts.busi_no = ti.indent_no
-                and ts.shipman_id = #{shipmanId}
-            </if>
-            <if test="empId != null">
-                and ti.emp_id = #{empId}
-            </if>
-            <choose>
-                <when test="goodsScope != null and goodsScope == -1">
-                    and tid.is_gift = 1
-                </when>
-                <when test="goodsScope != null and goodsScope == 0">
-                    and tid.is_gift = 0
-                </when>
-                <otherwise>
-                </otherwise>
-            </choose>
+        <if test="frtCatName != null and frtCatName != ''">
+            and tg.frt_cat_name = #{frtCatName}
+        </if>
+        <if test="scdCatName != null and scdCatName != ''">
+            and tg.scd_cat_name = #{scdCatName}
+        </if>
+        <if test="brandName != null and brandName != ''">
+            and tg.brand_name = #{brandName}
+        </if>
         </trim>
-        order by ti.indent_time,ti.indent_no
     </select>
     <select id="selectUndeletable" resultType="com.trenska.longwang.entity.indent.IndentDetail">
         select <include refid="Base_Column_List"/>

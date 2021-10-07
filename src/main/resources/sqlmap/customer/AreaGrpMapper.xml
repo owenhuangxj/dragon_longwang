@@ -4,7 +4,7 @@
     <select id="selectAllChildrenByAreaGrpId" resultType="int">
         select area_grp_id
         from t_area_grp
-        where FIND_IN_SET(area_grp_id,getChildList(17))
+        where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
     </select>
 
     <select id="selectAreaGrpPage" resultType="com.trenska.longwang.entity.customer.AreaGrp">

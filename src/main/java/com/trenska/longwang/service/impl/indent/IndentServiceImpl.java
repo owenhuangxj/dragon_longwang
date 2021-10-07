@@ -2415,10 +2415,10 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 
 		singleGoodsSalesDetailModel.setSalesAmntSum(salesAmntSum.toString());
 
-		List<SingleGoodsSalesIndentDetailModel> singleGoodsSalesIndentDetailModels = indentDetailMapper.selectSingleGoodsIndentDetail(page, params);
+		List<SingleGoodsSalesIndentDetailModel> singleGoodsSalesIndentDetailModels
+				= indentDetailMapper.selectSingleGoodsIndentDetail(page, params);
 
 		for (SingleGoodsSalesIndentDetailModel record : singleGoodsSalesIndentDetailModels) {
-
 			BigDecimal discount = new BigDecimal(record.getDiscount());
 			discount = discount.setScale(retain, RoundingMode.HALF_UP);
 			record.setDiscount(discount.toString());
@@ -2455,9 +2455,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 		records.add(singleGoodsSalesDetailModel);
 		page.setRecords(records);
 		page.setTotal(total);
-
 		return page;
-
 	}
 
 	/**
@@ -2486,7 +2484,6 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			record.setDiscountAmount(discountAmount.toString());
 
 		}
-
 		int total = super.baseMapper.selectGoodsSalesRankCount(params);
 		page.setRecords(records);
 		page.setTotal(total);
