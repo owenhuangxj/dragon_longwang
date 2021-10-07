@@ -18,7 +18,7 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        tdd.id, tdd.cust_id, tdd.name_no, tdd.deal_time, cast(tdd.amount as decimal(9,2)) as amount,cast(tdd.debt as decimal(9,2)) as debt ,
+        tdd.id, tdd.cust_id, tdd.name_no, tdd.deal_time, cast(tdd.amount as decimal(13,2)) as amount,cast(tdd.debt as decimal(13,2)) as debt ,
         ifnull(tdd.oper,'') as oper,ifnull(tdd.payway,'') as payway ,ifnull(tdd.remarks,'') as remarks,ifnull(tdd.audit_remarks,'') as audit_remarks
     </sql>
     <select id="selectDealDetailCountSelective" resultType="java.lang.Integer">
@@ -41,7 +41,7 @@
     </select>
 
     <select id="selectDealDetailPageSelective" resultMap="BaseResultMap">
-        select tdd.id, tdd.cust_id, tdd.name_no, tdd.deal_time, tdd.amount,cast(tdd.debt as decimal(9,2)) as debt ,
+        select tdd.id, tdd.cust_id, tdd.name_no, tdd.deal_time, tdd.amount,cast(tdd.debt as decimal(13,2)) as debt ,
                tdd.oper,ifnull(tdd.payway,'') as payway ,ifnull(tdd.remarks,'') as remarks,ifnull(tdd.audit_remarks,'') as audit_remarks
         from t_deal_detail tdd
         <trim prefix="where" prefixOverrides="and">
@@ -95,7 +95,7 @@
     销售商品(作废)amount前缀为-,sum()恰好能进行统计，因为增加欠款是这两者绝对值的差
     -->
     <select id="selectDealDetailSummarizingForAdd" resultType="com.trenska.longwang.entity.financing.DealDetailSummarizing">
-        select ifnull(sum(if(substring(tdd.oper,1,4) = '销售商品',cast(amount as decimal(9,2)),0)),0) as plusDebt
+        select ifnull(sum(if(substring(tdd.oper,1,4) = '销售商品',cast(amount as decimal(13,2)),0)),0) as plusDebt
         from t_deal_detail tdd
         where tdd.cust_id = #{custId}
         <trim prefix="and" prefixOverrides="and">
@@ -199,11 +199,11 @@
               sum(
                 if(
                   substring(tdd.amount,1,1)='+',
-                  cast(tdd.amount as decimal(9,2))
+                  cast(tdd.amount as decimal(13,2))
                 ,0)
               ),
             0)) as plusDebt,
-            abs(ifnull( sum( if(substring(tdd.name_no,1,3) = '收款单' and instr(tdd.oper,'作废') = 0 , cast(tdd.amount as decimal(9,2)),0) ) ,0)) as receiptedDetb,
+            abs(ifnull( sum( if(substring(tdd.name_no,1,3) = '收款单' and instr(tdd.oper,'作废') = 0 , cast(tdd.amount as decimal(13,2)),0) ) ,0)) as receiptedDetb,
             abs(ifnull(
                 sum(
                     if(
@@ -212,7 +212,7 @@
                       or (substring(tdd.name_no,1,3) = '付款单' and instr(tdd.oper,'作废') = 0)
                       or (substring(tdd.name_no,1,3) = '退货单' and instr(tdd.oper,'作废') = 0)
                       or (substring(tdd.name_no,1,3) = '订货单' and tdd.oper = '销售商品(核改)'),
-                      cast(tdd.amount as decimal(9,2))
+                      cast(tdd.amount as decimal(13,2))
                     ,0)
                 )
             ,0)) as cutDebt

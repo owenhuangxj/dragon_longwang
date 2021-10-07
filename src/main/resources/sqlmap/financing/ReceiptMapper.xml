@@ -156,8 +156,8 @@
     <!-- 客户对账统计数据，即没有分组和分页的数据 -->
     <select id="selectAccountCheckingSummationReceiptPart" resultType="com.trenska.longwang.model.report.AccountCheckingSummationModel">
         SELECT
-        IFNULL(sum(IF(tr.type = '收款单' ,cast(tr.receipt_amount as decimal(9,2)),0)),0)  AS receivedAmountTotal,
-        IFNULL(sum(IF(tr.type = '付款单' ,cast(tr.receipt_amount as decimal(9,2)),0)),0)  AS payedAmountTotal
+        IFNULL(sum(IF(tr.type = '收款单' ,cast(tr.receipt_amount as decimal(13,2)),0)),0)  AS receivedAmountTotal,
+        IFNULL(sum(IF(tr.type = '付款单' ,cast(tr.receipt_amount as decimal(13,2)),0)),0)  AS payedAmountTotal
         FROM (
         SELECT cust_id FROM t_customer
         <trim prefixOverrides="AND" prefix="WHERE">
@@ -208,7 +208,7 @@
               if(  tdd.oper = '增加欠款'
                    or substring(tdd.name_no,1,3) = '订货单'
                    or (substring(tdd.name_no,1,3) = '调账单'and tdd.oper = '调账增加'),
-                cast(tdd.amount as decimal(9,2)),0
+                cast(tdd.amount as decimal(13,2)),0
               )
             )
             ,0
@@ -217,7 +217,7 @@
         abs(
           ifnull(
             sum(
-              if(substring(tdd.name_no,1,3) = '收款单' ,cast(tdd.amount as decimal(9,2)),0)
+              if(substring(tdd.name_no,1,3) = '收款单' ,cast(tdd.amount as decimal(13,2)),0)
             )
             ,0
           )
@@ -228,7 +228,7 @@
               if(  substring(tdd.name_no,1,3) = '付款单'
                    or substring(tdd.name_no,1,3) = '退货单'
                    or(substring(tdd.name_no,1,3) = '调账单' and substring(tdd.oper,1,4) = '调账减少'),
-                cast(tdd.amount as decimal(9,2))
+                cast(tdd.amount as decimal(13,2))
               ,0
               )
             )
@@ -320,8 +320,8 @@
     </select>
 
     <select id="selectDealDetailSummarizingForDecrease" resultType="com.trenska.longwang.entity.financing.DealDetailSummarizing">
-        select ifnull(sum(if(tr.type = '收款单' and tr.stat = 1,cast(tr.receipt_amount as decimal(9,2)),0)),0) as receiptedDetb,
-               ifnull(sum(if(tr.type = '付款单' and tr.stat = 1,cast(tr.receipt_amount as decimal(9,2)),0)),0) as cutDebt
+        select ifnull(sum(if(tr.type = '收款单' and tr.stat = 1,cast(tr.receipt_amount as decimal(13,2)),0)),0) as receiptedDetb,
+               ifnull(sum(if(tr.type = '付款单' and tr.stat = 1,cast(tr.receipt_amount as decimal(13,2)),0)),0) as cutDebt
         from t_receipt tr
         where tr.stat = 1
         and tr.cust_id = #{custId}
@@ -340,7 +340,7 @@
     <select id="selectReceiptStatics" resultType="java.util.Map">
         SELECT
        <foreach collection="payways" separator="," item="payway" >
-        concat(cast(sum(if(tr.payway = #{payway},tr.receipt_amount,0)) as decimal(9,2)),'') as #{payway}
+        concat(cast(sum(if(tr.payway = #{payway},tr.receipt_amount,0)) as decimal(13,2)),'') as #{payway}
        </foreach>
         FROM t_receipt tr
         <if test="areaGrpId != null">
@@ -414,12 +414,12 @@
                 tdd.oper = '增加欠款'
                 or substring(tdd.name_no,1,3) = '订货单'
                 or (substring(tdd.name_no,1,3) = '调账单'and tdd.oper = '调账增加')
-                ,cast(tdd.amount as decimal(9,2))
+                ,cast(tdd.amount as decimal(13,2))
               ,0)
             )
           ,0)
         ) as salesAmountTotal,
-        abs(ifnull( sum( if(substring(tdd.name_no,1,3) = '收款单' , cast(tdd.amount as decimal(9,2)),0) ) ,0)) as receivedAmountTotal,
+        abs(ifnull( sum( if(substring(tdd.name_no,1,3) = '收款单' , cast(tdd.amount as decimal(13,2)),0) ) ,0)) as receivedAmountTotal,
         abs(
           ifnull(
             sum(
@@ -427,7 +427,7 @@
                 substring(tdd.name_no,1,3) = '付款单'
                 or substring(tdd.name_no,1,3) = '退货单'
                 or (substring(tdd.name_no,1,3) = '调账单' and substring(tdd.oper,1,4) = '调账减少'),
-                cast(tdd.amount as decimal(9,2))
+                cast(tdd.amount as decimal(13,2))
               ,0)
             )
           ,0)

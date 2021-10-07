@@ -679,6 +679,7 @@ public class ReportsController {
 		params.put("beginTime", beginTime);
 		params.put("areaGrpId", areaGrpId);
 		params.put("salesmanId", salesmanId);
+//		params.put("employeeId",SysUtil.getEmpIdInToken());
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
 		Page<Map<String, List<Map<String, String>>>> receiptStatics = receiptService.getReceiptStatics(params, page);
 
