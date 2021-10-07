@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.trenska.longwang.dao.customer.AreaGrpMapper">
+    <select id="selectAllChildrenByAreaGrpId" resultType="int">
+        select area_grp_id
+        from t_area_grp
+        where FIND_IN_SET(area_grp_id,getChildList(17))
+    </select>
+
     <select id="selectAreaGrpPage" resultType="com.trenska.longwang.entity.customer.AreaGrp">
         select
         <include refid="Base_Column_List"/>

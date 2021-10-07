@@ -292,9 +292,11 @@
             <if test="custName != null and custName != ''">
                 and instr(tc.cust_name,#{custName})
             </if>
-            <if test="areaGrpId != null">
+            <if test="areaGrpIds != null and areaGrpIds.size() > 0">
                 and tc.area_grp_id in (
-                  select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                <foreach item="areaGrpId" collection="areaGrpIds" separator=",">
+                    #{areaGrpId}
+                </foreach>
                 )
             </if>
         </trim>
@@ -317,10 +319,12 @@
         and ti.stat in ('已出库','已完成')
         and ti.indent_no = tid.indent_no
         and tid.goods_id = tg.goods_id
-        <if test="custIds != null and custIds.size() > 0">
-            <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
-                #{custId}
-            </foreach>
+        <if test="employeeId != null">
+            and exists(
+                select 1 from t_emp_area_grp eag
+                join sys_emp se on eag.emp_id = se.emp_id
+                where se.emp_id = #{employeeId} and tc.area_grp_id = eag.area_grp_id
+            )
         </if>
         <trim prefixOverrides="and" prefix="and">
             <if test="beginTime != null and endTime != null">
@@ -341,11 +345,13 @@
             <if test="custName != null and custName != ''">
                 and instr(tc.cust_name,#{custName})
             </if>
-            <if test="areaGrpId != null">
-                and tc.area_grp_id in (
-                  select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
-                )
-            </if>
+            <if test="areaGrpIds != null and areaGrpIds.size() > 0">
+                    and tc.area_grp_id in (
+                    <foreach item="areaGrpId" collection="areaGrpIds" separator=",">
+                        #{areaGrpId}
+                    </foreach>
+                    )
+                </if>
         </trim>
         group by tc.cust_id
         order by tc.cust_no
@@ -358,10 +364,12 @@
             and ti.stat in ('已出库','已完成')
             and ti.indent_no = tid.indent_no
             and tid.goods_id = tg.goods_id
-            <if test="custIds != null and custIds.size() > 0">
-                <foreach collection="custIds" item="custId" open="and tc.cust_id in (" close=")" separator=",">
-                    #{custId}
-                </foreach>
+            <if test="employeeId != null">
+                and exists(
+                    select 1 from t_emp_area_grp eag
+                    join sys_emp se on eag.emp_id = se.emp_id
+                    where se.emp_id = #{employeeId} and tc.area_grp_id = eag.area_grp_id
+                )
             </if>
             <trim prefixOverrides="and" prefix="and">
                 <if test="beginTime != null and endTime != null">
@@ -379,9 +387,11 @@
                 <if test="scdCatName != null and scdCatName !=''">
                     and tg.scd_cat_name = #{scdCatName}
                 </if>
-                <if test="areaGrpId != null">
+                <if test="areaGrpIds != null and areaGrpIds.size() > 0">
                     and tc.area_grp_id in (
-                    select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+                    <foreach item="areaGrpId" collection="areaGrpIds" separator=",">
+                        #{areaGrpId}
+                    </foreach>
                     )
                 </if>
             </trim>
@@ -458,9 +468,11 @@
             <otherwise>
             </otherwise>
         </choose>
-        <if test="areaGrpId != null">
+        <if test="areaGrpIds != null and areaGrpIds.size() > 0">
             and tc.area_grp_id in (
-              select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+            <foreach item="areaGrpId" collection="areaGrpIds" separator=",">
+                #{areaGrpId}
+            </foreach>
             )
         </if>
     </select>
@@ -535,9 +547,11 @@
             </when>
             <otherwise/>
         </choose>
-        <if test="areaGrpId != null">
+        <if test="areaGrpIds != null and areaGrpIds.size() > 0">
             and tc.area_grp_id in (
-              select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+            <foreach item="areaGrpId" collection="areaGrpIds" separator=",">
+                #{areaGrpId}
+            </foreach>
             )
         </if>
         group by tc.cust_id,tid.is_gift,tg.goods_id
@@ -616,9 +630,11 @@
             <otherwise>
             </otherwise>
         </choose>
-        <if test="areaGrpId != null">
+        <if test="areaGrpIds != null and areaGrpIds.size() > 0">
             and tc.area_grp_id in (
-            select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
+            <foreach item="areaGrpId" collection="areaGrpIds" separator=",">
+                #{areaGrpId}
+            </foreach>
             )
         </if>
         group by tc.cust_id,tid.is_gift,tg.goods_id
@@ -1274,7 +1290,8 @@
         </trim>
         ) as tg
         left join (
-        select tid.goods_id as goods_id ,sum(tid.num) as num ,sum(cast(tid.discount_amount as decimal(13,4))) as discountAmount,
+        select tid.goods_id as goods_id ,sum(tid.num) as num ,
+               sum(cast(tid.discount_amount as decimal(13,4))) as discountAmount,
                sum(cast(tid.amount as decimal(13,4)) + cast(tid.discount_amount as decimal(13,4))) as salesAmnt ,
                tid.discount as discount ,sum(cast(tid.amount as decimal(13,4))) as indentTotal,tid.price as price,
                ti.indent_type as indentType
@@ -1290,12 +1307,11 @@
         </if>
             and tc.cust_id = ti.cust_id
         <trim prefixOverrides="and" prefix="and">
-            <if test="areaGrpId != null">
-                and ti.cust_id in (
-                    select cust_id from t_customer
-                    where area_grp_id in (
-                      select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
-                    )
+            <if test="areaGrpIds != null and areaGrpIds.size() > 0">
+                and tc.area_grp_id in (
+                <foreach item="areaGrpId" collection="areaGrpIds" separator=",">
+                    #{areaGrpId}
+                </foreach>
                 )
             </if>
             <if test="beginTime != null and endTime != null">
@@ -1381,12 +1397,11 @@
                 and ts.shipman_id = #{shipmanId}
             </if>
                 and tc.cust_id = ti.cust_id
-            <if test="areaGrpId != null">
-                and ti.cust_id in (
-                    select tc.cust_id from t_customer tc
-                    where tc.area_grp_id in (
-                      select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
-                    )
+            <if test="areaGrpIds != null and areaGrpIds.size() > 0">
+                and tc.area_grp_id in (
+                <foreach item="areaGrpId" collection="areaGrpIds" separator=",">
+                    #{areaGrpId}
+                </foreach>
                 )
             </if>
             <if test="beginTime != null and endTime != null">
@@ -1424,21 +1439,19 @@
         tid.discount as discount ,tid.price as price ,concat('-',sum(cast(tid.amount as decimal(13,4)))) as indentTotal,
         concat('-',sum(cast(tid.amount as decimal(13,4)) + cast(tid.amount as decimal(13,4)))) as salesAmnt,
         concat('-',sum(cast(tid.discount_amount as decimal(13,4)))) as discountTotal,concat('-',sum(tid.num)) as num
-        from t_goods tg ,t_unit tu , t_indent_detail tid, t_indent ti
+        from t_goods tg ,t_unit tu , t_indent_detail tid, t_indent ti, t_customer tc
         <if test="specPropId != null">
             , t_goods_spec tgs
         </if>
         <if test="shipmanId != null">
             , t_stock ts
         </if>
-        <if test="custName != null and custName != ''">
-            , t_customer tc
-        </if>
         where tg.main_unit_id = tu.unit_id
         and ti.stat = '已完成'
         and ti.indent_type = '退货单'
         and ti.indent_no = tid.indent_no
         and tg.goods_id = tid.goods_id
+        and tc.cust_id = ti.cust_id
         <trim prefixOverrides="and" prefix="and">
             <if test="frtCatName != null and frtCatName != ''">
                 and tg.frt_cat_name = #{frtCatName}
@@ -1460,15 +1473,11 @@
                 and ts.busi_no = ti.indent_no
                 and ts.shipman_id = #{shipmanId}
             </if>
-            <if test="custName != null and custName != ''">
-                and tc.cust_id = ti.cust_id
-            </if>
-            <if test="areaGrpId != null">
-                and ti.cust_id in (
-                select tc.cust_id from t_customer tc
-                where tc.area_grp_id in (
-                select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
-                )
+            <if test="areaGrpIds != null and areaGrpIds.size() > 0">
+                and tc.area_grp_id in (
+                <foreach item="areaGrpId" collection="areaGrpIds" separator=",">
+                    #{areaGrpId}
+                </foreach>
                 )
             </if>
             <if test="beginTime != null and endTime != null">
@@ -1525,22 +1534,20 @@
           tid.discount as discount ,tid.price as price ,sum(cast(tid.amount as decimal(13,4))) as indentTotal,
           sum(cast(tid.amount as decimal(13,4)) + cast(tid.amount as decimal(13,4))) as salesAmnt,
           sum(cast(tid.discount_amount as decimal(13,4))) as discountTotal,sum(tid.num) as num
-          from t_goods tg ,t_unit tu , t_indent_detail tid, t_indent ti
+          from t_goods tg ,t_unit tu , t_indent_detail tid, t_indent ti, t_customer tc
           <if test="specPropId != null">
             , t_goods_spec tgs
           </if>
           <if test="shipmanId != null">
             , t_stock ts
           </if>
-          <if test="custName != null and custName != ''">
-            , t_customer tc
-          </if>
           where tg.main_unit_id = tu.unit_id
           and ti.stat in ('已出库','已完成')
           and ti.indent_type = '订货单'
           and ti.indent_no = tid.indent_no
           and tg.goods_id = tid.goods_id
-          <trim prefixOverrides="and" prefix="and">
+          and tc.cust_id = ti.cust_id
+        <trim prefixOverrides="and" prefix="and">
             <if test="frtCatName != null and frtCatName != ''">
                 and tg.frt_cat_name = #{frtCatName}
             </if>
@@ -1561,16 +1568,12 @@
                 and ts.busi_no = ti.indent_no
                 and ts.shipman_id = #{shipmanId}
             </if>
-            <if test="custName != null and custName != ''">
-                and tc.cust_id = ti.cust_id
-            </if>
-            <if test="areaGrpId != null">
-                and ti.cust_id in (
-                select tc.cust_id from t_customer tc
-                where tc.area_grp_id in (
-                select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
-                )
-                )
+            <if test="areaGrpIds != null and areaGrpIds.size() > 0">
+              and tc.area_grp_id in (
+              <foreach item="areaGrpId" collection="areaGrpIds" separator=",">
+                  #{areaGrpId}
+              </foreach>
+              )
             </if>
             <if test="beginTime != null and endTime != null">
                 and ti.sales_time between #{beginTime} and #{endTime}
@@ -1607,21 +1610,19 @@
         tid.discount as discount ,tid.price as price ,concat('-',sum(cast(tid.amount as decimal(13,4)))) as indentTotal,
         concat('-',sum(cast(tid.amount as decimal(13,4)) + cast(tid.amount as decimal(13,4)))) as salesAmnt,
         concat('-',sum(cast(tid.discount_amount as decimal(13,4)))) as discountTotal,sum(tid.num) as num
-        from t_goods tg ,t_unit tu , t_indent_detail tid, t_indent ti
+        from t_goods tg ,t_unit tu , t_indent_detail tid, t_indent ti, t_customer tc
         <if test="specPropId != null">
             , t_goods_spec tgs
         </if>
         <if test="shipmanId != null">
             , t_stock ts
         </if>
-        <if test="custName != null and custName != ''">
-            , t_customer tc
-        </if>
         where tg.main_unit_id = tu.unit_id
         and ti.stat = '已完成'
         and ti.indent_type = '退货单'
         and ti.indent_no = tid.indent_no
         and tg.goods_id = tid.goods_id
+        and tc.cust_id = ti.cust_id
         <trim prefixOverrides="and" prefix="and">
             <if test="frtCatName != null and frtCatName != ''">
                 and tg.frt_cat_name = #{frtCatName}
@@ -1643,15 +1644,11 @@
                 and ts.busi_no = ti.indent_no
                 and ts.shipman_id = #{shipmanId}
             </if>
-            <if test="custName != null and custName != ''">
-                and tc.cust_id = ti.cust_id
-            </if>
-            <if test="areaGrpId != null">
-                and ti.cust_id in (
-                select tc.cust_id from t_customer tc
-                where tc.area_grp_id in (
-                select area_grp_id from t_area_grp where FIND_IN_SET(area_grp_id,getChildList(#{areaGrpId}))
-                )
+            <if test="areaGrpIds != null and areaGrpIds.size() > 0">
+                and tc.area_grp_id in (
+                <foreach item="areaGrpId" collection="areaGrpIds" separator=",">
+                    #{areaGrpId}
+                </foreach>
                 )
             </if>
             <if test="beginTime != null and endTime != null">

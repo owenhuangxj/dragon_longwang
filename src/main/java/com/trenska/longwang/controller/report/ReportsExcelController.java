@@ -85,6 +85,10 @@ public class ReportsExcelController {
 		params.put("frtCatName", frtCatName);
 		params.put("scdCatName", scdCatName);
 		params.put("salesmanId", salesmanId);
+		if (areaGrpId != null) {
+			List<Integer> areaGrpIds = areaGrpMapper.selectAllChildrenByAreaGrpId(areaGrpId);
+			params.put("areaGrpIds",areaGrpIds);
+		}
 		Page<CustSalesBillModel> pageInfo = indentService.getCustSales(params, page);
 		List<CustSalesBillRecordsModel> contents = new ArrayList<>();
 		List<CustSalesBillRecordsModel> records = pageInfo.getRecords().get(0).getRecords();
@@ -92,7 +96,6 @@ public class ReportsExcelController {
 
 		Map<String, String> title = new LinkedHashMap<>();
 
-		//title.put("brandName", "品牌");
 		title.put("custNo", "客户编号");
 		title.put("custName", "客户名称");
 		title.put("odrAmnt", "销售货款");
@@ -134,8 +137,6 @@ public class ReportsExcelController {
 		}
 
 		HSSFWorkbook wb = ExcelUtil.getHSSFWorkbook("客户销售账本", true, summarizing, query, title, contents, null);
-//		wb.write(new File("e:\\out\\demo.xls"));
-//		wb.close();
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentDispositionFormData("attachment", new String("客户销售账本.xls".getBytes(DragonConstant.srcEncoding), DragonConstant.destEncoding));
@@ -156,6 +157,11 @@ public class ReportsExcelController {
 	) throws NoSuchFieldException, IllegalAccessException, IOException {
 		searchModel.setEmployeeId(SysUtil.getEmpIdInToken());
 		Map<String, Object> query = assembleCustomerSasleSummarizingQuery(searchModel);
+
+		if (searchModel.getAreaGrpId() != null) {
+			List<Integer> areaGrpIds = areaGrpMapper.selectAllChildrenByAreaGrpId(searchModel.getAreaGrpId());
+			searchModel.setAreaGrpIds(areaGrpIds);
+		}
 
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
 		Page<CustSalesSummarizingModel> pageInfo = indentService.getCustSalesSummarizing(searchModel, page);
@@ -574,9 +580,6 @@ public class ReportsExcelController {
 			@RequestParam(required = false, name = "areaGrpName") String areaGrpName,
 			@PathVariable(value = "current") Integer current, @PathVariable(value = "size") Integer size
 	) throws Exception {
-//		if(StringUtils.isNotEmpty(discount) && !StringUtil.isNumeric(discount)){
-//
-//		}
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
 		Map<String, Object> params = new HashMap<>();
 		params.put("empId", empId);
@@ -594,6 +597,10 @@ public class ReportsExcelController {
 		params.put("goodsScope", goodsScope);
 		params.put("frtCatName", frtCatName);
 		params.put("scdCatName", scdCatName);
+		if (areaGrpId != null) {
+			List<Integer> areaGrpIds = areaGrpMapper.selectAllChildrenByAreaGrpId(areaGrpId);
+			params.put("areaGrpIds",areaGrpIds);
+		}
 		Page<GoodsSalesSummarizingModel> pageInfo = indentService.getGoodsSalesSummarizing(params, page);
 		///////////////////////////////////////////// 处理合计部分 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 		CommonSummation goodsSalesSummation = indentService.getGoodsSalesSummation(params);

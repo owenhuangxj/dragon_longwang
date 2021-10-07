@@ -104,6 +104,10 @@ public class ReportsController {
 		params.put("salesmanId", salesmanId);
 		params.put("employeeId",SysUtil.getEmpIdInToken());
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
+		if (areaGrpId != null) {
+			List<Integer> areaGrpIds = areaGrpMapper.selectAllChildrenByAreaGrpId(areaGrpId);
+			params.put("areaGrpIds",areaGrpIds);
+		}
 		Page<CustSalesBillModel> pageInfo = indentService.getCustSales(params, page);
 		return PageHelper.getInstance().pageData(pageInfo);
 	}
@@ -117,6 +121,10 @@ public class ReportsController {
 //		SysEmp sysEmp = (SysEmp) SecurityUtils.getSubject().getPrincipal();
 		Page page = PageUtils.getPageParam(new PageHelper(current, size));
 		searchModel.setEmployeeId(SysUtil.getEmpIdInToken());
+		if (searchModel.getAreaGrpId() != null) {
+			List<Integer> areaGrpIds = areaGrpMapper.selectAllChildrenByAreaGrpId(searchModel.getAreaGrpId());
+			searchModel.setAreaGrpIds(areaGrpIds);
+		}
 		CustSalesSummationModel summarizing = indentService.getCustSalesSummation(searchModel);
 		Page<CustSalesSummarizingModel> pageInfo = indentService.getCustSalesSummarizing(searchModel, page);
 		return PageHelper.getInstance().pageData(pageInfo).summarizing(summarizing);
@@ -354,6 +362,10 @@ public class ReportsController {
 		params.put("goodsScope", goodsScope);
 		params.put("specPropId", specPropId);
 		params.put("salesmanId", salesmanId);
+		if (areaGrpId != null) {
+			List<Integer> areaGrpIds = areaGrpMapper.selectAllChildrenByAreaGrpId(areaGrpId);
+			params.put("areaGrpIds",areaGrpIds);
+		}
 		CommonSummation summarizing = indentService.getGoodsSalesSummation(params);
 		Page<GoodsSalesSummarizingModel> pageInfo = indentService.getGoodsSalesSummarizing(params, page);
 		return PageHelper.getInstance().pageData(pageInfo).summarizing(summarizing);

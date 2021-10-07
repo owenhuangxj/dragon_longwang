@@ -18,6 +18,8 @@ import java.util.Set;
 //@CacheNamespace(implementation = RedisCacheMybatis.class, eviction = RedisCacheMybatis.class)
 public interface AreaGrpMapper extends BaseMapper<AreaGrp> {
 
+	List<Integer> selectAllChildrenByAreaGrpId(int areaGrpId);
+
 	List<AreaGrp> selectAreaGrpPage(Pagination pagination);
 
 	List<AreaGrp> selectThirdClassAreaGrpPage(Pagination pagination);

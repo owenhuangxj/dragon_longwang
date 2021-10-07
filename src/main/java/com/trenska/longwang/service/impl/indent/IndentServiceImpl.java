@@ -1983,7 +1983,6 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	@Override
 	@DataAuthVerification
 	public Page<CustSalesBillModel> getCustSales(Map<String, Object> params, Page page) {
-
 		long start = System.currentTimeMillis();
 		SysConfig sysConfig = SysUtil.getSysConfig(SysUtil.getEmpIdInToken());
 		int retain = sysConfig.getRetain();
@@ -2386,8 +2385,6 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 			record.setIndentTotal(indentTotal.toString());
 
 		}
-
-//		int total = super.baseMapper.selectGoodsSalesSummarizingCount(params);
 		int total = super.baseMapper.selectGoodsSalesSummarizingCount(params);
 		page.setRecords(records);
 		page.setTotal(total);
