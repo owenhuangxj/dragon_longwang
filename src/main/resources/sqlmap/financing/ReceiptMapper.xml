@@ -456,7 +456,6 @@
         ) as tc
         left join(select * from t_deal_detail where deal_time between #{beginTime} and #{endTime}) as tdd
         on tdd.cust_id = tc.cust_id
-        order by tc.cust_id
     </select>
     <select id="selectReceiptSelectiveSummation" resultType="com.trenska.longwang.model.report.CommonReceiptSummation">
         select ifnull(sum( tr.receipt_amount ),0) as receiptSum

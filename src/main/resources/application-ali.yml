@@ -3,10 +3,10 @@ server:
   port: 8888
 #  servlet:
 #    context-path: /xx_admin
-magic-api:
-  web: /magic/web
-  resource:
-  location: /data/magic-api
+#magic-api:
+#  web: /magic/web
+#  resource:
+#  location: /data/magic-api
 spring:
   #  main:
   #    allow-bean-definition-overriding: true

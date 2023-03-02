@@ -33,7 +33,8 @@ public class PageHelper<T> {
 
 	private PageHelper() {
 	}
-	public PageHelper(Integer current,Integer size){
+
+	public PageHelper(Integer current, Integer size) {
 		this.current = current;
 		this.size = size;
 	}
@@ -78,8 +79,33 @@ public class PageHelper<T> {
 		return this;
 	}
 
-	public PageHelper summarizing(Object summarizing){
+	public PageHelper summarizing(Object summarizing) {
 		this.summarizing = summarizing;
 		return this;
+	}
+
+public static boolean test(long number) {
+	if (number == 0 ){
+		return false;
+	}
+	if (number < 0) {
+		number = -number;
+	}
+
+
+
+	while (number != 1) {
+		if (number % 2 == 0) {
+			number = number / 2;
+		} else {
+			return false;
+		}
+	}
+	return true;
+}
+
+	public static void main(String[] args) {
+		// 1000
+		System.out.println(test(10));
 	}
 }

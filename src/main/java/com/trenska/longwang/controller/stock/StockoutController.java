@@ -11,7 +11,7 @@ import com.trenska.longwang.service.goods.IGoodsService;
 import com.trenska.longwang.service.stock.IStockDetailService;
 import com.trenska.longwang.service.stock.IStockService;
 import com.trenska.longwang.service.sys.ISysEmpService;
-import com.trenska.longwang.util.PDFUtil;
+import com.trenska.longwang.util.PdfUtil;
 import com.trenska.longwang.util.PageUtils;
 import com.trenska.longwang.util.PrintSingleton;
 import io.swagger.annotations.*;
@@ -138,20 +138,20 @@ public class StockoutController {
 			String htmlStr = "";
 			String title = "";
 			if ("CK".equals(type.toUpperCase())) {
-				htmlStr = PDFUtil.freemarkerRender(params, templatePath + File.separator + "ckdpdftpl/tpl.ftl");
+				htmlStr = PdfUtil.freemarkerRender(params, templatePath + File.separator + "ckdpdftpl/tpl.ftl");
 				title = new String(("出库单-" + params.get("stockNo")).getBytes("gb2312"), "ISO8859-1") + ".pdf";
 			} else if ("RK".equals(type.toUpperCase())) {
-				htmlStr = PDFUtil.freemarkerRender(params, templatePath + File.separator + "rkdpdftpl/tpl.ftl");
+				htmlStr = PdfUtil.freemarkerRender(params, templatePath + File.separator + "rkdpdftpl/tpl.ftl");
 				title = new String(("入库单-" + params.get("stockNo")).getBytes("gb2312"), "ISO8859-1") + ".pdf";
 			} else if ("BY".equals(type.toUpperCase())) {
-				htmlStr = PDFUtil.freemarkerRender(params, templatePath + File.separator + "bydpdftpl/tpl.ftl");
+				htmlStr = PdfUtil.freemarkerRender(params, templatePath + File.separator + "bydpdftpl/tpl.ftl");
 				title = new String(("报溢单-" + params.get("stockNo")).getBytes("gb2312"), "ISO8859-1") + ".pdf";
 			} else if ("BS".equals(type.toUpperCase())) {
-				htmlStr = PDFUtil.freemarkerRender(params, templatePath + File.separator + "bsdpdftpl/tpl.ftl");
+				htmlStr = PdfUtil.freemarkerRender(params, templatePath + File.separator + "bsdpdftpl/tpl.ftl");
 				title = new String(("报损单-" + params.get("stockNo")).getBytes("gb2312"), "ISO8859-1") + ".pdf";
 			}
 			log.info("html= " + htmlStr);
-			byte[] pdfBytes = PDFUtil.createPDF(htmlStr, templatePath + File.separator + "simsun.ttc");
+			byte[] pdfBytes = PdfUtil.createPDF(htmlStr, templatePath + File.separator + "simsun.ttc");
 			if (pdfBytes != null && pdfBytes.length > 0) {
 				headers.setContentDispositionFormData("attachment", title);
 				headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
@@ -189,13 +189,13 @@ public class StockoutController {
 
 		String htmlContent = "";
 		if ("CK".equals(type)) {
-			htmlContent = PDFUtil.freemarkerRender(params, templatePath + File.separator + "ckdpdftpl/tpl.ftl");
+			htmlContent = PdfUtil.freemarkerRender(params, templatePath + File.separator + "ckdpdftpl/tpl.ftl");
 		} else if ("RK".equals(type)) {
-			htmlContent = PDFUtil.freemarkerRender(params, templatePath + File.separator + "rkdpdftpl/tpl.ftl");
+			htmlContent = PdfUtil.freemarkerRender(params, templatePath + File.separator + "rkdpdftpl/tpl.ftl");
 		} else if ("BY".equals(type)) {
-			htmlContent = PDFUtil.freemarkerRender(params, templatePath + File.separator + "bydpdftpl/tpl.ftl");
+			htmlContent = PdfUtil.freemarkerRender(params, templatePath + File.separator + "bydpdftpl/tpl.ftl");
 		} else if ("BS".equals(type)) {
-			htmlContent = PDFUtil.freemarkerRender(params, templatePath + File.separator + "bsdpdftpl/tpl.ftl");
+			htmlContent = PdfUtil.freemarkerRender(params, templatePath + File.separator + "bsdpdftpl/tpl.ftl");
 		}
 
 		WebPrintModel wm = PrintSingleton.INSTNACE.getInstance().retOk(htmlContent, "24.1", "13");

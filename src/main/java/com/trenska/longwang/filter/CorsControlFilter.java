@@ -8,7 +8,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
 
 /**
- * 该 Filter用于解决 HttpServletRequest 获取不到 axios增加的自定义header
+ * 该Filter用于解决 HttpServletRequest 获取不到 axios增加的自定义header
  */
 @Component
 public class CorsControlFilter implements Filter {

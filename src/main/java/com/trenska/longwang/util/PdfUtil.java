@@ -17,15 +17,15 @@ import java.util.Map;
  * @Author: junqiang.lu
  * @Date: 2018/12/25
  */
-public class PDFUtil {
+public class PdfUtil {
 
-    private PDFUtil(){}
+    private PdfUtil(){}
 
     private volatile static Configuration configuration;
 
     static {
         if (configuration == null) {
-            synchronized (PDFUtil.class) {
+            synchronized (PdfUtil.class) {
                 if (configuration == null) {
                     configuration = new Configuration(Configuration.VERSION_2_3_28);
                 }

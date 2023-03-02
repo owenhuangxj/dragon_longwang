@@ -10,17 +10,17 @@ spring:
     username: root
     password: root
 #    password: Owen@2019
-  #    username: Dragon_2019
+#    username: Dragon_2019
 #    password: Longwang_2019@Admin
-  data:
-    mongodb:
-      host: localhost
-      database: test
-      port: 27017
+#  data:
+#    mongodb:
+#      host: localhost
+#      database: test
+#      port: 27017
 #      uri: mongodb://192.168.1.4:27017/?compressors=disabled&gssapiServiceName=mongodbd
-      username: Owen
-      password: Owen@2019
-      authentication-database: admin
+#      username: Owen
+#      password: Owen@2019
+#      authentication-database: admin
   redis:
     host: localhost
     password: xxlw

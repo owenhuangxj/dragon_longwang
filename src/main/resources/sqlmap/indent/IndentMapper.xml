@@ -34,9 +34,9 @@
         <result column="indent_type" property="indentType"/>
         <result column="indent_remarks" property="indentRemarks"/>
         <result column="deleted" property="deleted"/>
-        <result column="emp_name" property="empName"/>
         <result column="cust_name" property="custName"/>
-        <association column="salesman_id" property="salesmanName" select="com.trenska.longwang.dao.sys.SysEmpMapper.selectNameById"/>
+        <result column="salesman_name" property="salesmanName"/>
+        <association column="emp_id" property="empName" select="com.trenska.longwang.dao.sys.SysEmpMapper.selectNameById"/>
     </resultMap>
 
     <!-- 查询映射结果 -->
@@ -192,7 +192,7 @@
                ti.sum, ti.gift_sum,ti.odr_amnt, ti.iou_amnt, ti.iou_stat, ti.iou_time, ti.iou_remarks,
                ti.auditable,ti.audit_stat, ti.audit_remarks, ti.indent_total, ti.discount_total,
                ti.odr_src, ti.indent_remarks,ti.indent_type, ti.deleted,
-               (ti.indent_total-ti.received_amnt-ti.payed_amnt) as due_amnt,se.emp_name,tc.cust_name
+               (ti.indent_total-ti.received_amnt-ti.payed_amnt) as due_amnt,se.emp_name as salesman_name,tc.cust_name
         from t_indent ti, t_customer tc, sys_emp se
         where ti.cust_id = tc.cust_id
         and se.emp_id = ti.salesman_id
@@ -980,7 +980,7 @@
         select ifnull(sum( case when ti.indent_type = '订货单' then tid.num else -tid.num end ) ,0 ) as salesNum ,
         concat(@rownum:=@rownum+1,'') as rankNum,tag.area_grp_id as areaGrpId , tag.area_grp_name as areaGrpName,
         ifnull(sum( case when ti.indent_type = '订货单' then cast(tid.amount as decimal(13,4))
-          else -cast(tid.amount as decimal(13,4)) end ) , 0 ) as indentTotal ,
+          else -(cast(tid.amount as decimal(13,4))) end ) , 0 ) as indentTotal ,
         ifnull(sum( case when ti.indent_type = '订货单' then tid.discount_amount
           else -tid.discount_amount end ) , 0 ) as discountTotal,
         ifnull(sum( case when ti.indent_type = '订货单' then (cast(tid.amount as decimal(13,4)) + tid.discount_amount)
@@ -1119,9 +1119,9 @@
         ifnull(sum(case when ti.indent_type = '订货单' then (cast(tid.amount as decimal(13,4)) + cast(tid.discount_amount as decimal(13,4)))
           else -(cast(tid.amount as decimal(13,4)) + cast(tid.discount_amount as decimal(13,4))) end ) , 0 ) as salesAmntSum,
         ifnull(sum(case when ti.indent_type = '订货单' then cast(tid.amount as decimal(13,4))
-          else -cast(tid.amount as decimal(13,4)) end ) , 0 ) as indentTotalSum,
+          else -(cast(tid.amount as decimal(13,4))) end ) , 0 ) as indentTotalSum,
         ifnull(sum(case when ti.indent_type = '订货单' then cast(tid.discount_amount as decimal(13,4))
-          else -cast(tid.discount_amount as decimal(13,4)) end ) , 0 ) as discountAmntSum,
+          else -(cast(tid.discount_amount as decimal(13,4))) end ) , 0 ) as discountAmntSum,
         ifnull(sum(case when ti.indent_type = '订货单' then tid.num * tid.multi else -tid.num * tid.multi end ) ,0 ) as salesNumSum
         from t_indent ti , t_customer tc ,t_goods tg , t_indent_detail tid
         where ti.stat in ('已出库','已完成')

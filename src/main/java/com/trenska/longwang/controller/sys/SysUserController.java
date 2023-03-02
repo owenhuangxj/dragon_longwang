@@ -76,7 +76,9 @@ public class SysUserController {
 			@ApiImplicitParam(name = "empPwd", value = "用户密码", paramType = "body", required = true, dataType = "String")
 	})
 	public LoginResultModel login(@ApiParam(name = "emp", value = "登录参数", required = true) @Valid @RequestBody SysEmp emp) {
-
+		if (emp == null) {
+			throw new UnknownAccountException();
+		}
 		UsernamePasswordToken usernamePasswordToken = new UsernamePasswordToken(emp.getEmpAcct(), emp.getEmpPwd());
 		Subject subject = SecurityUtils.getSubject();
 		try {
@@ -133,7 +135,7 @@ public class SysUserController {
 		// 复制SysEmp给响应模型，包括角色和权限
 		ObjectCopier.copyProperties(dbSysEmp, loginResultModel);
 		loginResultModel.setSuccess(true);
-		loginResultModel.setToken(JasyptUtil.encypt(password,token));
+		loginResultModel.setToken(JasyptUtil.encypt(password, token));
 		// 将系统配置SysConfig 存入登陆响应模型中
 		loginResultModel.setSysConfig(sysConfig);
 		loginResultModel.setSessionId(token);

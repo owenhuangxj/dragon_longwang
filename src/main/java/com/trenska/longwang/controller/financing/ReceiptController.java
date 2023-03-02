@@ -253,6 +253,8 @@ public class ReceiptController {
 			@RequestParam(required = false, name = "salesmanId") Integer salesmanId,
 			@PathVariable("current") Integer current, @PathVariable("size") Integer size
 	) {
+		ThreadLocal<Integer> in = new ThreadLocal<>();
+		in.set(1);
 		Map<String, Object> params = new HashMap<>();
 		params.put("custId", custId);
 		params.put("endTime", endTime);
@@ -366,7 +368,7 @@ public class ReceiptController {
 			params.put("empName", sysemp != null ? sysemp.getEmpName() : "");//制单人
 		}
 
-		String htmlContent = PDFUtil.freemarkerRender(params, templatePath + File.separator + "skdpdftpl/skd.ftl");
+		String htmlContent = PdfUtil.freemarkerRender(params, templatePath + File.separator + "skdpdftpl/skd.ftl");
 
 		WebPrintModel wm = PrintSingleton.INSTNACE.getInstance().retOk(htmlContent, "24.1", "9.31");
 
@@ -396,7 +398,7 @@ public class ReceiptController {
 			SysEmp sysemp = empService.getById(receipt.getEmpId());
 			params.put("empName", sysemp != null ? sysemp.getEmpName() : "");//制单人
 		}
-		String htmlContent = PDFUtil.freemarkerRender(params, templatePath + File.separator + "fkdpdftpl/fkd.ftl");
+		String htmlContent = PdfUtil.freemarkerRender(params, templatePath + File.separator + "fkdpdftpl/fkd.ftl");
 		WebPrintModel wm = PrintSingleton.INSTNACE.getInstance().retOk(htmlContent, "24.1", "9.31");
 		return CommonResponse.getInstance().succ(true).data(wm);
 	}

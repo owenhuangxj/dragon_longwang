@@ -595,13 +595,13 @@ public class IndentController {
 		String htmlStr = "";
 		//通过是否有送货人判断是否出库   未出库
 		if (params.containsKey("shipMan")) {
-			htmlStr = PDFUtil.freemarkerRender(params, templatePath + File.separator + "dhdpdftpl/dhd.ftl");
+			htmlStr = PdfUtil.freemarkerRender(params, templatePath + File.separator + "dhdpdftpl/dhd.ftl");
 		} else {
-			htmlStr = PDFUtil.freemarkerRender(params, templatePath + File.separator + "xsdd/xsd.ftl");
+			htmlStr = PdfUtil.freemarkerRender(params, templatePath + File.separator + "xsdd/xsd.ftl");
 		}
 		log.info("dhd = " + htmlStr);
 
-		byte[] pdfBytes = PDFUtil.createPDF(htmlStr, templatePath + File.separator + "simsun.ttc");
+		byte[] pdfBytes = PdfUtil.createPDF(htmlStr, templatePath + File.separator + "simsun.ttc");
 		if (pdfBytes != null && pdfBytes.length > 0) {
 			String fileName = null;
 			try {
@@ -640,9 +640,9 @@ public class IndentController {
 			String htmlStr = "";
 			//通过是否有送货人判断是否出库   未出库
 			if (params.containsKey("shipMan")) {
-				htmlStr = PDFUtil.freemarkerRender(params, templatePath + File.separator + "dhdpdftpl/dhd.ftl");
+				htmlStr = PdfUtil.freemarkerRender(params, templatePath + File.separator + "dhdpdftpl/dhd.ftl");
 			} else {
-				htmlStr = PDFUtil.freemarkerRender(params, templatePath + File.separator + "xsdd/xsd.ftl");
+				htmlStr = PdfUtil.freemarkerRender(params, templatePath + File.separator + "xsdd/xsd.ftl");
 			}
 
 			WebPrintModel wm = PrintSingleton.INSTNACE.getInstance().retOk(htmlStr, "24.1", "13");
@@ -670,9 +670,9 @@ public class IndentController {
 			return new ResponseEntity<String>("{ \"succ\" : \"false\", \"msg\" : \"获取数据失败\" }",
 					headers, HttpStatus.NOT_FOUND);
 		}
-		String htmlStr = PDFUtil.freemarkerRender(params, templatePath + File.separator + "xsthd/tpl.ftl");
+		String htmlStr = PdfUtil.freemarkerRender(params, templatePath + File.separator + "xsthd/tpl.ftl");
 		log.info("thd = " + htmlStr);
-		byte[] pdfBytes = PDFUtil.createPDF(htmlStr, templatePath + File.separator + "simsun.ttc");
+		byte[] pdfBytes = PdfUtil.createPDF(htmlStr, templatePath + File.separator + "simsun.ttc");
 		if (pdfBytes != null && pdfBytes.length > 0) {
 			String fileName = null;
 			try {
@@ -699,7 +699,7 @@ public class IndentController {
 			if (null == params || params.isEmpty()) {
 				return CommonResponse.getInstance().succ(false).msg("获取数据失败");
 			}
-			String htmlStr = PDFUtil.freemarkerRender(params, templatePath + File.separator + "xsthd/tpl.ftl");
+			String htmlStr = PdfUtil.freemarkerRender(params, templatePath + File.separator + "xsthd/tpl.ftl");
 			WebPrintModel wm = PrintSingleton.INSTNACE.getInstance().retOk(htmlStr, "21", "29.7");
 			return CommonResponse.getInstance().succ(true).data(wm);
 		} catch (Exception e) {
