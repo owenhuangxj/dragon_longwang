@@ -78,7 +78,10 @@ public class DragonConstant {
 	public static final String NO_ACCESS_PERMISSION_MSG = "无访问权限";
 	public final static int ACCESS_TIMEOUT = 10401; /* 认证失败:未登录 */
 	public static final int TOKEN_MISSING = 10402;
-	public static final int LOGGED_OTHER_PLACE = 10403; /* 无权限 */
+	public static final int LOGGED_OTHER_PLACE = 104031; /* 无权限 */
+
+	public static final int NO_AREA_AUTHORITY = 104032; /* 没有区域权限 */
+
 	public static final int ACCESS_FORBIDDEN = 10405; /* 方法错误 */
 	public static final String TOKEN_MISSING_MSG = "无效的令牌";
 	public static final String CHANGE_SUCC = "修改成功";

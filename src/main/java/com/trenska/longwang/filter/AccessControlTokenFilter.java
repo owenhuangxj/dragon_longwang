@@ -23,6 +23,12 @@ import org.apache.shiro.web.filter.AccessControlFilter;
  * 如果redis中的令牌为null 提示登陆超时，如果不为null则匹配header和reids中token是否相同，相同才允许访问资源
  */
 public class AccessControlTokenFilter extends AccessControlFilter {
+	private boolean closeLoginCheck;
+
+	public AccessControlTokenFilter(boolean closeLoginCheck) {
+		this.closeLoginCheck = closeLoginCheck;
+	}
+
 	/**
 	 * 表示是否允许访问；mappedValue就是[urls]配置中拦截器参数部分，如果允许访问返回true，否则false；
 	 * (感觉这里应该是对白名单（不需要登录的接口）放行的)
@@ -47,9 +53,12 @@ public class AccessControlTokenFilter extends AccessControlFilter {
 	protected boolean onAccessDenied(ServletRequest request, ServletResponse resp) throws IOException {
 		// 出鬼了，获取不到Principal了...
 //		SysEmp sysEmp = (SysEmp) getSubject(request, response).getPrincipal();
-
+		if (closeLoginCheck) {
+			return true;
+		}
 		HttpServletRequest req = (HttpServletRequest) request;
 		String tokenInHeader = req.getHeader(DragonConstant.TOKEN_NAME);
+
 		// 如果无令牌
 		if (StringUtils.isEmpty(tokenInHeader)) {
 			ResponseUtil.accessDenied(DragonConstant.TOKEN_MISSING, DragonConstant.TOKEN_MISSING_MSG, DragonConstant.TOKEN_MISSING_MSG);
@@ -62,9 +71,7 @@ public class AccessControlTokenFilter extends AccessControlFilter {
 		if (StringUtils.isEmpty(tokenInRedis)) {
 			ResponseUtil.accessDenied(DragonConstant.ACCESS_TIMEOUT, DragonConstant.ACCESS_TIMEOUT_MSG, DragonConstant.ACCESS_TIMEOUT_MSG);
 		}
-		/**
-		 * 如果Header里面的token和Redis里面的token都不为null则允许访问资源
-		 */
+		// 如果Header里面的token和Redis里面的token都不为null则允许访问资源
 		return true;
 	}
 

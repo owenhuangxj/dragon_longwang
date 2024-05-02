@@ -1665,57 +1665,31 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	@Override
 	@DataAuthVerification
 	public Page<Indent> getIndentPageSelective(Map<String, Object> params, Page page) {
-
-		int empId = SysUtil.getEmpIdInToken();
-
-		SysConfig sysConfig = SysUtil.getSysConfig(empId);
+		SysConfig sysConfig = SysUtil.getSysConfig();
 		int retain = sysConfig.getRetain();
-
 		List<Indent> indents = super.baseMapper.selectIndentPageSelective(params, page);
 		for (Indent indent : indents) {
-
 			BigDecimal odrAmnt = new BigDecimal(indent.getOdrAmnt());
-
 			odrAmnt = odrAmnt.setScale(retain, RoundingMode.HALF_UP);
-
 			indent.setOdrAmnt(odrAmnt.toString());
-
 			BigDecimal dicountTotal = new BigDecimal(indent.getDiscountTotal());
-
 			dicountTotal = dicountTotal.setScale(retain, RoundingMode.HALF_UP);
-
 			indent.setDiscountTotal(dicountTotal.toString());
-
 			BigDecimal indentTotal = new BigDecimal(indent.getIndentTotal());
-
 			indentTotal = indentTotal.setScale(retain, RoundingMode.HALF_UP);
-
 			indent.setIndentTotal(indentTotal.toString());
-
 			BigDecimal receivedAmnt = new BigDecimal(indent.getReceivedAmnt());
-
 			receivedAmnt = receivedAmnt.setScale(retain, RoundingMode.HALF_UP);
-
 			indent.setReceivedAmnt(receivedAmnt.toString());
-
 			BigDecimal payedAmnt = new BigDecimal(indent.getPayedAmnt());
-
 			payedAmnt = payedAmnt.setScale(retain, RoundingMode.HALF_UP);
-
 			indent.setPayedAmnt(payedAmnt.toString());
-
 			BigDecimal dueAmnt = new BigDecimal(indent.getDueAmnt());
-
 			dueAmnt = dueAmnt.setScale(retain, RoundingMode.HALF_UP);
-
 			indent.setDueAmnt(dueAmnt.toString());
-
 			BigDecimal iouAmnt = new BigDecimal(indent.getIouAmnt());
-
 			iouAmnt = iouAmnt.setScale(retain, RoundingMode.HALF_UP);
-
 			indent.setIouAmnt(iouAmnt.toString());
-
 			// 处理出库详情
 //			for (IndentDetail indentDetail : indent.getIndentDetails()) {
 //				Integer goodsId = indentDetail.getGoodsId();
@@ -1724,13 +1698,11 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 //				indentDetail.setStockoutMadedates(stockMadedates);
 //			}
 		}
-
 		// 从结果中筛选有两个弊端 ，1: 分页不准确 ，2: 多发sql
 //		List<Indent> indentList = indents.stream().filter(indent -> custIds.contains(indent.getCustId())).collect(Collectors.toList());
 //		page.setRecords(indentList);
 		page.setRecords(indents);
 		page.setTotal(super.baseMapper.selectIndentPageSelectiveCount(params));
-
 		return page;
 	}
 
@@ -1984,7 +1956,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	@DataAuthVerification
 	public Page<CustSalesBillModel> getCustSales(Map<String, Object> params, Page page) {
 		long start = System.currentTimeMillis();
-		SysConfig sysConfig = SysUtil.getSysConfig(SysUtil.getEmpIdInToken());
+		SysConfig sysConfig = SysUtil.getSysConfig();
 		int retain = sysConfig.getRetain();
 
 		CustSalesSummationModel summation = super.baseMapper.selectCustSalesBillSummation(params);
@@ -2613,7 +2585,7 @@ public class IndentServiceImpl extends ServiceImpl<IndentMapper, Indent> impleme
 	public Indent getIndentInfo(String indentNo) {
 		Indent indent = super.baseMapper.getIndentByNo(indentNo);
 		List<IndentDetail> indentDetails = indent.getIndentDetails();
-		SysConfig sysConfig = SysUtil.getSysConfig(SysUtil.getEmpIdInToken());
+		SysConfig sysConfig = SysUtil.getSysConfig();
 		int retain = sysConfig.getRetain();
 
 		for (IndentDetail indentDetail : indentDetails) {

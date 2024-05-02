@@ -16,13 +16,24 @@ import java.util.Optional;
 /**
  * 2019/7/15
  * 创建人:Owen
- * 拦截器实现登陆超时控制；检查存入reids中的token是否已经过期来控制
+ * 拦截器实现登陆超时控制；检查存入redis中的token是否已经过期来控制
  */
 @Slf4j
-public class LoginControlInterceptor implements HandlerInterceptor {
+public class UserTokenInvalidCheckInterceptor implements HandlerInterceptor {
+	/**
+	 * 是否开启登陆检查，false表示关闭登陆检查
+	 */
+	private boolean closeLoginCheck;
+
+	public UserTokenInvalidCheckInterceptor(boolean closeLoginCheck) {
+		this.closeLoginCheck = closeLoginCheck;
+	}
 
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+		if (closeLoginCheck) {
+			return true;
+		}
 		String requestURI = request.getRequestURI();
 		boolean isLogin = requestURI.contains("login");
 		boolean isLogout = requestURI.contains("logout");

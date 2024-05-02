@@ -1,0 +1,18 @@
+spring:
+  profiles:
+    active: dev
+    include: druid,security
+  mvc:
+    static-path-pattern: /static/**
+  resources:
+    static-locations: classpath:/META-INF/resources/,classpath:/resources/,classpath:/static/
+  session:
+    timeout: 1800
+thread:
+  pool:
+    db:
+      retrieve:
+        corePoolSize: 3
+        maximumPoolSize: 5
+        keepAliveTime: 1
+        blockingQueueCapacity: 3

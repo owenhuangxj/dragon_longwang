@@ -83,12 +83,7 @@ public class SysUserController {
 		Subject subject = SecurityUtils.getSubject();
 		try {
 			subject.login(usernamePasswordToken); // 登陆后可以通过subject获取到Principal对象
-		} catch (IncorrectCredentialsException ex) {
-			LoginResultModel loginResultModel = new LoginResultModel();
-			loginResultModel.setSuccess(false);
-			loginResultModel.setMsg(DragonConstant.LOGIN_FAILURE_MSG);
-			return loginResultModel;
-		} catch (UnknownAccountException ex) {
+		} catch (IncorrectCredentialsException | UnknownAccountException ex) {
 			LoginResultModel loginResultModel = new LoginResultModel();
 			loginResultModel.setSuccess(false);
 			loginResultModel.setMsg(DragonConstant.LOGIN_FAILURE_MSG);

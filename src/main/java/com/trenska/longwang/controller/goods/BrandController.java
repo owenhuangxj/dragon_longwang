@@ -140,7 +140,11 @@ public class BrandController {
 		existModel.setMsg(msg);
 		return existModel;
 	}
-
+	@GetMapping("/add")
+	public boolean addBrand2(@RequestParam Brand brand) {
+		System.out.println(brand);
+		return true;
+	}
 
 //	@GetMapping("/list/page/search/{current}/{size}")
 //	@ApiImplicitParams({

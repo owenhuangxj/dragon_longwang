@@ -1,0 +1,8 @@
+thread:
+  pool:
+    db:
+      retrieve:
+        corePoolSize: 3
+        maximumPoolSize: 5
+        keepAliveTime: 1
+        blockingQueueCapacity: 3

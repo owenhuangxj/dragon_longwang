@@ -301,6 +301,8 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
 		return page;
 	}
 
+	//spring-cloud-starter-netflix-eureka-client
+
 	@Override
 	public Page<Goods> getGoodsPageSelective(Page page, Map<String, Object> params) {
 		List<Goods> records = super.baseMapper.selectGoodsPageSelective(page, params);

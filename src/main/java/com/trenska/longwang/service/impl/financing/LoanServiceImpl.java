@@ -100,7 +100,7 @@ public class LoanServiceImpl extends ServiceImpl<LoanMapper, Loan> implements IL
 	@Override
 	public Page<Loan> getLoanPageSelective(Page page, Map<String, Object> params) {
 
-		SysConfig sysConfig = SysUtil.getSysConfig(SysUtil.getEmpIdInToken());
+		SysConfig sysConfig = SysUtil.getSysConfig();
 		Integer retain = sysConfig.getRetain();
 
 		List<Loan> records = super.baseMapper.selectLoanPageSelective(page, params);

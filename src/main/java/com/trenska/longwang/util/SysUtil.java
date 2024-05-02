@@ -61,11 +61,11 @@ public class SysUtil {
 	 *
 	 * @return 账号对应的系统配置
 	 */
-	public static SysConfig getSysConfig(int empId) {
+	public static SysConfig getSysConfig() {
 		// 从redis中获取SysConfig
 		RedisTemplate<String, Object> jsonRedisTemplate =
 				ApplicationContextHolder.getBean(DragonConstant.REDIS_JSON_TEMPLATE_NAME);
-
+		int empId = SysUtil.getEmpIdInToken();
 		SysConfig sysConfig =
 				(SysConfig) jsonRedisTemplate.opsForValue().get(DragonConstant.SYS_CONFIG_IDENTIFIER.concat(String.valueOf(empId)));
 		// 如果redis 出故障了或者缓存失效了则先获取数据库中的对应记录，如果数据库中没有对应的配置记录，则获取容器中的默认系统配置

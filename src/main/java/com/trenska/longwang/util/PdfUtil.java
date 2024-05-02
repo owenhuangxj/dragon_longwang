@@ -74,10 +74,9 @@ public class PdfUtil {
      * @param fontFile 所需字体文件(相对路径+文件名)
      * */
     public static byte[] createPDF(String htmlTmpStr, String fontFile) {
-        ByteArrayOutputStream outputStream = null;
         byte[] result = null;
         try {
-            outputStream = new ByteArrayOutputStream();
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             ITextRenderer renderer = new ITextRenderer();
             renderer.setDocumentFromString(htmlTmpStr);
             ITextFontResolver fontResolver = renderer.getFontResolver();

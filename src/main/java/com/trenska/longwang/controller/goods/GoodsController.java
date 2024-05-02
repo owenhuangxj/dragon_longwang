@@ -351,7 +351,7 @@ public class GoodsController {
 			@ApiImplicitParam(name = "goodsId", value = "商品id", paramType = "body", dataType = "int")
 	})
 	@ApiOperation("通过商品id获取商品信息")
-	public Goods getGoodsByBoodsId(@PathVariable("goodsId") Integer goodsId) {
+	public Goods getGoodsByGoodsId(@PathVariable("goodsId") Integer goodsId) {
 		return goodsService.getGoodsByGoodsId(goodsId);
 	}
 
