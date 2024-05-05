@@ -26,11 +26,24 @@ public class DbRetrieveThreadPool {
                 });
     }
 
+    /**
+     * 执行一个没有返回值的异步任务
+     *
+     * @param runnable 异步任务
+     * @return CompletableFuture对象
+     */
     public CompletableFuture<Void> runAsync(Runnable runnable) {
         log.info("{} processing the business progress>>>", Thread.currentThread().getName());
         return CompletableFuture.runAsync(runnable, threadPoolExecutor);
     }
 
+    /**
+     * 执行一个返回值类型为U的异步任务
+     *
+     * @param supplier 异步任务
+     * @param <U>      返回值类型
+     * @return 携带返回值的Completable对象
+     */
     public <U> CompletableFuture<U> supplyAsync(Supplier<U> supplier) {
         return CompletableFuture.supplyAsync(supplier, threadPoolExecutor);
     }
