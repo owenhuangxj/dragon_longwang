@@ -20,7 +20,7 @@ import org.apache.shiro.web.filter.AccessControlFilter;
  * 2019/4/3
  * 创建人:Owen
  * 自定义Shiro Filter，用于处理token令牌
- * 如果redis中的令牌为null 提示登陆超时，如果不为null则匹配header和reids中token是否相同，相同才允许访问资源
+ * 如果redis中的令牌为null 提示登陆超时，如果不为null则匹配header和Redis中token是否相同，相同才允许访问资源
  */
 public class AccessControlTokenFilter extends AccessControlFilter {
 	private boolean closeLoginCheck;
