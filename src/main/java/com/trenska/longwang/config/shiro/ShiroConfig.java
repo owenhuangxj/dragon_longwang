@@ -81,14 +81,10 @@ public class ShiroConfig {
         shiroFilterFactoryBean.setSecurityManager(securityManager);
         shiroFilterFactoryBean.setFilterChainDefinitionMap(filterChainDefinition.getFilterChainMap());
 
-
         // 向Shiro注册自定义拦截器，此处只是注册，下面还要明确告诉Shiro 该拦截器要处理的url
         Map<String, Filter> filtersMap = new LinkedHashMap();
         filtersMap.put("authc", new AccessControlTokenFilter(closeLoginCheck));
         shiroFilterFactoryBean.setFilters(filtersMap);
-
-
-
         return shiroFilterFactoryBean;
     }
 }

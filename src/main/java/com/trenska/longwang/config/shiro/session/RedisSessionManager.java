@@ -3,14 +3,12 @@ package com.trenska.longwang.config.shiro.session;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.session.Session;
 import org.apache.shiro.session.UnknownSessionException;
-import org.apache.shiro.session.mgt.DefaultSessionKey;
 import org.apache.shiro.session.mgt.SessionKey;
 import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
 import org.apache.shiro.web.session.mgt.WebSessionKey;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.ServletRequest;
-import java.io.Serializable;
 
 /**
  * 解决一次WEB请求多次从SessionDAO(本工程具体实现是RedisSessionDao)中获取Session
