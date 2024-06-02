@@ -9,6 +9,7 @@ import com.trenska.longwang.entity.sys.SysConfig;
 import com.trenska.longwang.entity.sys.SysEmp;
 import com.trenska.longwang.entity.sys.SysEmpRole;
 import com.trenska.longwang.model.sys.CommonResponse;
+import com.trenska.longwang.service.sys.IEmpAreaGrpService;
 import com.trenska.longwang.service.sys.ISysEmpRoleService;
 import com.trenska.longwang.service.sys.ISysEmpService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +41,7 @@ public class SysEmpServiceImpl extends ServiceImpl<SysEmpMapper, SysEmp> impleme
 	private ISysEmpRoleService sysEmpRoleService;
 
 	@Autowired
-	private EmpAreaGrpServiceImpl empAreaGrpService;
+	private IEmpAreaGrpService empAreaGrpService;
 
 	@Override
 	public Page<SysEmp> getSysEmpPage(Map<String,Object> params,Page page) {

@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.session.Session;
 import org.apache.shiro.session.UnknownSessionException;
 import org.apache.shiro.session.mgt.eis.AbstractSessionDAO;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +18,7 @@ import java.util.concurrent.TimeUnit;
  * Shiro的Session存入Redis中避免分布式集群场景下服务器之间Session不共享的问题
  */
 @Slf4j
+@Primary
 @Component
 public class RedisSessionDao extends AbstractSessionDAO {
     private static final String SHIRO_SESSION_PREFIX = "ShiroSession:";

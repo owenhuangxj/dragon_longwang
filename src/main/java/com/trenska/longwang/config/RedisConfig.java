@@ -19,7 +19,6 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-import org.springframework.integration.redis.util.RedisLockRegistry;
 
 import java.time.Duration;
 @SuppressWarnings("all")
@@ -82,14 +81,6 @@ public class RedisConfig extends CachingConfigurerSupport {
 		return redisTemplate;
 	}
 
-//	@Bean("redisCacheManager")
-//	public CacheManager cacheManager(RedisConnectionFactory redisConnectionFactory) {
-//		RedisCacheConfiguration redisCacheConfiguration
-//				= RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMillis(timeout)); // 设置缓存有效期
-//		return RedisCacheManager
-//				.builder(RedisCacheWriter.nonLockingRedisCacheWriter(redisConnectionFactory))
-//				.cacheDefaults(redisCacheConfiguration).build();
-//	}
 	@Bean("redisCacheManager")
 	public CacheManager cacheManager(RedisTemplate<String,String> redisTemplate) {
 		RedisCacheConfiguration redisCacheConfiguration = RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMillis(timeout));
@@ -120,21 +111,4 @@ public class RedisConfig extends CachingConfigurerSupport {
 			return key;
 		};
 	}
-
-	/**
-	 * 注册Redis分布式锁
-	 * @param redisConnectionFactory
-	 * @return
-	 */
-	@Bean
-	public RedisLockRegistry redisLockRegistry(RedisConnectionFactory redisConnectionFactory){
-		RedisLockRegistry redisLockRegistry = new RedisLockRegistry(redisConnectionFactory,REGISTRY_KEY);
-		return redisLockRegistry;
-	}
-
-//	@Bean("redissonClient")
-//	public RedissonClient redisson() throws IOException {
-//		Config config = new Config().fromYAML(RedisConfig.class.getClassLoader().getResource("application-redisson.yml"));
-//		return Redisson.create(config);
-//	}
 }

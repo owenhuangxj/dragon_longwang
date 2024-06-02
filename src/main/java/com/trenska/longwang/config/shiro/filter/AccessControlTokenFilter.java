@@ -1,4 +1,4 @@
-package com.trenska.longwang.filter;
+package com.trenska.longwang.config.shiro.filter;
 
 import java.io.IOException;
 import java.util.Optional;
