@@ -31,14 +31,6 @@ public class DruidConfiguration {
 		return servletRegistrationBean;
 	}
 
-//	@Bean
-//	public FilterRegistrationBean filterRegistrationBean() {
-//		FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean(new WebStatFilter());
-//		filterRegistrationBean.addUrlPatterns("/*");
-//		filterRegistrationBean.addInitParameter("exclusions", "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*");
-//		return filterRegistrationBean;
-//	}
-
 	@Data
 	@ConfigurationProperties(prefix = DATASOURCE_CONFIG_PREFIX)
 	private class IDataSourceProperties {

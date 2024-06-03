@@ -6,7 +6,6 @@ import org.apache.shiro.session.UnknownSessionException;
 import org.apache.shiro.session.mgt.SessionKey;
 import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
 import org.apache.shiro.web.session.mgt.WebSessionKey;
-import org.springframework.stereotype.Component;
 
 import javax.servlet.ServletRequest;
 
@@ -16,7 +15,6 @@ import javax.servlet.ServletRequest;
  * 从WebSessionKey中可以获取ServletRequest和ServletResponse
  */
 @Slf4j
-@Component
 public class RedisSessionManager extends DefaultWebSessionManager {
     @Override
     protected Session retrieveSession(SessionKey sessionKey) throws UnknownSessionException {

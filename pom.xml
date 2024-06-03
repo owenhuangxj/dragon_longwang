@@ -77,7 +77,6 @@
         </dependency>
         <dependency>
             <groupId>org.apache.shiro</groupId>
-            <!--<artifactId>shiro-spring</artifactId>-->
             <artifactId>shiro-spring-boot-web-starter</artifactId>
             <version>1.4.0</version>
         </dependency>
@@ -85,17 +84,6 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
-            <exclusions>
-                <exclusion>
-                    <artifactId>lettuce-core</artifactId>
-                    <groupId>io.lettuce</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.itextpdf</groupId>
@@ -193,13 +181,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <!-- 序列化相关结束 -->
-        <!--Hibernate Validator则是JBoss社区开源的一个JSR 303  Bean Validation规范的优秀实践。JSR 303 Bean Validation是一个数据验证的J2EE规范。-->
-        <!--<dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-validator</artifactId>
-            <version>5.4.0.Final</version>
-        </dependency>-->
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
@@ -207,15 +188,13 @@
         </dependency>
         <!-- 序列化相关结束 -->
         <!-- 文档处理相关 -->
-        <!--
-            jsoup 是一款Java 的HTML解析器，可直接解析某个URL地址、HTML文本内容。它提供了一套非常省力的API，
+        <!-- jsoup 是一款Java 的HTML解析器，可直接解析某个URL地址、HTML文本内容。它提供了一套非常省力的API，
             可通过DOM，CSS以及类似于jQuery的操作方法来取出和操作数据。
             Jsoup的主要功能
                 1）从一个URL，文件或字符串中解析HTML
                 2）使用DOM或CSS选择器来查找、取出数据
                 3）可操作HTML元素、属性、文本
-            jsoup是基于MIT协议发布的，可放心使用于商业项目。
-         -->
+            jsoup是基于MIT协议发布的，可放心使用于商业项目。-->
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
@@ -224,6 +203,7 @@
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi</artifactId>
+            <version>${poi.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
@@ -287,11 +267,7 @@
             <artifactId>httpcore</artifactId>
             <version>4.4.11</version>
         </dependency>
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-extension</artifactId>
-            <version>3.1.0</version>
-        </dependency>
+        <!-- 包含 mybatis-plus的分页插件  -->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-support</artifactId>
@@ -300,11 +276,6 @@
         <dependency>
             <groupId>net.sf.ehcache</groupId>
             <artifactId>ehcache</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-generator</artifactId>
-            <version>3.1.0</version>
         </dependency>
         <!--mybatis-generator依赖用 -->
         <dependency>
@@ -347,9 +318,6 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <!--<configuration>
-                    <fork>true</fork>
-                </configuration>-->
             </plugin>
         </plugins>
     </build>

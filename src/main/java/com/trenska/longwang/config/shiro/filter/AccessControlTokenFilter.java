@@ -1,10 +1,14 @@
 package com.trenska.longwang.config.shiro.filter;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
+import com.trenska.longwang.entity.sys.SysEmp;
 import com.trenska.longwang.util.JasyptUtil;
 import com.trenska.longwang.util.SysUtil;
 import org.apache.commons.lang3.StringUtils;
@@ -41,6 +45,10 @@ public class AccessControlTokenFilter extends AccessControlFilter {
 	@Override
 	protected boolean isAccessAllowed(ServletRequest request, ServletResponse response, Object mappedValue) {
 		fillCorsHeader((HttpServletRequest) request, (HttpServletResponse) response);
+		Set<String> values = Arrays.stream(((String[]) mappedValue)).collect(Collectors.toSet());
+		if (values.contains("test")) {
+			return true;
+		}
 		return false;
 	}
 
@@ -50,9 +58,9 @@ public class AccessControlTokenFilter extends AccessControlFilter {
 	 * 如果onAccessDenied()也返回false，则直接返回，不会进入请求的方法（只有isAccessAllowed()和onAccessDenied()的情况下）
 	 */
 	@Override
-	protected boolean onAccessDenied(ServletRequest request, ServletResponse resp) throws IOException {
+	protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws IOException {
 		// 出鬼了，获取不到Principal了...
-//		SysEmp sysEmp = (SysEmp) getSubject(request, response).getPrincipal();
+		SysEmp sysEmp = (SysEmp) getSubject(request, response).getPrincipal();
 		if (closeLoginCheck) {
 			return true;
 		}
@@ -61,7 +69,8 @@ public class AccessControlTokenFilter extends AccessControlFilter {
 
 		// 如果无令牌
 		if (StringUtils.isEmpty(tokenInHeader)) {
-			ResponseUtil.accessDenied(DragonConstant.TOKEN_MISSING, DragonConstant.TOKEN_MISSING_MSG, DragonConstant.TOKEN_MISSING_MSG);
+			ResponseUtil.accessDenied(DragonConstant.TOKEN_MISSING, DragonConstant.TOKEN_MISSING_MSG,
+					DragonConstant.TOKEN_MISSING_MSG);
 			return false;
 		}
 

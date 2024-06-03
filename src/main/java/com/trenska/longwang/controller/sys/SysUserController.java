@@ -48,7 +48,7 @@ import java.util.concurrent.TimeUnit;
 @CrossOrigin
 @Slf4j
 @RequestMapping("/user")
-@Api(value = "UserController", description = "账号接口")
+@Api(description = "账号接口")
 public class SysUserController {
 
 	@Value("${spring.redis.token-timeout}")

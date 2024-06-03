@@ -20,7 +20,7 @@ import java.io.Serializable;
 @TableName("t_sys_config")
 @NoArgsConstructor
 /**
- * 当报mybatisplus entity XXX Not Found TableInfoCache.错误时，则缺少实体类对应的Mapper，添加mapper即可
+ * 当报mybatis-plus entity XXX Not Found TableInfoCache.错误时，则缺少实体类对应的Mapper，添加mapper即可
  */
 public class SysConfig extends Model<SysConfig> {
 	@TableId(type = IdType.INPUT)

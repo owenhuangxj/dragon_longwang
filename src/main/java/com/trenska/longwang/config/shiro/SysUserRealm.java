@@ -8,7 +8,6 @@ import com.trenska.longwang.service.sys.ISysEmpService;
 import com.trenska.longwang.service.sys.ISysPermService;
 import com.trenska.longwang.service.sys.ISysRoleService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.authc.credential.CredentialsMatcher;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
@@ -19,17 +18,10 @@ import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.util.ByteSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Primary;
-import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 @Slf4j
-@Primary
-@Component
 public class SysUserRealm extends AuthorizingRealm {
 	@Autowired
 	private ISysEmpService empService;

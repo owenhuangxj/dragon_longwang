@@ -25,12 +25,6 @@ public class MyBatisPlusConfig {
         return new PaginationInterceptor();
     }
 
-//    @Bean
-//    @ConditionalOnMissingBean(IllegalSQLInterceptor.class)
-//    public IllegalSQLInterceptor illegalSQLInterceptor(){
-//        return new IllegalSQLInterceptor();
-//    }
-
     /**
      * 逻辑删除插件
      * 效果: 使用Mapper自带方法删除和查找都会附带逻辑删除功能 (自己写的xml不会)

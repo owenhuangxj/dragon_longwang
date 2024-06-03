@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.math.BigDecimal;
@@ -47,7 +48,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @CrossOrigin
 @RestController
-@SuppressWarnings("all")
 @RequestMapping("/financing")
 @Api(description = "财务管理接口")
 public class ReceiptController {
@@ -67,20 +67,8 @@ public class ReceiptController {
 	@Value("${template.path}")
 	private String templatePath;
 
-	@Autowired
-	private AreaGrpMapper areaGrpMapper;
-
-	@Autowired
-	private ILoanService loanService;
-
-	@Autowired
+	@Resource
 	private IDealDetailService dealDetailService;
-
-	@Autowired
-	private DealDetailMapper dealDetailMapper;
-
-	@Autowired
-	private CustomerMapper customerMapper;
 
 	@PostMapping("/receipt/add")
 	@ApiOperation("新建收款单")

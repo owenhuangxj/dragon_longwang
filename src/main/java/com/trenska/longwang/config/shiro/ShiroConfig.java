@@ -4,24 +4,23 @@ import com.trenska.longwang.config.shiro.cache.RedisCacheManager;
 import com.trenska.longwang.config.shiro.filter.AccessControlTokenFilter;
 import com.trenska.longwang.config.shiro.filter.RolesOrAuthorizationFilter;
 import com.trenska.longwang.config.shiro.session.RedisSessionManager;
-import org.apache.shiro.session.mgt.SessionManager;
 import org.apache.shiro.session.mgt.eis.SessionDAO;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.spring.web.config.DefaultShiroFilterChainDefinition;
 import org.apache.shiro.spring.web.config.ShiroFilterChainDefinition;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
-import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 
 import javax.servlet.Filter;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Configuration
 public class ShiroConfig {
-    @Value("${check.login.close:true}")
+    @Value("${check.login.close:false}")
     private boolean closeLoginCheck;
 
     @Value("#{@environment['shiro.loginUrl'] ?: '/login.jsp'}")
@@ -34,18 +33,23 @@ public class ShiroConfig {
     protected String unauthorizedUrl;
 
     @Bean
+    public SysUserRealm realm() {
+        return new SysUserRealm();
+    }
+
+    @Bean
     public RedisCacheManager redisCacheManager() {
         return new RedisCacheManager();
     }
-
+    
     /**
      * Shiro默认的SessionDAO为MemorySessionDAO,自定义RedisSessionDao使用@Primary注解，否则此处多个SessionDAO实例会报错
      */
     @Bean
-    protected SessionManager sessionManager(SessionDAO sessionDao) {
+    protected RedisSessionManager sessionManager(SessionDAO sessionDao) {
         // DefaultWebSessionManager一次请求会多次请求Redis，RedisDefaultWebSessionManager重写retrieveSession实现多次请求只会请求redis一次
         // DefaultWebSessionManager sessionManager = new DefaultWebSessionManager();
-        DefaultWebSessionManager sessionManager = new RedisSessionManager();
+        RedisSessionManager sessionManager = new RedisSessionManager();
         sessionManager.setSessionDAO(sessionDao);
         return sessionManager;
     }
@@ -76,18 +80,22 @@ public class ShiroConfig {
         return securityManager;
     }
 
+    /**
+     * 此方法最终向Springboot注册的ShiroFilterChainDefinition实现类Bean参照https://shiro.apache.org/spring-boot.html即可
+     */
     @Bean
     public ShiroFilterChainDefinition shiroFilterChainDefinition() {
+        Map<String, String> pathDefinitions = new LinkedHashMap<>();
+        pathDefinitions.put("/swagger-ui.html", "anon");
+        pathDefinitions.put("/swagger-resources", "anon");
+        pathDefinitions.put("/swagger-resources/configuration/security", "anon");
+        pathDefinitions.put("/swagger-resources/configuration/ui", "anon");
+        pathDefinitions.put("/v2/api-docs", "anon");
+        pathDefinitions.put("/webjars/springfox-swagger-ui/**", "anon");
+        pathDefinitions.put("/user/**", "visitable[超级管理员,运营]");
+        pathDefinitions.put("/**", "authc");
         DefaultShiroFilterChainDefinition chainDefinition = new DefaultShiroFilterChainDefinition();
-        chainDefinition.addPathDefinition("/swagger-ui.html", "anon");
-        chainDefinition.addPathDefinition("/swagger-resources", "anon");
-        chainDefinition.addPathDefinition("/swagger-resources/configuration/security", "anon");
-        chainDefinition.addPathDefinition("/swagger-resources/configuration/ui", "anon");
-        chainDefinition.addPathDefinition("/v2/api-docs", "anon");
-        chainDefinition.addPathDefinition("/webjars/springfox-swagger-ui/**", "anon");
-        chainDefinition.addPathDefinition("/user/login", "anon");
-        chainDefinition.addPathDefinition("/user/logout", "anon");
-        chainDefinition.addPathDefinition("/**", "authc");
+        chainDefinition.addPathDefinitions(pathDefinitions);
         return chainDefinition;
     }
 
@@ -114,7 +122,7 @@ public class ShiroConfig {
         // 此处是Shiro注册自定义过滤器，注意：一定要new，如果让Spring管理这个过滤器会造成SecurityUtils.getSubject()获取到null的情况
         Map<String, Filter> filters = filterFactoryBean.getFilters();
         filters.put("rolesOr", new RolesOrAuthorizationFilter());
-        filters.put("authc", new AccessControlTokenFilter(closeLoginCheck));
+        filters.put("visitable", new AccessControlTokenFilter(closeLoginCheck));
         filterFactoryBean.setFilterChainDefinitionMap(shiroFilterChainDefinition.getFilterChainMap());
         return filterFactoryBean;
     }

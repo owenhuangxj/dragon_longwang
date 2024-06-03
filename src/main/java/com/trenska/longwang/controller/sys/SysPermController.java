@@ -1,30 +1,29 @@
 package com.trenska.longwang.controller.sys;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.trenska.longwang.entity.sys.SysPerm;
 import com.trenska.longwang.service.sys.ISysPermService;
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
+import java.util.List;
 
 @RestController
 @CrossOrigin
 @Slf4j
-@RequestMapping("/perm")
+@RequestMapping("/user")
 @Api(value = "PermController", description = "权限接口")
 public class SysPermController {
 
 	@Autowired
 	private ISysPermService permService;
 
-
-	public static void main(String[] args) {
-		System.out.println(new BigDecimal("3755").setScale(2,BigDecimal.ROUND_HALF_UP) );
-
+	@GetMapping("/pname/{pname}")
+	public List<SysPerm> listByPname(@PathVariable("pname") String pname) {
+		LambdaQueryWrapper<SysPerm> queryWrapper = new LambdaQueryWrapper<>();
+		queryWrapper.eq(SysPerm::getPname, pname);
+		return permService.list(queryWrapper);
 	}
-
-
 }

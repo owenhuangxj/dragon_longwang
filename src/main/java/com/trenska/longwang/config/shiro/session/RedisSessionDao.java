@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 @Primary
 @Component
 public class RedisSessionDao extends AbstractSessionDAO {
-    private static final String SHIRO_SESSION_PREFIX = "ShiroSession:";
+    private static final String SHIRO_SESSION_PREFIX = "TrenskaShiroSession:";
     @Resource
     private RedisTemplate redisTemplate;
 
